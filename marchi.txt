@@ -1,0 +1,24 @@
+# Marchi spesso imitati dai bot truffaldini.
+# Formato: marchio|username_ufficiale1,username_ufficiale2|generico  (le parti dopo | sono facoltative)
+# "generico" = parola comune (es. wallet): conta solo se il nome è fatto del marchio + parole esca.
+# Gli username ufficiali segnati "da verificare" vanno confermati in collaudo.
+binance
+telegram|telegram,BotFather
+wallet|wallet|generico
+ton
+tonkeeper
+metamask
+trustwallet
+coinbase
+bybit
+okx
+kraken
+revolut
+paypal
+amazon
+poste
+postepay
+intesa
+unicredit
+satispay
+nexi

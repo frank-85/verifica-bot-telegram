@@ -1,0 +1,37 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Le verifiche svolte restano sul computer di chi le fa: non si pubblicano.
+verifiche/
+scaricati/
+verdetto*.json
+resoconto*.md
+
+# Materiale personale: screenshot, appunti, note di lavoro, impostazioni locali.
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.pdf
+*.log
+.env
+.env.*
+.claude/
+CLAUDE.md
+MEMORY.md
+SOUL.md
+DREAM.md
+CLOUD.md
+FEEDBACK.md
+LEGGIMI.md
+FASE_*.md
+appunti*/
+note*/
+
+# Editor e sistema operativo.
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

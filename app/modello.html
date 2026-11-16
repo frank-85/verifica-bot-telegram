@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; style-src 'unsafe-inline'; img-src data: blob:; connect-src https://cdn.jsdelivr.net blob: data:; worker-src blob: https://cdn.jsdelivr.net; font-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="description" content="Semaforo di affidabilità per bot e Mini App Telegram: autovalutazione guidata e verificata, metodo trasparente. Tutto sul tuo dispositivo.">
+<title>Verifica Bot</title>
+<style>
+/* ===== Sistema visivo B2: token (una riga della palette della spec = un gruppo di token) ===== */
+:root {
+  --pagina: #f8fafc; --sfondo: #ffffff;
+  --scheda: #ffffff; --bordo: #e2e8f0; --tenue: #f1f5f9;
+  --testo: #0f172a; --secondario: #475569;
+  --firma: #14213d;
+  --primario: #1d4ed8; --su-primario: #ffffff;
+  --verde: #15803d; --ambra: #a16207; --rosso: #b91c1c;
+  --verde-tinta: #ecfdf3; --ambra-tinta: #fef7e0; --rosso-tinta: #fdeceb;
+  --verde-testo: #166534; --ambra-testo: #854d0e; --rosso-testo: #991b1b;
+  --simbolo: #ffffff;
+  --ombra: 0 1px 2px rgba(15,23,42,.05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pagina: #0b1220; --sfondo: #111827;
+    --scheda: #1f2937; --bordo: #374151; --tenue: #1f2937;
+    --testo: #e2e8f0; --secondario: #94a3b8;
+    --firma: #e2e8f0;
+    --primario: #93c5fd; --su-primario: #0f172a;
+    --verde: #4ade80; --ambra: #facc15; --rosso: #f87171;
+    --verde-tinta: #0f2a1c; --ambra-tinta: #2a2410; --rosso-tinta: #2d1517;
+    --verde-testo: #4ade80; --ambra-testo: #facc15; --rosso-testo: #f87171;
+    --simbolo: #111827;
+    --ombra: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --pagina: #0b1220; --sfondo: #111827;
+  --scheda: #1f2937; --bordo: #374151; --tenue: #1f2937;
+  --testo: #e2e8f0; --secondario: #94a3b8;
+  --firma: #e2e8f0;
+  --primario: #93c5fd; --su-primario: #0f172a;
+  --verde: #4ade80; --ambra: #facc15; --rosso: #f87171;
+  --verde-tinta: #0f2a1c; --ambra-tinta: #2a2410; --rosso-tinta: #2d1517;
+  --verde-testo: #4ade80; --ambra-testo: #facc15; --rosso-testo: #f87171;
+  --simbolo: #111827;
+  --ombra: none;
+  color-scheme: dark;
+}
+/* colore dell'esito: pieno (forma, bordo), tinta (sfondo), su-tinta (testo colorato) */
+.t-verde { --pieno: var(--verde); --tinta: var(--verde-tinta); --su-tinta: var(--verde-testo); }
+.t-giallo { --pieno: var(--ambra); --tinta: var(--ambra-tinta); --su-tinta: var(--ambra-testo); }
+.t-rosso { --pieno: var(--rosso); --tinta: var(--rosso-tinta); --su-tinta: var(--rosso-testo); }
+
+/* ===== base ===== */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--pagina); color: var(--testo); overflow-wrap: break-word;
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--primario); }
+:focus-visible { outline: 3px solid var(--primario); outline-offset: 2px; }
+h1, h2, h3 { line-height: 1.25; margin: 0 0 .5em; }
+h2 { font-size: 1.25rem; } h3 { font-size: 1.0625rem; }
+p { margin: 0 0 .8em; }
+.contenitore { max-width: 920px; margin: 0 auto; padding: 0 16px; }
+.muted { color: var(--secondario); } .piccolo { font-size: .875rem; }
+.mono, .codice { font-family: ui-monospace, Consolas, monospace; }
+.codice { font-size: .88em; word-break: break-all; }
+[hidden] { display: none !important; }
+
+/* ===== testata, selettore del tema, schede ===== */
+header.testata { background: var(--sfondo); border-bottom: 1px solid var(--bordo); padding: 12px 0 0; }
+.testata-riga { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+header.testata h1 { font-size: 1.375rem; font-weight: 800; letter-spacing: .01em; color: var(--firma); margin: 0; }
+header.testata p { color: var(--secondario); max-width: 640px; margin: 8px 0 0; font-size: .9375rem; }
+.tema { display: inline-flex; border: 1px solid var(--bordo); border-radius: 99px; background: var(--tenue); }
+.tema button { border: 0; background: transparent; color: var(--secondario); font: inherit; font-size: 13px; font-weight: 600;
+  min-height: 44px; padding: 0 12px; border-radius: 99px; cursor: pointer; }
+.tema button[aria-pressed="true"] { background: var(--sfondo); color: var(--testo); box-shadow: inset 0 0 0 2px var(--primario); }
+nav.schede { display: flex; gap: 4px; margin-top: 10px; overflow-x: auto; }
+nav.schede button { flex: 0 0 auto; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--secondario);
+  font: inherit; font-weight: 600; min-height: 44px; padding: 8px 14px; cursor: pointer; }
+nav.schede button[aria-selected="true"] { color: var(--testo); border-bottom-color: var(--primario); }
+main.contenitore { padding: 20px 16px 40px; }
+
+/* ===== componenti condivisi ===== */
+.card { background: var(--sfondo); border: 1px solid var(--bordo); border-radius: 14px; padding: 20px; box-shadow: var(--ombra); margin-bottom: 16px; }
+.bottone { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border: 1px solid var(--secondario);
+  background: var(--scheda); color: var(--testo); font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 10px; cursor: pointer; }
+.bottone.primario { background: var(--primario); border-color: var(--primario); color: var(--su-primario); }
+.bottone:disabled { background: var(--tenue); border-color: var(--bordo); color: var(--secondario); cursor: default; }
+.azioni { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+/* ===== percorso a passi ===== */
+.passo-conta { font-size: .875rem; font-weight: 600; color: var(--secondario); }
+.passo-nome { margin: 2px 0 0; }
+.avanzamento { height: 6px; background: var(--tenue); border-radius: 99px; overflow: hidden; margin: 10px 0 18px; }
+.avanzamento > div { height: 100%; background: var(--primario); border-radius: 99px; transition: width .2s; }
+/* passo 0: benefici e avvertenze sempre in vista */
+.benefici { list-style: none; padding: 0; margin: 14px 0 18px; display: grid; gap: 10px; }
+.benefici li { display: flex; align-items: flex-start; gap: 10px; }
+.benefici li::before { content: "✓"; flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--tenue); border: 1px solid var(--bordo);
+  color: var(--primario); font-size: .8125rem; font-weight: 800; display: grid; place-items: center; }
+.avvertenze { background: var(--tenue); border: 1px solid var(--bordo); border-left: 4px solid var(--secondario); border-radius: 12px;
+  padding: 14px 16px; margin: 0 0 6px; }
+.avvertenze .premessa { border-top: 0; margin-top: 0; padding-top: 0; font-size: .9375rem; color: var(--testo); }
+.avvertenze .premessa p:last-child { margin-bottom: 0; }
+/* campi */
+label.campo { display: block; font-weight: 600; margin: 16px 0 6px; }
+.campo-aiuto { margin: 6px 0 10px; }
+input[type="text"], textarea { width: 100%; font: inherit; color: var(--testo); background: var(--scheda); border: 1px solid var(--secondario);
+  border-radius: 10px; padding: 10px 12px; min-height: 48px; }
+input[type="text"]:focus, textarea:focus { border-color: var(--primario); }
+textarea { min-height: 120px; resize: vertical; }
+input[type="file"] { font: inherit; font-size: .875rem; color: var(--secondario); width: 100%; max-width: 100%; min-height: 44px; }
+input[type="file"]::file-selector-button { font: inherit; font-size: 1rem; font-weight: 600; min-height: 44px; margin-right: 12px; padding: 9px 16px;
+  border: 1px solid var(--secondario); border-radius: 10px; background: var(--scheda); color: var(--testo); cursor: pointer; }
+.avviso-rete { margin: 0 0 8px; }
+/* domande: una scheda per domanda, risposte come pulsanti (sotto restano veri radio) */
+fieldset.domanda { border: 1px solid var(--bordo); background: var(--scheda); border-radius: 12px; padding: 14px 14px 6px; margin: 0 0 12px;
+  min-width: 0; box-shadow: var(--ombra); }
+fieldset.domanda legend { float: left; width: 100%; padding: 0; margin: 0 0 12px; font-weight: 600; }
+.scelte { clear: both; display: flex; flex-wrap: wrap; gap: 8px; max-width: 440px; }
+.pillola { position: relative; flex: 1 1 auto; display: flex; cursor: pointer; }
+.pillola input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.pillola span { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 0 10px;
+  border: 1px solid var(--secondario); border-radius: 99px; background: var(--sfondo); color: var(--testo); font-weight: 600; white-space: nowrap; }
+.pillola span::before { content: ""; flex: 0 0 18px; height: 18px; border-radius: 50%; border: 2px solid var(--secondario);
+  font-size: 12px; font-weight: 800; line-height: 14px; text-align: center; }
+.pillola:hover span { border-color: var(--primario); }
+.pillola input:checked + span { background: var(--primario); border-color: var(--primario); color: var(--su-primario); font-weight: 700; }
+.pillola input:checked + span::before { content: "✓"; background: var(--su-primario); border-color: var(--su-primario); color: var(--primario); }
+.pillola input:focus-visible + span { outline: 3px solid var(--primario); outline-offset: 2px; }
+details.aiuto summary { cursor: pointer; color: var(--secondario); font-size: .875rem; padding: 12px 0; }
+details.aiuto p { font-size: .875rem; color: var(--secondario); margin: 0 0 10px; }
+/* screenshot: uno stato per file */
+.elenco-file { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 8px; }
+.file-voce { min-width: 0; border: 1px solid var(--bordo); border-radius: 10px; background: var(--scheda); padding: 10px 12px; }
+.file-testa { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; }
+.file-nome { min-width: 0; font-weight: 600; word-break: break-all; }
+.stato { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; border: 1px solid var(--bordo);
+  background: var(--tenue); color: var(--testo); font-size: .8125rem; font-weight: 700; white-space: nowrap; }
+.stato.errore { background: var(--rosso-tinta); border-color: var(--rosso); color: var(--rosso-testo); }
+.file-dettaglio { margin: 6px 0 0; font-size: .875rem; color: var(--secondario); }
+.rotella { flex: 0 0 14px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--secondario); border-top-color: transparent; }
+@keyframes gira { to { transform: rotate(360deg); } }
+.messaggio { border-radius: 10px; padding: 10px 12px; margin: 12px 0; font-size: .95rem; color: var(--testo); }
+.messaggio.errore { background: var(--rosso-tinta); border-left: 4px solid var(--rosso); }
+.messaggio.info { background: var(--tenue); border-left: 4px solid var(--primario); }
+ul.pulito { padding-left: 1.1em; margin: .3em 0 .6em; }
+ul.pulito li { margin-bottom: .3em; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--bordo); vertical-align: top; }
+th { color: var(--secondario); font-weight: 600; }
+/* tabelle: se non ci stanno, scorrono dentro il proprio riquadro, mai la pagina */
+.tabella-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--bordo); border-radius: 10px; margin: 0 0 12px; }
+.tabella-scroll th { background: var(--tenue); }
+.tabella-scroll tbody tr:last-child td { border-bottom: 0; }
+.tabella-scroll td.lungo { min-width: 150px; }
+.tabella-scroll td.breve { white-space: nowrap; font-weight: 600; }
+.tabella-scroll .num { white-space: nowrap; text-align: right; }
+.etichetta-rossa { display: block; margin-top: 2px; font-size: .8125rem; font-weight: 700; color: var(--rosso-testo); }
+details.area-dett .tabella-scroll { margin-bottom: 8px; }
+.premessa { font-size: .88rem; color: var(--secondario); border-top: 1px solid var(--bordo); margin-top: 18px; padding-top: 12px; }
+footer.piede { border-top: 1px solid var(--bordo); padding: 18px 0 30px; color: var(--secondario); font-size: .9rem; }
+.passi { counter-reset: passo; list-style: none; padding: 0; }
+.passi li { counter-increment: passo; position: relative; min-height: 28px; padding-left: 40px; margin-bottom: 12px; }
+.passi li::before { content: counter(passo); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--primario); color: var(--su-primario); display: grid; place-items: center; font-weight: 800; font-size: .9rem; }
+
+/* ===== esito ===== */
+.forma { display: block; width: 76px; height: 76px; margin: 0 auto 10px; }
+.forma.piccola { width: 28px; height: 28px; margin: 0; flex: 0 0 auto; }
+.forma-pieno { fill: var(--pieno); }
+.forma-simbolo { fill: var(--simbolo); }
+.report-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 0 0 12px; font-size: .875rem; color: var(--secondario); }
+.report-meta .mono { color: var(--testo); font-weight: 700; font-size: .9375rem; word-break: break-all; }
+.esito { background: var(--tinta); border-radius: 18px; padding: 22px 16px 18px; text-align: center; }
+.esito-titolo { font-size: 24px; font-weight: 800; line-height: 1.2; margin: 0; color: var(--testo); }
+.esito-sotto { font-size: 15px; font-weight: 600; margin: 6px 0 0; color: var(--su-tinta); }
+@keyframes entra { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cresce { from { transform: scale(.86); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: no-preference) {
+  .esito { animation: entra .25s ease-out both; }
+  .esito .forma { animation: cresce .3s ease-out both; }
+  .rotella { animation: gira .9s linear infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+/* barra del rischio: zone 30/30/40 come le soglie, indicatore a triangolino con il numero */
+.barra-rischio { margin: 18px 0 0; padding: 0 14px; }
+.barra-pista { position: relative; padding-top: 30px; }
+.indicatore { position: absolute; top: 0; transform: translateX(-50%); text-align: center; white-space: nowrap;
+  font-size: 14px; font-weight: 800; line-height: 1; color: var(--testo); }
+.indicatore::after { content: ""; display: block; margin: 4px auto 0; width: 0; height: 0;
+  border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 9px solid currentColor; }
+.zone { display: flex; gap: 3px; height: 12px; }
+.zone span { border-radius: 3px; }
+.zone .z-verde { flex: 30; background: var(--verde); }
+.zone .z-giallo { flex: 30; background: var(--ambra); }
+.zone .z-rosso { flex: 40; background: var(--rosso); }
+.etichette { display: flex; gap: 3px; margin-top: 6px; font-size: 13px; color: var(--secondario); }
+.etichette span:nth-child(1), .etichette span:nth-child(2) { flex: 30; }
+.etichette span:nth-child(3) { flex: 40; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; padding: 0; list-style: none; }
+.chip { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; padding: 6px 12px; border-radius: 99px;
+  background: var(--tenue); border: 1px solid var(--bordo); font-size: .875rem; color: var(--testo); }
+.chip .chip-nome { color: var(--secondario); }
+.chip strong { font-weight: 700; }
+.nota-regola { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--tinta); border-left: 4px solid var(--pieno);
+  font-size: .875rem; color: var(--testo); }
+.basata-su { margin: 14px 0 0; }
+.basata-su + p { margin-top: 8px; }
+.riquadro { border-radius: 12px; padding: 12px 14px; margin-top: 14px; color: var(--testo); }
+.riquadro.rosso { background: var(--rosso-tinta); border-left: 5px solid var(--rosso); }
+.riquadro.giallo { background: var(--ambra-tinta); border-left: 5px solid var(--ambra); }
+.riquadro.neutro { background: var(--tenue); border-left: 5px solid var(--secondario); }
+.riquadro h3 { margin-bottom: .3em; }
+.riquadro > :last-child { margin-bottom: 0; }
+.consigli { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.consiglio { background: var(--scheda); border: 1px solid var(--bordo); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.consiglio h3 { margin-bottom: .3em; }
+.consiglio ul.pulito { margin-bottom: 0; }
+/* dettaglio per area (ripiegabile) */
+details.dettaglio-aree { padding: 0; }
+details.dettaglio-aree > summary { cursor: pointer; padding: 14px 20px; min-height: 44px; font-weight: 700; font-size: 1.0625rem; }
+details.dettaglio-aree > summary .muted { font-weight: 400; }
+.dett-corpo { padding: 0 20px 14px; }
+.grafico-aree { display: grid; grid-template-columns: max-content 1fr 3.4em; gap: 10px 12px; align-items: center; margin: 4px 0 12px; }
+.nome-area { font-weight: 600; font-size: .95rem; }
+.barra-area { height: 14px; background: var(--tenue); border-radius: 99px; overflow: hidden; }
+.barra-area > div { height: 100%; border-radius: 99px; }
+.valore-area { font-weight: 700; font-size: .9375rem; text-align: right; }
+details.area-dett { border-top: 1px solid var(--bordo); padding: 2px 0 8px; }
+details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; }
+.segnale { margin: 4px 0 8px 4px; padding-left: 10px; border-left: 3px solid var(--bordo); }
+.segnale .fonte { font-size: .85rem; color: var(--secondario); }
+@media (max-width: 520px) {
+  header.testata h1 { font-size: 1.25rem; }
+  nav.schede button { flex: 1 1 auto; padding: 8px 6px; font-size: .875rem; }
+  .card { padding: 16px; }
+  details.dettaglio-aree { padding: 0; }
+  details.dettaglio-aree > summary { padding: 14px 16px; }
+  .dett-corpo { padding: 0 16px 12px; }
+  .esito-titolo { font-size: 22px; }
+  .forma { width: 68px; height: 68px; }
+  .forma.piccola { width: 28px; height: 28px; }
+  .barra-rischio { padding: 0 12px; }
+}
+/* schermi stretti: Indietro / Avanti sempre raggiungibili col pollice */
+@media (max-width: 640px) {
+  .azioni-fisse { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; flex-wrap: nowrap; margin: 0;
+    padding: 10px 16px; padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    background: var(--sfondo); border-top: 1px solid var(--bordo); }
+  .azioni-fisse .bottone { flex: 1 1 auto; white-space: nowrap; }
+  .azioni-fisse .bottone.primario { flex-grow: 2; }
+  body.con-barra { padding-bottom: 66px; padding-bottom: calc(66px + env(safe-area-inset-bottom)); }
+}
+@media print {
+  body.con-barra { padding-bottom: 0; }
+  :root, :root:not([data-theme="light"]), :root[data-theme="dark"] {
+    --pagina: #ffffff; --sfondo: #ffffff;
+    --scheda: #ffffff; --bordo: #e2e8f0; --tenue: #f1f5f9;
+    --testo: #0f172a; --secondario: #475569;
+    --firma: #14213d;
+    --primario: #1d4ed8; --su-primario: #ffffff;
+    --verde: #15803d; --ambra: #a16207; --rosso: #b91c1c;
+    --verde-tinta: #ecfdf3; --ambra-tinta: #fef7e0; --rosso-tinta: #fdeceb;
+    --verde-testo: #166534; --ambra-testo: #854d0e; --rosso-testo: #991b1b;
+    --simbolo: #ffffff;
+    --ombra: none;
+    color-scheme: light;
+  }
+  header.testata, nav.schede, .tema, .azioni, .solo-schermo, footer.piede .solo-schermo { display: none !important; }
+  .card { box-shadow: none; break-inside: avoid; }
+  details.dettaglio-aree { break-inside: auto; }
+  details > *:not(summary) { display: block !important; }
+  main.contenitore { padding: 0; }
+  .esito, .zone span, .barra-area, .barra-area > div, .riquadro, .nota-regola, .chip {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .esito, .esito .forma { animation: none !important; }
+}
+</style>
+</head>
+<body>
+<header class="testata">
+  <div class="contenitore">
+    <div class="testata-riga">
+      <h1>Verifica Bot</h1>
+      <div class="tema" id="selettore-tema" role="group" aria-label="Tema">
+        <button type="button" data-tema="auto" aria-pressed="true">Automatico</button>
+        <button type="button" data-tema="chiaro" aria-pressed="false">Chiaro</button>
+        <button type="button" data-tema="scuro" aria-pressed="false">Scuro</button>
+      </div>
+    </div>
+    <p>Semaforo di affidabilità per bot e Mini App Telegram. Regole trasparenti, nessuna AI durante l'uso: l'analisi avviene sul tuo dispositivo.</p>
+    <nav class="schede" role="tablist" aria-label="Sezioni">
+      <button type="button" role="tab" data-scheda="prova" aria-selected="true">Verifica un bot</button>
+      <button type="button" role="tab" data-scheda="come" aria-selected="false">Come funziona</button>
+    </nav>
+  </div>
+</header>
+
+<main class="contenitore">
+  <section id="prova" role="tabpanel"></section>
+  <section id="come" role="tabpanel" hidden></section>
+</main>
+
+<footer class="piede">
+  <div class="contenitore">
+    <p>Progetto dimostrativo di Francesco Guerra · <a href="https://www.linkedin.com/in/frguerra/" rel="noopener noreferrer" target="_blank">LinkedIn</a> · <a href="https://github.com/frank-85" rel="noopener noreferrer" target="_blank">GitHub</a></p>
+    <p class="piccolo">Lo strumento rileva segnali di rischio, non formula accuse. Ha finalità informative e non sostituisce pareri legali né verifiche di autorità indipendenti.</p>
+  </div>
+</footer>
+
+<template id="t-premessa">
+  <div class="premessa">
+    <p><strong>Avvertenze.</strong> Questo strumento aiuta a riconoscere <strong>segnali di rischio</strong> in bot e Mini App Telegram. Non fornisce pareri legali, forensi o tecnici certificati e non sostituisce le verifiche di autorità indipendenti. L'esito si basa sulle informazioni fornite e su controlli automatici con limiti noti: può sbagliare in entrambe le direzioni. Un esito rosso <strong>non è un'accusa</strong> né un giudizio sulle persone o le società coinvolte; un esito verde <strong>non è una garanzia</strong>. La decisione di usare o meno un bot spetta esclusivamente all'utente. Si consiglia sempre prudenza: non condividere mai seed phrase, codici o password e non inviare denaro per "sbloccare" un prelievo.</p>
+    <p>I pareri dello strumento sono <strong>indicativi e indiziari</strong>, non vincolanti e non probatori. L'autore lo ha realizzato con cura e attenzione, con il solo scopo di aiutare chi lo usa a orientarsi, ma nessuno strumento di questo tipo può offrire garanzie assolute: per sua natura è fallibile. La responsabilità finale sull'uso delle analisi, dei report ottenuti e sulle decisioni conseguenti resta sempre dell'utente.</p>
+    <p>I tuoi dati restano sul tuo dispositivo: dettagli nella scheda <em>Come funziona</em> → Privacy e dati.</p>
+  </div>
+</template>
+
+<template id="t-privacy">
+  <div>
+    <p><strong>Dove vanno i tuoi dati? Da nessuna parte.</strong> Questo strumento funziona interamente sul tuo dispositivo. Le risposte, i testi e gli screenshot che inserisci vengono elaborati solo nel tuo browser e spariscono quando chiudi la pagina: non vengono salvati, non vengono inviati all'autore, né ad Anthropic, né a Telegram, né a terzi. Non usiamo cookie, statistiche o tracciamenti, e non raccogliamo nome, email, telefono, posizione o dati del dispositivo.</p>
+    <p><strong>Unica eccezione:</strong> se carichi uno screenshot, il browser scarica una volta la libreria open source che ne legge il testo (da cdn.jsdelivr.net); come per qualunque sito, quel servizio vede il tuo indirizzo IP, ma <strong>non</strong> riceve l'immagine né le tue risposte. Se preferisci, incolla il testo invece dell'immagine.</p>
+    <p><strong>Consiglio:</strong> prima di caricare uno screenshot, ritaglia o copri dati tuoi (numero di telefono, nome, saldo, indirizzi di wallet). Il report che scarichi o stampi resta tuo e sul tuo dispositivo: condividilo con attenzione.</p>
+  </div>
+</template>
+
+<template id="t-ai">
+  <div>
+    <p>Lo strumento è stato <strong>progettato e sviluppato con l'assistenza di strumenti di intelligenza artificiale</strong> (Claude, di Anthropic), sotto la direzione e la responsabilità dell'autore. <strong>Durante l'uso non interviene alcuna AI generativa</strong>: il verdetto è calcolato da regole fisse e pubbliche (consultabili nella scheda <em>Come funziona</em>); la lettura degli screenshot usa un riconoscitore di caratteri locale. Lo strumento non prende decisioni con effetti giuridici sull'utente: fornisce un'indicazione che l'utente è libero di seguire o no.</p>
+    <p>Anthropic, Telegram e i titolari dei marchi citati <strong>non sono coinvolti</strong> nel funzionamento dello strumento, non lo approvano e non ne sono responsabili. Nomi e marchi citati appartengono ai rispettivi titolari e sono usati solo per descrivere i bot analizzati.</p>
+  </div>
+</template>
+
+<!-- Forme dell'esito: una per colore, così il colore non è mai l'unico segnale -->
+<template id="t-forma-verde"><svg class="forma t-verde" data-forma="cerchio" viewBox="0 0 80 80" aria-hidden="true" focusable="false"><circle class="forma-pieno" cx="40" cy="40" r="36"/><path class="forma-simbolo" d="M24 41l10 10 22-22-5-5-17 17-5-5z"/></svg></template>
+<template id="t-forma-giallo"><svg class="forma t-giallo" data-forma="triangolo" viewBox="0 0 80 80" aria-hidden="true" focusable="false"><path class="forma-pieno" d="M40 6c2.6 0 4.9 1.4 6.2 3.6l29 50.4c2.7 4.8-.7 10.8-6.2 10.8H11c-5.5 0-8.9-6-6.2-10.8l29-50.4C35.1 7.4 37.4 6 40 6z"/><rect class="forma-simbolo" x="36" y="25" width="8" height="24" rx="3"/><circle class="forma-simbolo" cx="40" cy="58" r="4.5"/></svg></template>
+<template id="t-forma-rosso"><svg class="forma t-rosso" data-forma="ottagono" viewBox="0 0 80 80" aria-hidden="true" focusable="false"><path class="forma-pieno" d="M26 4h28l22 22v28L54 76H26L4 54V26z"/><path class="forma-simbolo" d="M28 23l12 12 12-12 5 5-12 12 12 12-5 5-12-12-12 12-5-5 12-12-12-12z"/></svg></template>
+
+<!--DATI-->
+<!--SCRIPT-->
+<script>
+(function () {
+  "use strict";
+  var DATI = JSON.parse(document.getElementById("dati").textContent);
+  var CAT = catalogoDaLista(DATI.catalogo);
+  var RISORSE = risorseDaPayload({ catalogo: DATI.catalogo, questionario: DATI.questionario, regole: DATI.regole, marchi: DATI.marchi });
+  var Q = DATI.questionario;
+  var NOMI_AREE = { identita: "Identità", promesse: "Promesse", richieste: "Richieste", tecnica: "Tecnica", reputazione: "Reputazione", trasparenza: "Trasparenza" };
+  var ESITI = {
+    verde: { etichetta: "Nessun segnale di rischio rilevante", fiducia: "alta", simbolo: "✓" },
+    giallo: { etichetta: "Alcuni segnali di rischio", fiducia: "media", simbolo: "!" },
+    rosso: { etichetta: "Segnali di rischio gravi", fiducia: "bassa", simbolo: "✕" }
+  };
+  var NOMI_ZONE = { verde: "bassa", giallo: "media", rosso: "alta" };
+
+  /* ---------- utilità DOM (niente HTML come stringa) ---------- */
+  function el(tag, attr) {
+    var e = document.createElement(tag);
+    if (attr) Object.keys(attr).forEach(function (k) {
+      var v = attr[k];
+      if (v === null || v === undefined || v === false) return;
+      if (k === "testo") e.textContent = v;
+      else if (k === "classe") e.className = v;
+      else if (k.indexOf("on") === 0) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? "" : v);
+    });
+    for (var i = 2; i < arguments.length; i++) aggiungi(e, arguments[i]);
+    return e;
+  }
+  function aggiungi(e, figlio) {
+    if (figlio === null || figlio === undefined || figlio === false) return;
+    if (Array.isArray(figlio)) { figlio.forEach(function (f) { aggiungi(e, f); }); return; }
+    e.appendChild(typeof figlio === "string" ? document.createTextNode(figlio) : figlio);
+  }
+  function svuota(e) { while (e.firstChild) e.removeChild(e.firstChild); return e; }
+  function modello(id) { return document.getElementById(id).content.cloneNode(true); }
+  var _opzLink = { sempre: false }; // nei report di autovalutazione nessun link è cliccabile
+  function collegamento(url) {
+    var d = disinnesca(url, _opzLink);
+    if (d.href) return el("a", { href: d.href, target: "_blank", rel: "noopener noreferrer", testo: d.testo });
+    return el("span", { classe: "codice", testo: d.testo, title: "Link disinnescato: non cliccabile per sicurezza" });
+  }
+  function fonte(testo) {
+    var s = String(testo || "");
+    return /^(https?:|javascript:|data:)/i.test(s) || /^[\w-]+(\.[\w-]+)+\//.test(s) ? collegamento(s) : document.createTextNode(s);
+  }
+  function testoConLink(testo) {
+    var frammenti = [], s = String(testo || ""), re = /https?:\/\/[^\s)"'»]+/g, m, ultimo = 0;
+    while ((m = re.exec(s)) !== null) {
+      if (m.index > ultimo) frammenti.push(s.slice(ultimo, m.index));
+      frammenti.push(collegamento(m[0])); ultimo = m.index + m[0].length;
+    }
+    if (ultimo < s.length) frammenti.push(s.slice(ultimo));
+    return frammenti;
+  }
+
+  /* ---------- report (uguale per vetrina e autovalutazione) ---------- */
+  function grafico(aree) {
+    var g = el("div", { classe: "grafico-aree", role: "img", "aria-label": "Rischio per area, da 0 a 100: " +
+      ORDINE_AREE.map(function (a) { return NOMI_AREE[a] + " " + (aree[a] ? aree[a].rischio : 0); }).join(", ") });
+    var piena = false;
+    ORDINE_AREE.forEach(function (a) {
+      var r = aree[a] ? aree[a].rischio : 0;
+      // colori del semaforo riservati all'esito: qui barra neutra, rossa solo se l'area è piena (cambia l'esito)
+      var colore = r >= SOGLIE.areaPiena ? "var(--rosso)" : "var(--secondario)";
+      if (r >= SOGLIE.areaPiena) piena = true;
+      g.appendChild(el("div", { classe: "nome-area", testo: NOMI_AREE[a] }));
+      g.appendChild(el("div", { classe: "barra-area" }, r > 0 ? el("div", { style: "width:" + Math.max(3, Math.min(100, r)) + "%;background:" + colore }) : null));
+      g.appendChild(el("div", { classe: "valore-area mono", testo: r + (r >= SOGLIE.areaPiena ? " ⚠" : "") }));
+    });
+    if (!piena) return g;
+    return el("div", null, g, el("p", { classe: "piccolo muted", testo: "⚠ Area al massimo del rischio (" + SOGLIE.areaPiena +
+      " o più): da sola impedisce l'esito verde. Le altre barre indicano solo quanto pesa ciascuna area, senza giudizio di colore." }));
+  }
+
+  function basataSuVetrina(v) {
+    var c = v.contesto || {};
+    return ["analisi completa con la skill /verifica-bot",
+      (c.fonti_indipendenti || 0) + " fonti indipendenti",
+      "materiale analizzato (screenshot o testi): " + (c.materiale_utente ? "sì" : "no"),
+      "controlli tecnici completi: " + (c.tecnica_completa ? "sì" : "no")];
+  }
+
+  /* Forma dell'esito (cerchio, triangolo, ottagono): clonata dai template, mai costruita da stringhe. */
+  function forma(verdetto, piccola) {
+    var f = modello("t-forma-" + verdetto);
+    if (piccola) f.querySelector("svg").setAttribute("class", "forma piccola t-" + verdetto);
+    return f;
+  }
+
+  function sottotitolo(v) {
+    var motivo = motivoRegola(v), vicino = notaProssimita(v);
+    if (v.verdetto === "verde") return "Verde · non è una garanzia" + (vicino ? " · " + vicino : "");
+    if (v.verdetto === "giallo") return "Giallo · " + (motivo === "prudenza" ? "regola di prudenza" : vicino || "procedi con cautela");
+    return "Rosso · " + (v.linee_rosse && v.linee_rosse.length ? "linea rossa superata"
+      : motivo === "segnalazioni" || v.rosso_da_segnalazioni ? "segnalazioni concordi"
+      : motivo === "prudenza" ? "regola di prudenza" : "fermati e verifica");
+  }
+
+  /* Barra del rischio: l'indicatore sta sul rischio finale, quindi sempre nella zona del colore. */
+  function barraRischio(v) {
+    var n = rischioFinale(v);
+    return el("div", { classe: "barra-rischio", role: "img", "aria-label": "Rischio " + n + " su 100, zona " + NOMI_ZONE[zonaRischio(n)] },
+      el("div", { classe: "barra-pista" },
+        el("div", { classe: "indicatore mono", style: "left:" + posizioneIndicatore(n) + "%", testo: String(n) }),
+        el("div", { classe: "zone" }, el("span", { classe: "z-verde" }), el("span", { classe: "z-giallo" }), el("span", { classe: "z-rosso" }))),
+      el("div", { classe: "etichette" }, el("span", { testo: "basso" }), el("span", { testo: "medio" }), el("span", { testo: "alto" })));
+  }
+
+  /* Quando prevale una regola il numero mostrato non è la media: lo si dice, con la media accanto. */
+  function notaRegola(v) {
+    var motivo = motivoRegola(v), corpo;
+    if (!motivo) return null;
+    if (motivo === "linea_rossa") {
+      corpo = [el("strong", { testo: "Prevale una linea rossa. " }),
+        "Una linea rossa provata vale come un'espulsione diretta: il rischio mostrato è il massimo (dettaglio nel riquadro qui sotto). "];
+    } else if (motivo === "segnalazioni") {
+      corpo = [el("strong", { testo: "Prevale la regola sulle segnalazioni. " }),
+        "Segnalazioni da almeno due siti distinti portano il rischio mostrato nella zona rossa. "];
+    } else {
+      corpo = [el("strong", { testo: "Prevale una regola di prudenza. " }),
+        "L'esito verde è escluso (certezza bassa oppure un'area al rischio massimo): il rischio mostrato resta nella zona del colore assegnato. "];
+    }
+    return el("p", { classe: "nota-regola t-" + v.verdetto }, corpo,
+      "Media delle 6 aree: ", el("span", { classe: "mono", testo: v.punteggio_totale + "/100" }), ".");
+  }
+
+  function mostraReport(v, contenitore, opzioni) {
+    opzioni = opzioni || {};
+    var es = ESITI[v.verdetto];
+    var basataSu = opzioni.basataSu && opzioni.basataSu.length ? opzioni.basataSu : basataSuVetrina(v);
+    var autoval = v.origine === "autovalutazione guidata";
+    _opzLink = { sempre: autoval };
+    var nodo = el("div", { classe: "report" });
+
+    function chip(nome, valore) {
+      return el("li", { classe: "chip" }, el("span", { classe: "chip-nome", testo: nome }), valore);
+    }
+    function elenco(titolo, voci, classe) {
+      if (!voci || !voci.length) return null;
+      return el("div", { classe: classe || null }, el("h3", { testo: titolo }),
+        el("ul", { classe: "pulito" }, voci.map(function (t) { return el("li", null, testoConLink(t)); })));
+    }
+
+    /* 1. riquadro esito → barra → chip → note */
+    var principale = el("div", { classe: "card" },
+      el("p", { classe: "report-meta" },
+        el("span", { classe: "mono", testo: "@" + v.bot.username }),
+        el("span", { testo: (v.data ? String(v.data).slice(0, 10) + " · " : "") + (autoval ? "autovalutazione guidata" : "analisi completa") })),
+      el("div", { classe: "esito t-" + v.verdetto },
+        forma(v.verdetto),
+        el("h2", { classe: "esito-titolo", testo: es.etichetta }),
+        el("p", { classe: "esito-sotto", testo: sottotitolo(v) })),
+      barraRischio(v),
+      el("ul", { classe: "chips" },
+        chip("Certezza della valutazione", el("strong", { testo: v.fiducia })),
+        chip("Fiducia nel bot", el("strong", { testo: es.fiducia })),
+        chip("Rischio complessivo", el("strong", { classe: "mono", testo: rischioFinale(v) + "/100" }))),
+      notaRegola(v));
+
+    if (v.linee_rosse && v.linee_rosse.length) {
+      principale.appendChild(el("div", { classe: "riquadro rosso" }, el("h3", { testo: "⛔ Linee rosse (ciascuna determina da sola l'esito rosso)" }),
+        el("ul", { classe: "pulito" }, v.linee_rosse.map(function (l) {
+          return el("li", null, el("strong", { testo: (CAT[l.codice] ? CAT[l.codice].descrizione : l.codice) + ": " }), testoConLink(l.prova));
+        }))));
+    }
+    if (v.rosso_da_segnalazioni) principale.appendChild(el("div", { classe: "riquadro rosso" },
+      el("p", { testo: autoval
+        ? "Esito rosso per segnalazioni: hai indicato segnalazioni provenienti da almeno due siti distinti (non verificate dallo strumento)."
+        : "Esito rosso per segnalazioni: almeno due siti distinti riportano segnalazioni su questo bot." })));
+    if (opzioni.contrasti && opzioni.contrasti.length) {
+      principale.appendChild(el("div", { classe: "riquadro giallo" }, el("h3", { testo: "Discrepanze con le tue risposte" }),
+        el("ul", { classe: "pulito" }, opzioni.contrasti.map(function (c) {
+          return el("li", { testo: "Il controllo automatico ha rilevato " + c.frase + ", in contrasto con la risposta fornita (" + (CAT[c.codice] ? CAT[c.codice].descrizione : c.codice) + ")." });
+        }))));
+    }
+    if (opzioni.avvisi && opzioni.avvisi.length) {
+      principale.appendChild(el("div", { classe: "riquadro neutro" }, el("h3", { testo: "Avvisi sul link della Mini App" }),
+        el("ul", { classe: "pulito" }, opzioni.avvisi.map(function (a) { return el("li", { testo: a }); }))));
+    }
+    principale.appendChild(el("p", { classe: "piccolo muted basata-su" }, el("strong", { testo: "Basata su: " }), basataSu.join(" · ")));
+    if (autoval && v.verdetto === "verde") principale.appendChild(el("p", { classe: "piccolo muted", testo: "Un esito verde ottenuto in autovalutazione raggiunge al massimo una certezza media: la certezza alta è riservata alle analisi complete. Nessun controllo può garantire la sicurezza di un servizio." }));
+    if (autoval && v.fiducia === "bassa") principale.appendChild(el("p", { classe: "piccolo muted", testo: "Certezza bassa: lo strumento non ha potuto analizzare materiale proveniente dal bot. Aggiungi uno screenshot o incolla il testo per ottenere una valutazione più solida." }));
+    nodo.appendChild(principale);
+
+    /* 2. cosa fare, prima dei dettagli */
+    var fare = elenco("Cosa fare", v.cosa_fare, "consiglio"), nonFare = elenco("Cosa non fare", v.cosa_non_fare, "consiglio");
+    if (fare || nonFare) nodo.appendChild(el("div", { classe: "card" }, el("div", { classe: "consigli" }, fare, nonFare)));
+
+    /* 3. dettaglio per area, ripiegabile */
+    var corpoAree = el("div", { classe: "dett-corpo" }, el("div", { classe: "aree" }, grafico(v.aree)));
+    ORDINE_AREE.forEach(function (a) {
+      var area = v.aree[a] || { rischio: 0, segnali: [] };
+      var segs = area.segnali || [];
+      corpoAree.appendChild(el("details", { classe: "area-dett", open: segs.length ? true : null },
+        el("summary", { testo: NOMI_AREE[a] + " — rischio " + area.rischio + (segs.length ? " · " + segs.length + (segs.length === 1 ? " segnale" : " segnali") : " · nessun segnale") }),
+        segs.map(function (s) {
+          var voce = CAT[s.codice];
+          var punti = s.fuori_catalogo ? s.punti : voce ? voce.punti : 0;
+          return el("div", { classe: "segnale" },
+            el("div", null, el("strong", { testo: (voce ? voce.descrizione : s.codice.replace(/_/g, " ")) }),
+              el("span", { classe: "muted piccolo", testo: " (" + (punti > 0 ? "+" : "") + punti + (s.tipo_prova === "segnalazione" ? ", da fonte di terzi" : "") + ")" })),
+            s.testo && s.testo !== "x" ? el("div", null, testoConLink(s.testo)) : null,
+            s.fonte ? el("div", { classe: "fonte" }, "Fonte: ", fonte(s.fonte)) : null);
+        })));
+    });
+    nodo.appendChild(el("details", { classe: "card dettaglio-aree" },
+      el("summary", null, "Rischio per area", el("span", { classe: "muted piccolo", testo: " · grafico e segnali rilevati" })),
+      corpoAree));
+
+    /* 4. non verificato, fonti, azioni, avvertenze */
+    nodo.appendChild(el("div", { classe: "card" },
+      elenco("Non verificato", v.non_verificato),
+      v.fonti && v.fonti.length ? el("div", null, el("h3", { testo: "Fonti" }), el("ul", { classe: "pulito" }, v.fonti.map(function (f) {
+        return el("li", null, (f.titolo ? f.titolo + " — " : ""), f.url ? collegamento(f.url) : null);
+      }))) : null,
+      el("div", { classe: "azioni" },
+        el("button", { type: "button", classe: "bottone", testo: "Stampa / salva PDF", onclick: function () { window.print(); } }),
+        el("button", { type: "button", classe: "bottone", testo: "Scarica verdetto.json", onclick: function () { scarica(v); } }),
+        opzioni.extraAzioni || null),
+      modello("t-premessa")));
+
+    svuota(contenitore).appendChild(nodo);
+  }
+
+  /* In stampa il dettaglio per area si apre da solo e poi torna com'era. */
+  window.addEventListener("beforeprint", function () {
+    Array.prototype.forEach.call(document.querySelectorAll(".report details"), function (d) {
+      if (!d.open) { d.setAttribute("data-chiuso", ""); d.open = true; }
+    });
+  });
+  window.addEventListener("afterprint", function () {
+    Array.prototype.forEach.call(document.querySelectorAll(".report details[data-chiuso]"), function (d) {
+      d.removeAttribute("data-chiuso"); d.open = false;
+    });
+  });
+  window.mostraReport = mostraReport;
+
+  function scarica(v) {
+    var blob = new Blob([JSON.stringify(v, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = el("a", { href: url, download: "verdetto_" + v.bot.username.replace(/[^\w-]/g, "_") + ".json" });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+
+  /* ---------- tema: Automatico / Chiaro / Scuro (solo in memoria, nessun salvataggio) ---------- */
+  var sceltaTema = "auto";
+  var sistemaScuro = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function applicaTema(scelta) {
+    sceltaTema = scelta === "chiaro" || scelta === "scuro" ? scelta : "auto";
+    var radice = document.documentElement;
+    if (sceltaTema === "auto") radice.removeAttribute("data-theme");
+    else radice.setAttribute("data-theme", sceltaTema === "scuro" ? "dark" : "light");
+    var gruppo = document.getElementById("selettore-tema");
+    Array.prototype.forEach.call(gruppo.querySelectorAll("button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-tema") === sceltaTema));
+    });
+    gruppo.setAttribute("aria-label", "Tema: ora " + temaEffettivo(sceltaTema, !!(sistemaScuro && sistemaScuro.matches)));
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("#selettore-tema button"), function (b) {
+    b.addEventListener("click", function () { applicaTema(b.getAttribute("data-tema")); });
+  });
+  if (sistemaScuro && sistemaScuro.addEventListener) sistemaScuro.addEventListener("change", function () { applicaTema(sceltaTema); });
+  applicaTema("auto");
+
+  /* ---------- schede ---------- */
+  function apriScheda(nome) {
+    Array.prototype.forEach.call(document.querySelectorAll("nav.schede button"), function (b) {
+      b.setAttribute("aria-selected", String(b.dataset.scheda === nome));
+    });
+    ["prova", "come"].forEach(function (id) { document.getElementById(id).hidden = id !== nome; });
+    aggiornaBarra();
+  }
+  /* Lo spazio in fondo alla pagina serve solo quando la barra azioni fissa è davvero in vista. */
+  function aggiornaBarra() {
+    document.body.classList.toggle("con-barra", !document.getElementById("prova").hidden && !!document.querySelector("#prova .azioni-fisse"));
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("nav.schede button"), function (b) {
+    b.addEventListener("click", function () { apriScheda(b.dataset.scheda); window.scrollTo(0, 0); });
+  });
+
+  /* Riquadro che scorre in orizzontale da solo (anche da tastiera), senza far scorrere la pagina. */
+  function tabellaScorrevole(nome, tabella) {
+    return el("div", { classe: "tabella-scroll", role: "region", "aria-label": nome, tabindex: "0" }, tabella);
+  }
+
+  /* ---------- Come funziona ---------- */
+  function mostraCome() {
+    var s = svuota(document.getElementById("come"));
+    s.appendChild(el("div", { classe: "card" },
+      el("h2", { testo: "Come funziona" }),
+      el("ol", { classe: "passi" },
+        el("li", null, el("strong", { testo: "Raccolta. " }), "Nella versione completa (skill /verifica-bot per Claude Code) l'AI individua e analizza le prove: pagina pubblica del bot, sito, Mini App, recensioni, segnalazioni. In questa pagina la raccolta è affidata a te, con il supporto dei controlli automatici."),
+        el("li", null, el("strong", { testo: "Classificazione. " }), "Ogni prova viene ricondotta a un segnale di un catalogo fisso di " + DATI.catalogo.length + " voci, ciascuna con la propria area e il proprio punteggio."),
+        el("li", null, el("strong", { testo: "Decisione. " }), "Il colore è calcolato da un motore a regole, non dall'AI: a parità di prove, il verdetto è sempre lo stesso."),
+        el("li", null, el("strong", { testo: "Prudenza. " }), "Regole specifiche impediscono i falsi verdi e dichiarano il grado di solidità di ogni valutazione.")),
+      el("p", { classe: "muted", testo: "Il motore di questa pagina è la versione JavaScript del motore Python della skill. Un test di parità verifica che entrambi producano risultati identici sugli stessi casi" +
+        (DATI.numero_test ? " (" + DATI.numero_test + " test automatici in tutto)." : ".") })));
+
+    s.appendChild(el("div", { classe: "card" },
+      el("h3", { testo: "Pesi e soglie" }),
+      tabellaScorrevole("Pesi delle aree", el("table", null,
+        el("thead", null, el("tr", null, el("th", { scope: "col", testo: "Area" }), el("th", { scope: "col", classe: "num", testo: "Peso" }), el("th", { scope: "col", testo: "Cosa guarda" }))),
+        el("tbody", null, ORDINE_AREE.map(function (a) {
+          var descr = { identita: "nome, marchi imitati, spunta ufficiale", promesse: "guadagni, rendimenti, fretta, regali",
+            richieste: "seed phrase, codici, depositi, prelievi condizionati", tecnica: "Mini App, link, file",
+            reputazione: "etichette Telegram, CONSOB, segnalazioni, recensioni", trasparenza: "sito, termini, chi gestisce" }[a];
+          return el("tr", null, el("td", { classe: "breve", testo: NOMI_AREE[a] }), el("td", { classe: "num mono", testo: "×" + PESI[a] }), el("td", { classe: "lungo", testo: descr }));
+        })))),
+      el("ul", { classe: "pulito" },
+        el("li", { testo: "Media delle aree = media pesata del rischio delle 6 aree (0-100)." }),
+        el("li", { testo: "Il rischio complessivo mostrato cade sempre nella zona del colore: una linea rossa provata vale 100 (come un'espulsione diretta), le segnalazioni concordi almeno " + (SOGLIE.giallo + 1) + ", una regola di prudenza che impedisce il verde almeno " + (SOGLIE.verde + 1) + ". Negli altri casi coincide con la media." }),
+        el("li", { testo: "Verde fino a " + SOGLIE.verde + ", giallo fino a " + SOGLIE.giallo + ", rosso oltre." }),
+        el("li", { testo: "Una linea rossa supportata da prova diretta determina sempre l'esito rosso, con certezza alta." }),
+        el("li", { testo: "Segnalazioni provenienti da almeno due siti distinti determinano l'esito rosso (salvo bot ufficiale verificato)." }),
+        el("li", { testo: "L'esito verde è escluso con certezza bassa e quando un'area raggiunge " + SOGLIE.areaPiena + " o più: un pericolo grave non viene diluito nella media." }))));
+
+    s.appendChild(el("div", { classe: "card" },
+      el("h3", { testo: "Certezza della valutazione" }),
+      el("p", { testo: "Ogni esito è accompagnato da un indice di certezza, che ne esprime la solidità." }),
+      el("ul", { classe: "pulito" },
+        el("li", null, el("strong", { testo: "Alta: " }), "una linea rossa provata, oppure un'analisi completa con più fonti indipendenti, materiale analizzato e controlli tecnici."),
+        el("li", null, el("strong", { testo: "Media: " }), "almeno una fonte. Nell'autovalutazione richiede materiale autentico analizzato dallo strumento (screenshot o testo), la consultazione delle sezioni prelievo/pagamenti e nessun \"Non so\" sulle richieste. È il livello massimo raggiungibile in autovalutazione."),
+        el("li", null, el("strong", { testo: "Bassa: " }), "solo dichiarazioni, senza materiale analizzato. Con certezza bassa l'esito verde non è possibile.")),
+      el("p", { classe: "muted", testo: "Nell'autovalutazione lo strumento non si basa soltanto sulle risposte: analizza autonomamente il nome, gli screenshot o il testo e il link. Se un controllo contraddice una risposta, prevale il controllo e il report ne dà evidenza." })));
+
+    s.appendChild(el("div", { classe: "card" },
+      el("h3", { testo: "Perché un'area al massimo esclude il verde" }),
+      el("p", { testo: "Nelle prove, un servizio che consentiva il prelievo solo dopo un deposito o dopo aver invitato altre persone otteneva un esito verde, con rischio 29/100. Il calcolo era corretto, ma un pericolo gravissimo veniva diluito nella media." }),
+      el("p", { testo: "Ne sono derivate due correzioni: la nuova linea rossa \"prelievo condizionato\" e la regola per cui un'area al rischio massimo esclude il verde. Il caso è diventato un test automatico: un'eventuale regressione verrebbe rilevata immediatamente." })));
+
+    var gruppi = {};
+    DATI.catalogo.forEach(function (c) { (gruppi[c.area] = gruppi[c.area] || []).push(c); });
+    s.appendChild(el("div", { classe: "card" },
+      el("h3", { testo: "Il catalogo dei segnali (" + DATI.catalogo.length + ")" }),
+      ORDINE_AREE.map(function (a) {
+        return el("details", { classe: "area-dett" }, el("summary", { testo: NOMI_AREE[a] + " (" + gruppi[a].length + ")" }),
+          tabellaScorrevole("Segnali dell'area " + NOMI_AREE[a], el("table", null,
+            el("thead", null, el("tr", null, el("th", { scope: "col", testo: "Segnale" }), el("th", { scope: "col", classe: "num", testo: "Punti" }))),
+            el("tbody", null, gruppi[a].map(function (c) {
+              return el("tr", null,
+                el("td", { classe: "lungo" }, c.descrizione, c.linea_rossa ? el("span", { classe: "etichetta-rossa", testo: "⛔ linea rossa" }) : null),
+                el("td", { classe: "num mono", testo: (c.punti > 0 ? "+" : "") + c.punti }));
+            })))));
+      })));
+
+    s.appendChild(el("div", { classe: "card", id: "privacy" }, el("h3", { testo: "Privacy e dati" }), modello("t-privacy"),
+      el("p", { classe: "piccolo muted", testo: "Garanzia tecnica: la pagina include una regola di sicurezza (Content-Security-Policy) che blocca le connessioni verso qualsiasi indirizzo diverso da quello della libreria di lettura. Neppure verso quell'indirizzo il codice invia dati: lo utilizza esclusivamente per scaricare la libreria, configurata per non salvare nulla sul dispositivo." })));
+    s.lastChild.appendChild(el("p", { classe: "piccolo muted", testo: "Se consulti questa pagina online, il servizio che la ospita (GitHub Pages) riceve, come qualsiasi sito web, i dati tecnici della connessione, tra cui l'indirizzo IP. Ciò che scrivi o carichi nella pagina non viene trasmesso. Per escludere anche questo passaggio puoi scaricare il file e aprirlo dal tuo dispositivo." }));
+    s.appendChild(el("div", { classe: "card" }, el("h3", { testo: "AI e trasparenza" }), modello("t-ai")));
+    s.appendChild(el("div", { classe: "card" }, el("h3", { testo: "Avvertenze e natura dell'esito" }), modello("t-premessa")));
+    s.appendChild(el("p", { classe: "piccolo muted", testo: "Pagina generata il " + String(DATI.generato).slice(0, 10) + "." }));
+  }
+
+  /* ---------- Prova tu: lettura screenshot ---------- */
+  var _tesseract = null;
+  function leggiScreenshot(file) {
+    if (!file || !/^image\//.test(file.type || "")) return Promise.reject(new Error("Il file \"" + (file && file.name) + "\" non è un'immagine. Carica uno screenshot (PNG o JPG) oppure incolla il testo."));
+    if (!_tesseract) _tesseract = new Promise(function (ok, ko) { var s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"; s.onload = ok; s.onerror = function () { _tesseract = null; ko(new Error("Impossibile scaricare la libreria di lettura (verifica la connessione a internet). In alternativa, incolla il testo dello screenshot nel riquadro sottostante.")); }; document.head.appendChild(s); });
+    var limite = new Promise(function (ok, ko) { setTimeout(function () { ko(new Error("La lettura richiede più tempo del previsto. Riprova oppure incolla il testo nel riquadro sottostante.")); }, 120000); });
+    return Promise.race([_tesseract.then(function () { return window.Tesseract.recognize(file, "ita+eng", { cacheMethod: "none" }); }), limite]).then(function (r) { return (r && r.data && r.data.text) || ""; });
+  }
+
+  /* ---------- Prova tu: percorso a passi ---------- */
+  var stato;
+  function nuovoStato() {
+    return { passo: 0, username: "", nomeVisualizzato: "", linkMiniApp: "", screenshot: [], incollato: "",
+      risposte: {}, sezioniViste: null, linkSegnalazioni: "", linkPositivi: "", messaggio: "" };
+  }
+  var PASSI_AREE = Q.aree.length;
+  var ULTIMO = 3 + PASSI_AREE; // 0 premessa, 1 bot, 2 materiale, 3..(2+n) aree, 3+n copertura, poi report
+
+  function righe(t) { return String(t || "").split(/\s+/).map(function (x) { return x.trim(); }).filter(Boolean); }
+
+  function input() {
+    var testi = stato.screenshot.filter(function (s) { return s.testo; }).map(function (s) { return { origine: "screenshot", testo: s.testo }; });
+    if (stato.incollato.trim()) testi.push({ origine: "incollato", testo: stato.incollato });
+    return { username: stato.username, nomeVisualizzato: stato.nomeVisualizzato, risposte: stato.risposte,
+      sezioniViste: stato.sezioniViste, testi: testi, linkMiniApp: stato.linkMiniApp.trim(),
+      linkSegnalazioni: righe(stato.linkSegnalazioni), linkPositivi: righe(stato.linkPositivi) };
+  }
+
+  function campo(etichetta, chiave, aiuto, multi) {
+    var id = "c_" + chiave;
+    var controllo = multi ? el("textarea", { id: id, spellcheck: "false" }) : el("input", { id: id, type: "text", autocomplete: "off", spellcheck: "false" });
+    controllo.value = stato[chiave];
+    controllo.addEventListener("input", function () { stato[chiave] = controllo.value; });
+    if (aiuto) controllo.setAttribute("aria-describedby", id + "_aiuto");
+    return el("div", null, el("label", { classe: "campo", "for": id, testo: etichetta }), controllo,
+      aiuto ? el("div", { classe: "piccolo muted campo-aiuto", id: id + "_aiuto", testo: aiuto }) : null);
+  }
+
+  /* Risposte come pulsanti grandi: ogni pulsante è un'etichetta che contiene un vero radio (tastiera e lettori di schermo). */
+  function scelta(nome, valoreAttuale, opzioni, alCambio) {
+    return el("div", { classe: "scelte", role: "radiogroup" }, opzioni.map(function (o) {
+      var r = el("input", { type: "radio", name: nome, value: o[0] });
+      r.checked = valoreAttuale === o[0];
+      r.addEventListener("change", function () { alCambio(o[0]); });
+      return el("label", { classe: "pillola" }, r, el("span", { testo: o[1] }));
+    }));
+  }
+
+  function nomePasso(p) {
+    if (p === 0) return "Prima di iniziare";
+    if (p === 1) return "Identificazione del bot";
+    if (p === 2) return "Materiale del bot";
+    if (p < 3 + PASSI_AREE) return Q.aree[p - 3].titolo;
+    return "Controlli finali";
+  }
+
+  function passoPremessa(corpo) {
+    function beneficio(titolo, testo) { return el("li", null, el("span", null, el("strong", { testo: titolo }), testo)); }
+    corpo.appendChild(el("h2", { testo: "Verifica l'affidabilità di un bot o di una Mini App Telegram" }));
+    corpo.appendChild(el("p", { classe: "muted", testo: "Un percorso guidato che si conclude con un semaforo di affidabilità e con le indicazioni su cosa fare." }));
+    corpo.appendChild(el("ul", { classe: "benefici" },
+      beneficio("Pochi minuti: ", "indichi il bot, aggiungi i messaggi ricevuti e rispondi ad alcune domande."),
+      beneficio("Controlli automatici ", "su nome, testo e link, con i criteri delle analisi complete."),
+      beneficio("Tutto sul tuo dispositivo: ", "risposte, testi e screenshot non vengono inviati né salvati.")));
+    corpo.appendChild(el("div", { classe: "avvertenze" }, modello("t-premessa")));
+    corpo.appendChild(el("details", { classe: "aiuto" }, el("summary", { testo: "Privacy e dati in breve" }), modello("t-privacy")));
+  }
+
+  function passoBot(corpo) {
+    corpo.appendChild(campo("Username del bot (obbligatorio)", "username", "Esempio: @NomeDelBot, il link t.me/NomeDelBot o un link copiato da Telegram Web. È indicato nel profilo del bot."));
+    corpo.appendChild(campo("Nome visualizzato (facoltativo)", "nomeVisualizzato", "Il nome riportato in cima alla chat, trascritto esattamente: consente di individuare caratteri che imitano lettere comuni."));
+    corpo.appendChild(campo("Link della Mini App (facoltativo)", "linkMiniApp", "Se il bot apre una pagina web, incolla qui il relativo indirizzo. La pagina non viene aperta: ne viene analizzato soltanto il dominio."));
+  }
+
+  function elencoScreenshot(lista) {
+    svuota(lista);
+    stato.screenshot.forEach(function (s) {
+      var etichetta, dettaglio = null;
+      if (s.errore) {
+        etichetta = el("span", { classe: "stato errore" }, el("span", { "aria-hidden": "true", testo: "!" }), "errore");
+        dettaglio = s.errore;
+      } else if (s.testo === null) {
+        etichetta = el("span", { classe: "stato" }, el("span", { classe: "rotella", "aria-hidden": "true" }), "lettura in corso");
+      } else {
+        var letto = s.testo.trim();
+        etichetta = el("span", { classe: "stato" }, el("span", { "aria-hidden": "true", testo: "✓" }), "letto");
+        dettaglio = letto ? letto.length + " caratteri: «" + letto.slice(0, 140) + (letto.length > 140 ? "…" : "") + "»" : "nessun testo riconosciuto";
+      }
+      lista.appendChild(el("li", { classe: "file-voce" },
+        el("div", { classe: "file-testa" }, el("span", { classe: "file-nome", testo: s.nome }), etichetta),
+        dettaglio ? el("p", { classe: "file-dettaglio", testo: dettaglio }) : null));
+    });
+  }
+
+  function passoMateriale(corpo) {
+    corpo.appendChild(el("p", { testo: "Questo passaggio determina la solidità della valutazione: lo strumento analizza il materiale e individua autonomamente le formulazioni a rischio. In assenza di materiale la certezza resta bassa e l'esito verde non è possibile." }));
+    corpo.appendChild(el("div", { classe: "messaggio info" }, el("strong", { testo: "Privacy: " }),
+      "le immagini restano sul tuo dispositivo. Per analizzarle, il browser scarica una volta la libreria open source di lettura da cdn.jsdelivr.net (circa 10-15 MB tra programma e dati linguistici; nulla viene salvato sul dispositivo e il servizio riceve solo il tuo indirizzo IP, non l'immagine). Prima del caricamento, oscura numero di telefono, nome, saldo e indirizzi di wallet."));
+    var lista = el("ul", { classe: "elenco-file", "aria-label": "Screenshot caricati" });
+    var file = el("input", { type: "file", id: "c_file", accept: "image/*", multiple: true, "aria-describedby": "c_file_avviso" });
+    file.addEventListener("change", function () {
+      Array.prototype.forEach.call(file.files, function (f) {
+        var voce = { nome: f.name, testo: null, errore: "" };
+        stato.screenshot.push(voce);
+        elencoScreenshot(lista);
+        leggiScreenshot(f).then(function (t) { voce.testo = t; }, function (e) { voce.errore = e.message; voce.testo = ""; })
+          .then(function () { elencoScreenshot(lista); });
+      });
+      file.value = "";
+    });
+    corpo.appendChild(el("label", { classe: "campo", "for": "c_file", testo: "Screenshot (uno o più)" }));
+    corpo.appendChild(el("p", { classe: "piccolo muted avviso-rete", id: "c_file_avviso", testo: "Su rete mobile la prima lettura può richiedere circa un minuto: in alternativa incolla il testo nel riquadro più sotto." }));
+    corpo.appendChild(file);
+    corpo.appendChild(lista);
+    elencoScreenshot(lista);
+    corpo.appendChild(campo("In alternativa, incolla il testo dei messaggi o della descrizione", "incollato", "Funziona anche offline. Puoi incollare più messaggi in sequenza.", true));
+  }
+
+  function passoArea(corpo, area) {
+    corpo.appendChild(el("p", { classe: "muted", testo: "In caso di dubbio rispondi \"Non so\": la voce verrà registrata tra gli elementi non verificati, senza incidere sul livello di rischio." }));
+    area.domande.forEach(function (d) {
+      corpo.appendChild(el("fieldset", { classe: "domanda" }, el("legend", { testo: d.testo }),
+        scelta(d.id, stato.risposte[d.codice], [["si", "Sì"], ["no", "No"], ["nonso", "Non so"]], function (v) { stato.risposte[d.codice] = v; }),
+        el("details", { classe: "aiuto" }, el("summary", { testo: "Dove verificarlo" }), el("p", { testo: d.aiuto }))));
+    });
+  }
+
+  function passoCopertura(corpo) {
+    corpo.appendChild(el("fieldset", { classe: "domanda" }, el("legend", { testo: Q.copertura.testo }),
+      scelta(Q.copertura.id, stato.sezioniViste === null ? null : stato.sezioniViste ? "si" : "no", [["si", "Sì"], ["no", "No"]],
+        function (v) { stato.sezioniViste = v === "si"; }),
+      el("details", { classe: "aiuto" }, el("summary", { testo: "Perché è importante" }), el("p", { testo: Q.copertura.aiuto }))));
+    corpo.appendChild(campo("Link a segnalazioni trovate (facoltativo, uno per riga)", "linkSegnalazioni", "Articoli, forum o avvisi che segnalano problemi con questo bot. Segnalazioni da due siti distinti determinano l'esito rosso.", true));
+    corpo.appendChild(campo("Link a fonti positive indipendenti (facoltativo, uno per riga)", "linkPositivi", "Ad esempio il sito ufficiale del servizio che cita il bot, oppure un articolo di una testata autorevole.", true));
+    corpo.appendChild(el("p", { classe: "piccolo muted", testo: "I link servono solo a conteggiare fonti e siti: non vengono aperti e nel report compaiono disattivati." }));
+  }
+
+  function disegnaProva() {
+    var sezione = svuota(document.getElementById("prova"));
+    var p = stato.passo;
+    if (p > ULTIMO) { disegnaRisultato(sezione); return aggiornaBarra(); }
+    var card = el("div", { classe: "card" });
+    card.appendChild(el("div", { classe: "passo-testa" },
+      el("div", { classe: "passo-conta", testo: p === 0 ? nomePasso(p) : "Passo " + p + " di " + ULTIMO }),
+      p > 0 ? el("h2", { classe: "passo-nome", testo: nomePasso(p) }) : null));
+    card.appendChild(el("div", { classe: "avanzamento", "aria-hidden": "true" }, el("div", { style: "width:" + Math.round(p / ULTIMO * 100) + "%" })));
+    var corpo = el("div");
+    if (p === 0) passoPremessa(corpo);
+    else if (p === 1) passoBot(corpo);
+    else if (p === 2) passoMateriale(corpo);
+    else if (p < 3 + PASSI_AREE) passoArea(corpo, Q.aree[p - 3]);
+    else passoCopertura(corpo);
+    card.appendChild(corpo);
+    var avviso = stato.messaggio ? el("div", { classe: "messaggio errore", role: "alert", testo: stato.messaggio }) : null;
+    if (avviso) card.appendChild(avviso);
+    card.appendChild(el("div", { classe: "azioni azioni-fisse" },
+      p > 0 ? el("button", { type: "button", classe: "bottone", testo: "← Indietro", onclick: function () { stato.messaggio = ""; stato.passo--; disegnaProva(); window.scrollTo(0, 0); } }) : null,
+      el("button", { type: "button", classe: "bottone primario", testo: p === 0 ? "Ho letto, avvia la verifica" : p === ULTIMO ? "Calcola il semaforo" : "Avanti →", onclick: avanti })));
+    sezione.appendChild(card);
+    aggiornaBarra();
+    /* con la barra fissa il pulsante è sempre in vista: il messaggio deve esserlo altrettanto */
+    if (avviso && avviso.scrollIntoView) avviso.scrollIntoView({ block: "center" });
+  }
+
+  function avanti() {
+    stato.messaggio = "";
+    if (stato.passo === 1 && !normalizzaUsername(stato.username)) {
+      stato.messaggio = eLinkInvito(stato.username)
+        ? "Questo è un link d'invito a un gruppo o a un canale, non a un bot. Apri il bot su Telegram e copia il suo @username dal profilo."
+        : !stato.username.trim() ? "Inserisci lo username del bot per proseguire (ad esempio @NomeDelBot)."
+        : "Il link inserito non indica un bot. Usa lo username (@NomeDelBot) oppure il link t.me/NomeDelBot.";
+      return disegnaProva();
+    }
+    if (stato.passo === 2 && stato.screenshot.some(function (s) { return s.testo === null; })) { stato.messaggio = "Attendi il completamento dell'analisi degli screenshot."; return disegnaProva(); }
+    if (stato.passo >= 3 && stato.passo < 3 + PASSI_AREE &&
+        Q.aree[stato.passo - 3].domande.some(function (d) { return !stato.risposte[d.codice]; })) {
+      stato.messaggio = "Per proseguire rispondi a tutte le domande (è ammessa anche la risposta \"Non so\")."; return disegnaProva();
+    }
+    if (stato.passo === ULTIMO && stato.sezioniViste === null) { stato.messaggio = "Indica se hai consultato le sezioni prelievo / pagamenti / inviti."; return disegnaProva(); }
+    stato.passo++;
+    disegnaProva();
+    window.scrollTo(0, 0);
+  }
+
+  function disegnaRisultato(sezione) {
+    var r;
+    try { r = costruisciVerdetto(input(), RISORSE); }
+    catch (e) {
+      if (/^risposte mancanti/.test(e.message)) { stato.passo = 3; stato.messaggio = "Alcune risposte risultano mancanti: completa le domande (è ammessa anche la risposta \"Non so\")."; }
+      else { stato.passo = 1; stato.messaggio = e.message === "username mancante" ? "Username del bot mancante." : "Si è verificato un errore: " + e.message; }
+      return disegnaProva();
+    }
+    var area = el("div");
+    sezione.appendChild(area);
+    mostraReport(r.verdetto, area, { contrasti: r.contrasti, basataSu: r.basataSu, avvisi: r.avvisi,
+      extraAzioni: [el("button", { type: "button", classe: "bottone", testo: "← Modifica le risposte", onclick: function () { stato.passo = ULTIMO; disegnaProva(); window.scrollTo(0, 0); } }),
+        el("button", { type: "button", classe: "bottone", testo: "Verifica un altro bot", onclick: function () { stato = nuovoStato(); stato.passo = 1; disegnaProva(); window.scrollTo(0, 0); } })] });
+  }
+
+  stato = nuovoStato();
+  disegnaProva();
+  mostraCome();
+})();
+</script>
+</body>
+</html>

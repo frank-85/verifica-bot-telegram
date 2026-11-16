@@ -1,0 +1,100 @@
+[
+ {
+  "codice": "richiesta_seed_o_codici",
+  "area": "richieste",
+  "flags": "u",
+  "descrizione": "Chiede seed phrase o parole di recupero",
+  "pattern": "\\b(inserisci|inserire|inserendo|invia|inviaci|inviare|digita|incolla|importa|enter|send|type|paste|import|provide|submit|input)\\b[^.!?\\n]{0,40}(\\b(seed|recovery|secret|mnemonic)[ -]?(phrase|words?)\\b|\\b(frase|parole) di recupero\\b|\\b(12|24)[ -]?(word|parole)\\b)"
+ },
+ {
+  "codice": "richiesta_seed_o_codici",
+  "area": "richieste",
+  "flags": "u",
+  "descrizione": "Chiede la chiave privata o la password",
+  "pattern": "\\b(inserisci|inserire|inserendo|invia|inviaci|inviare|digita|incolla|importa|enter|send|type|paste|import|provide|submit|input)\\b[^.!?\\n]{0,30}\\b(private key|chiave privata|password)\\b"
+ },
+ {
+  "codice": "richiesta_seed_o_codici",
+  "area": "richieste",
+  "flags": "u",
+  "descrizione": "Chiede un codice di accesso",
+  "pattern": "\\b(inserisci|inserire|inserendo|invia|inviaci|inviare|digita|incolla|importa|enter|send|type|paste|import|provide|submit|input)\\b[^.!?\\n]{0,30}(\\b(codice|code)\\b[^.!?\\n]{0,30}\\b(telegram|accesso|login|sms|2fa)\\b|\\b(telegram|login|sms|2fa)\\b[^.!?\\n]{0,15}\\b(codice|code)\\b)"
+ },
+ {
+  "codice": "prelievo_condizionato",
+  "area": "richieste",
+  "flags": "u",
+  "descrizione": "Prelievo solo dopo deposito, pagamento o inviti",
+  "pattern": "\\bwithdraw\\w*[^.\\n]{0,60}\\bonly\\b[^.\\n]{0,60}(deposit|boost|invit|fee|pay)|\\bprelie\\w*[^.\\n]{0,60}\\bsolo\\b[^.\\n]{0,60}(deposit|boost|invit|commission|pagament|acquist)"
+ },
+ {
+  "codice": "prelievo_condizionato",
+  "area": "richieste",
+  "flags": "u",
+  "descrizione": "Per prelevare devi prima pagare",
+  "pattern": "\\b(to|per) (withdraw|prelevare)\\b[^.\\n]{0,40}\\b(must|need|devi|occorre|bisogna)\\b[^.\\n]{0,40}(pay|deposit|fee|paga|commission|invit)"
+ },
+ {
+  "codice": "prelievo_condizionato",
+  "area": "richieste",
+  "flags": "u",
+  "descrizione": "Deposita o paga per sbloccare il prelievo",
+  "pattern": "\\b(deposit\\w*|pay|paga\\w*)\\b[^.\\n]{0,30}\\b(to|per) (withdraw|unlock|sbloccare|prelevare)\\b"
+ },
+ {
+  "codice": "rendimento_garantito",
+  "area": "promesse",
+  "flags": "u",
+  "descrizione": "Rendimento garantito o fisso",
+  "pattern": "\\b(rendiment\\w*|profit\\w*|returns?|guadagn\\w*|income|yield)\\b[^.!?\\n]{0,20}\\b(guarantee\\w*|garantit\\w*)\\b|\\b(guarantee\\w*|garantit\\w*)\\b[^.!?\\n]{0,30}\\b(profit\\w*|returns?|rendiment\\w*|income|guadagn\\w*|yield)\\b|\\b(profit\\w*|returns?|rendiment\\w*|interess\\w*|yield|apy|roi)\\b[^.!?\\n]{0,25}\\d+([.,]\\d+)? ?%|\\d+([.,]\\d+)? ?% ?(daily|al giorno|per day|giornalier\\w*|a settimana|weekly|al mese|monthly)\\b[^.!?\\n]{0,25}\\b(profit\\w*|returns?|rendiment\\w*|guadagn\\w*|yield|interess\\w*)"
+ },
+ {
+  "codice": "promessa_guadagno",
+  "area": "promesse",
+  "flags": "u",
+  "descrizione": "Promette guadagni",
+  "pattern": "\\b(earn\\w*|guadagn\\w*)\\b[^.\\n]{0,30}\\b(money|soldi|cash|profit\\w*|usdt|ton|crypto|euro|dollar\\w*|real)\\b"
+ },
+ {
+  "codice": "richiesta_wallet_connect",
+  "area": "richieste",
+  "flags": "u",
+  "descrizione": "Chiede di collegare un wallet",
+  "pattern": "\\b(connect|link|collega)\\w*\\b[^.\\n]{0,20}\\b(wallet|portafoglio|tonkeeper|metamask)\\b"
+ },
+ {
+  "codice": "bonus_regalo_esca",
+  "area": "promesse",
+  "flags": "u",
+  "descrizione": "Regali, airdrop o bonus",
+  "pattern": "\\b(airdrop|claim|bonus|regalo|omaggio|free (ton|usdt|crypto|gift|tokens?))\\b"
+ },
+ {
+  "codice": "richiesta_comando_pc",
+  "area": "richieste",
+  "flags": "u",
+  "descrizione": "Chiede di eseguire un comando sul computer",
+  "pattern": "\\bwin ?\\+ ?r\\b|\\bmshta\\b|\\bcurl\\b[^|\\n]{0,80}\\| ?(ba)?sh\\b|\\bpowershell\\b[^.!?\\n]{0,20}(-enc\\w*|-e |\\biex\\b|invoke-expression|downloadstring)|\\b(paste|incolla|copy|copia)\\b[^.!?\\n]{0,40}\\b(powershell|cmd|terminal|terminale|prompt dei comandi|esegui|run)\\b"
+ },
+ {
+  "codice": "urgenza_pressione",
+  "area": "promesse",
+  "flags": "u",
+  "descrizione": "Mette fretta",
+  "pattern": "\\b(offer|offerta)\\b[^.\\n]{0,30}\\b(ends|expires|scade|termina)\\b|\\b(ultimi|last|only \\d+|solo \\d+) (posti|spots|places|seats)\\b|\\b(affrettati|hurry|act now|agisci ora)\\b|\\b(ends|expires|scade) (in|tra) \\d+ ?(min\\w*|ore|hours?)\\b"
+ },
+ {
+  "codice": "referral_piramidale",
+  "area": "promesse",
+  "flags": "u",
+  "descrizione": "Guadagni legati a portare altre persone",
+  "pattern": "\\b(invite|invita|bring|porta)\\b[^.\\n]{0,20}\\b(friends|amici|people|persone|users|utenti)\\b|\\breferral (bonus|reward|link|program\\w*)\\b"
+ },
+ {
+  "codice": "richiesta_deposito",
+  "area": "richieste",
+  "flags": "u",
+  "descrizione": "Chiede un deposito o un pagamento",
+  "pattern": "\\b(make|effettua|fai) (a|un) (deposit|deposito)\\b|\\b(deposit|deposita|top[ -]?up|ricarica)\\b ?\\d+|\\b(send|invia)\\b[^.\\n]{0,20}\\d+[^.\\n]{0,5}(ton|usdt|btc|eth|euro|€|\\$)"
+ }
+]

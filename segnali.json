@@ -1,0 +1,44 @@
+[
+  {"codice": "nome_imita_marchio", "area": "identita", "punti": 60, "linea_rossa": false, "descrizione": "Il nome imita un marchio noto (lettere aggiunte, scambiate o simili)"},
+  {"codice": "nome_parole_esca", "area": "identita", "punti": 20, "linea_rossa": false, "descrizione": "Il nome contiene parole esca (official, support, airdrop, claim, bonus...)"},
+  {"codice": "nome_incoerente_servizio", "area": "identita", "punti": 15, "linea_rossa": false, "descrizione": "Il nome non c'entra con il servizio offerto"},
+  {"codice": "imitazione_brand_finanza", "area": "identita", "punti": 100, "linea_rossa": true, "descrizione": "Imita un marchio noto e chiede soldi o wallet, oppure offre servizi finanziari o di investimento"},
+  {"codice": "bot_ufficiale_verificato", "area": "identita", "punti": -50, "linea_rossa": false, "descrizione": "Bot ufficiale confermato (spunta di Telegram o elenco ufficiale del marchio)"},
+
+  {"codice": "rendimento_garantito", "area": "promesse", "punti": 80, "linea_rossa": true, "descrizione": "Promette rendimenti garantiti o fissi su investimenti"},
+  {"codice": "promessa_guadagno", "area": "promesse", "punti": 40, "linea_rossa": false, "descrizione": "Promette guadagni o profitti"},
+  {"codice": "urgenza_pressione", "area": "promesse", "punti": 20, "linea_rossa": false, "descrizione": "Mette fretta (offerta a tempo, posti limitati, agisci ora)"},
+  {"codice": "referral_piramidale", "area": "promesse", "punti": 40, "linea_rossa": false, "descrizione": "Guadagni legati al portare altre persone"},
+  {"codice": "bonus_regalo_esca", "area": "promesse", "punti": 30, "linea_rossa": false, "descrizione": "Regali, airdrop o bonus come esca"},
+
+  {"codice": "richiesta_seed_o_codici", "area": "richieste", "punti": 100, "linea_rossa": true, "descrizione": "Chiede seed phrase, chiave privata, codice di accesso Telegram o password"},
+  {"codice": "richiesta_comando_pc", "area": "richieste", "punti": 100, "linea_rossa": true, "descrizione": "Chiede di incollare o eseguire un comando sul computer"},
+  {"codice": "richiesta_wallet_connect", "area": "richieste", "punti": 40, "linea_rossa": false, "descrizione": "Chiede di collegare un portafoglio cripto"},
+  {"codice": "richiesta_deposito", "area": "richieste", "punti": 50, "linea_rossa": false, "descrizione": "Chiede un deposito o un pagamento"},
+  {"codice": "richiesta_dati_personali", "area": "richieste", "punti": 25, "linea_rossa": false, "descrizione": "Chiede dati personali o documenti"},
+  {"codice": "richiesta_numero_contatti", "area": "richieste", "punti": 20, "linea_rossa": false, "descrizione": "Chiede numero di telefono o contatti senza motivo"},
+  {"codice": "prelievo_condizionato", "area": "richieste", "punti": 100, "linea_rossa": true, "descrizione": "Per prelevare chiede prima un deposito, un acquisto, una commissione o di portare altre persone"},
+
+  {"codice": "dominio_giovane", "area": "tecnica", "punti": 30, "linea_rossa": false, "descrizione": "Dominio collegato registrato da meno di 90 giorni"},
+  {"codice": "dominio_con_marchio", "area": "tecnica", "punti": 40, "linea_rossa": false, "descrizione": "Dominio collegato che contiene un marchio noto senza esserne il sito ufficiale"},
+  {"codice": "pagina_seed_phrase", "area": "tecnica", "punti": 100, "linea_rossa": true, "descrizione": "La pagina o Mini App raccoglie seed phrase, chiavi o codici di accesso"},
+  {"codice": "pagina_clickfix", "area": "tecnica", "punti": 100, "linea_rossa": true, "descrizione": "La pagina copia negli appunti un comando da incollare sul computer"},
+  {"codice": "pagina_offuscata", "area": "tecnica", "punti": 30, "linea_rossa": false, "descrizione": "Codice volutamente nascosto o offuscato"},
+  {"codice": "pagina_script_esterni", "area": "tecnica", "punti": 10, "linea_rossa": false, "descrizione": "Carica script da domini diversi"},
+  {"codice": "pagina_invio_dati_esterno", "area": "tecnica", "punti": 20, "linea_rossa": false, "descrizione": "Invia dati verso domini diversi da quello della pagina"},
+  {"codice": "wallet_lib_presente", "area": "tecnica", "punti": 0, "linea_rossa": false, "descrizione": "Usa una libreria di collegamento wallet (neutro da solo)"},
+  {"codice": "file_pericoloso_estensione", "area": "tecnica", "punti": 40, "linea_rossa": false, "descrizione": "File eseguibile, doppia estensione o archivio con eseguibili"},
+  {"codice": "file_malevolo_defender", "area": "tecnica", "punti": 100, "linea_rossa": true, "descrizione": "Microsoft Defender segnala il file come minaccia"},
+
+  {"codice": "etichetta_scam_telegram", "area": "reputazione", "punti": 100, "linea_rossa": true, "descrizione": "Telegram mostra l'etichetta SCAM o FAKE"},
+  {"codice": "consob_oscurato", "area": "reputazione", "punti": 100, "linea_rossa": true, "descrizione": "Dominio negli elenchi CONSOB dei siti oscurati o negli avvisi CONSOB/Banca d'Italia"},
+  {"codice": "segnalazione_truffa", "area": "reputazione", "punti": 35, "linea_rossa": false, "descrizione": "Segnalazione di truffa da una fonte terza"},
+  {"codice": "recensioni_sospette", "area": "reputazione", "punti": 15, "linea_rossa": false, "descrizione": "Recensioni positive troppo uniformi o tutte recenti"},
+  {"codice": "nessuna_storia_online", "area": "reputazione", "punti": 20, "linea_rossa": false, "descrizione": "Nessuna traccia online del bot o del servizio"},
+  {"codice": "recensioni_positive_indipendenti", "area": "reputazione", "punti": -20, "linea_rossa": false, "descrizione": "Recensioni positive da fonti indipendenti e credibili"},
+
+  {"codice": "nessun_sito", "area": "trasparenza", "punti": 20, "linea_rossa": false, "descrizione": "Nessun sito del servizio"},
+  {"codice": "nessun_termini_privacy", "area": "trasparenza", "punti": 20, "linea_rossa": false, "descrizione": "Nessun termine di servizio o informativa privacy"},
+  {"codice": "gestore_non_dichiarato", "area": "trasparenza", "punti": 20, "linea_rossa": false, "descrizione": "Non dichiara chi gestisce il servizio"},
+  {"codice": "gestore_dichiarato_verificabile", "area": "trasparenza", "punti": -20, "linea_rossa": false, "descrizione": "Dichiara un gestore (società) verificabile"}
+]
