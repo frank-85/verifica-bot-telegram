@@ -4,7 +4,7 @@
 
 🇮🇹 Italiano · [🇬🇧 English](README.en.md)
 
-[![Licenza MIT](https://img.shields.io/badge/licenza-MIT-0f766e)](LICENSE) ![Test](https://img.shields.io/badge/test-505%20Python%20%2B%20139%20JS-15803d) ![App installabile](https://img.shields.io/badge/app-installabile%20%C2%B7%20offline-1d4ed8) ![Dati raccolti](https://img.shields.io/badge/dati%20raccolti-zero-14213d)
+[![Licenza MIT](https://img.shields.io/badge/licenza-MIT-0f766e)](LICENSE) ![Test](https://img.shields.io/badge/test-507%20Python%20%2B%20139%20JS-15803d) ![App installabile](https://img.shields.io/badge/app-installabile%20%C2%B7%20offline-1d4ed8) ![Dati raccolti](https://img.shields.io/badge/dati%20raccolti-zero-14213d)
 
 [![Verifica Bot: tre esiti di esempio, verde, giallo e rosso, su telefono](docs/immagini/vetrina.png)](https://frank-85.github.io/verifica-bot-telegram/)
 
@@ -93,7 +93,7 @@ Ogni esito è accompagnato dalla **certezza della valutazione**, che dice quanto
 | `costruisci_icone.py` | Genera le icone da un unico disegno (SVG e PNG coerenti). |
 | `strumenti/vetrina/`, `docs/immagini/` | Lo script che fotografa l'app vera per le immagini di questo README, e le immagini. |
 | `verifica-bot/SKILL.md` | Le istruzioni per usare il motore con un assistente AI (Claude Code): l'assistente raccoglie le prove, il motore calcola l'esito. |
-| `tests/` | 505 test Python e 139 test JavaScript. |
+| `tests/` | 507 test Python e 139 test JavaScript. |
 
 Il motore esiste in due versioni, Python e JavaScript. Una serie di **test di parità** dà gli stessi casi a entrambe e verifica che producano lo stesso risultato: una correzione fatta da una parte sola fa fallire i test.
 
@@ -105,7 +105,7 @@ Servono Python (provato con 3.13), `pytest` e Node.js (provato con Node 22 e 24)
 
 ```
 python -m pytest -q
-python -I costruisci_app.py --numero-test 644
+python -I costruisci_app.py --numero-test 646
 ```
 
 Icone e immagini del README (servono Pillow e Microsoft Edge):

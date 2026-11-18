@@ -145,3 +145,23 @@ def test_gitignore_pubblica_icone_e_immagini():
     righe = (KIT / ".gitignore").read_text(encoding="utf-8").splitlines()
     assert "!icone/*.png" in righe and "!docs/immagini/*.png" in righe
     assert righe.index("!icone/*.png") > righe.index("*.png")  # l'eccezione deve venire dopo la regola
+
+
+# --- conferma dopo l'installazione (18/11/2026): niente dubbi su "l'ho installata davvero?" ---
+
+def _blocco_installa(generato):
+    return generato[generato.index("var appAperta"):generato.index('window.addEventListener("appinstalled"')]
+
+
+def test_installata_mostra_la_conferma(generato):
+    assert "Fatto: Verifica Bot è tra le app del dispositivo." in generato
+    assert "puoi aprirla dalla sua icona" in generato
+    assert 'aria-live="polite"' in generato[generato.index('id="installa"') - 80:generato.index('id="installa"') + 120]
+    blocco = _blocco_installa(generato)
+    assert 'scelta.outcome === "accepted"' in blocco and "installata()" in blocco
+
+
+def test_dentro_l_app_installata_nessun_invito(generato):
+    assert '"(display-mode: standalone)"' in generato and "navigator.standalone === true" in generato
+    blocco = _blocco_installa(generato)
+    assert "if (appAperta) return;" in blocco

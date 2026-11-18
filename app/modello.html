@@ -85,7 +85,9 @@ header.testata { background: var(--sfondo); border-bottom: 1px solid var(--bordo
 header.testata h1 { font-size: 1.375rem; font-weight: 800; letter-spacing: .01em; color: var(--firma); margin: 0; display: flex; align-items: center; gap: 10px; }
 .logo { flex: none; border-radius: 7px; }
 .installa { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 0; padding: 10px 12px; border: 1px solid var(--bordo); border-radius: 10px; background: var(--tenue); font-size: .9375rem; }
-.installa[hidden] { display: none; }
+.installa[hidden], .installa button[hidden] { display: none; }
+.installa.fatto { border-color: var(--primario); }
+.installa.fatto span { color: var(--testo); }
 .installa span { flex: 1 1 200px; color: var(--secondario); }
 header.testata p { color: var(--secondario); max-width: 640px; margin: 8px 0 0; font-size: .9375rem; }
 .tema { display: inline-flex; border: 1px solid var(--bordo); border-radius: 99px; background: var(--tenue); }
@@ -322,8 +324,8 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
       </div>
     </div>
     <p>Semaforo di affidabilità per bot e Mini App Telegram. Regole trasparenti, nessuna AI durante l'uso: l'analisi avviene sul tuo dispositivo.</p>
-    <div class="installa" id="installa" hidden>
-      <span>Usala come un'app: si apre a parte, con la sua icona, e funziona anche offline.</span>
+    <div class="installa" id="installa" hidden aria-live="polite">
+      <span id="installa-testo">Usala come un'app: si apre a parte, con la sua icona, e funziona anche offline.</span>
       <button type="button" class="bottone primario" id="installa-bottone">Installa l'app</button>
     </div>
     <nav class="schede" role="tablist" aria-label="Sezioni">
@@ -1033,18 +1035,34 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
     navigator.serviceWorker.register("sw.js").catch(function () { /* senza gestore l'app funziona comunque online */ });
   }
+  // aperta dall'icona (app installata): nessun invito a installarla
+  var appAperta = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
   var invitoInstalla = null, boxInstalla = document.getElementById("installa");
+  var testoInstalla = document.getElementById("installa-testo"), bottoneInstalla = document.getElementById("installa-bottone");
+  /* dopo l'installazione la scheda del browser resta aperta: si dice chiaramente che l'app ora è tra quelle del dispositivo */
+  function installata() {
+    invitoInstalla = null;
+    if (appAperta) return;
+    testoInstalla.textContent = "Fatto: Verifica Bot è tra le app del dispositivo. La prossima volta puoi aprirla dalla sua icona, oppure continuare qui.";
+    bottoneInstalla.hidden = true;
+    boxInstalla.classList.add("fatto");
+    boxInstalla.hidden = false;
+  }
   window.addEventListener("beforeinstallprompt", function (e) {
     e.preventDefault(); // il pulsante compare solo quando il browser offre davvero l'installazione
+    if (appAperta) return;
     invitoInstalla = e;
     boxInstalla.hidden = false;
   });
-  document.getElementById("installa-bottone").addEventListener("click", function () {
+  bottoneInstalla.addEventListener("click", function () {
     if (!invitoInstalla) return;
     invitoInstalla.prompt();
-    invitoInstalla.userChoice.then(function () { invitoInstalla = null; boxInstalla.hidden = true; });
+    invitoInstalla.userChoice.then(function (scelta) {
+      if (scelta.outcome === "accepted") installata();
+      else { invitoInstalla = null; boxInstalla.hidden = true; }
+    });
   });
-  window.addEventListener("appinstalled", function () { invitoInstalla = null; boxInstalla.hidden = true; });
+  window.addEventListener("appinstalled", installata);
 })();
 </script>
 </body>
