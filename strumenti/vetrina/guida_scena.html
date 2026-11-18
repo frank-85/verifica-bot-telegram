@@ -1,0 +1,50 @@
+<script>
+/* Porta l'app nello stato richiesto da ?s=verde|giallo|rosso|domande|pronto&t=chiaro|scuro */
+window.addEventListener("load", function () {
+  var q = new URLSearchParams(location.search), s = q.get("s") || "verde", tema = q.get("t") || "chiaro";
+  var SCENE = {
+    verde: { bot: "@EsempioMeteoBot", testo: "Benvenuto! Questo bot invia ogni mattina le previsioni del tempo per la tua città. Scrivi /citta per sceglierla e /stop per disattivare gli avvisi.", si: [] },
+    giallo: { bot: "@EsempioMissioniBot", testo: "Guadagna ogni giorno con le nostre missioni! Ricevi un bonus di benvenuto e completa i compiti per ottenere ricompense in denaro.", si: [/Promette guadagni/, /esche/] },
+    rosso: { bot: "@EsempioAirdropBot", testo: "Per ricevere l'airdrop sincronizza il wallet: inserisci qui la tua seed phrase di 12 parole.", si: [/seed phrase/, /collegare un wallet/, /esche/] }
+  };
+  var scena = SCENE[s] || SCENE.verde;
+  function bottone(t) { return Array.prototype.find.call(document.querySelectorAll("#prova button"), function (b) { return b.textContent.indexOf(t) === 0; }); }
+  function avanti() { (bottone("Avanti") || bottone("Ho letto") || bottone("Mostra")).click(); }
+  function titolo() { var h = document.querySelector("#prova .passo-nome"); return h ? h.textContent : ""; }
+  function visibili() { return Array.prototype.filter.call(document.querySelectorAll("#prova fieldset.domanda"), function (f) { return !f.hidden; }); }
+  function rispondi(f, v) { f.querySelector('input[value="' + v + '"]').click(); }
+  function scegli(f) {
+    var t = f.querySelector("legend").textContent;
+    if (scena.si.some(function (r) { return r.test(t); })) return "si";
+    return /indica il sito|Trovi i termini|dichiara chi lo gestisce|Cercando il nome/.test(t) ? "si" : "no";
+  }
+  function riempi(id, valore) { var c = document.getElementById(id); c.value = valore; c.dispatchEvent(new Event("input")); }
+  var b = document.querySelector('#selettore-tema [data-tema="' + tema + '"]'); if (b) b.click();
+  function scorriA(el, margine) { if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - (margine || 8)); }
+  if (s === "come") {
+    document.querySelector('[data-scheda="come"]').click();
+    scorriA(Array.prototype.find.call(document.querySelectorAll("h3"), function (h) { return h.textContent === "Pesi e soglie"; }), 12);
+    return;
+  }
+  avanti();
+  riempi("c_username", (s === "domande" || s === "pronto") ? "@EsempioMeteoBot" : scena.bot);
+  avanti();
+  riempi("c_incollato", scena.testo);
+  avanti();
+  for (var giro = 0; giro < 6 && /Chi è|Cosa|Chi lo/.test(titolo()); giro++) {
+    if (s === "domande" && titolo() === "Cosa ti chiede") {
+      var v = visibili(); rispondi(v[0], "no"); rispondi(v[1], "no"); rispondi(v[2], "no");
+      window.scrollTo(0, 0); return;
+    }
+    // le domande condizionali compaiono dopo una risposta: due passate
+    visibili().forEach(function (f) { rispondi(f, scegli(f)); });
+    visibili().forEach(function (f) { if (!f.querySelector("input:checked")) rispondi(f, scegli(f)); });
+    avanti();
+  }
+  rispondi(visibili()[0], "si");
+  avanti();
+  if (s === "pronto") { window.scrollTo(0, 0); return; }
+  bottone("Mostra").click();
+  scorriA(document.querySelector("#prova .report"), 10);
+});
+</script>

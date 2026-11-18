@@ -1,11 +1,17 @@
 """Calcolo deterministico di rischio per area, punteggio, fiducia e verdetto."""
 import copy
 import json
+import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+from rete import dominio_registrabile
+
 KIT = Path(__file__).resolve().parent
-PESI = {"identita": 2, "promesse": 1, "richieste": 2, "tecnica": 2, "reputazione": 1, "trasparenza": 1}
+PESI = {"identita": 2, "promesse": 2, "richieste": 2, "tecnica": 2, "reputazione": 1, "trasparenza": 1}
+# taratura 18/11/2026 (Francesco): somma pesata ÷ 3 con tetto 100, non più media pesata.
+# Con la media le aree vuote diluivano il rischio: una truffa da manuale (deposito + wallet) restava gialla.
+DIVISORE = 3
 SOGLIA_VERDE = 30
 SOGLIA_GIALLO = 60
 
@@ -21,19 +27,20 @@ def carica_catalogo(percorso: Path | None = None) -> dict[str, dict]:
 
 
 def _dominio(fonte: str) -> str:
-    host = urlparse(fonte).hostname or fonte
+    # senza schema ("reddit.com/r/x") si tiene solo il nome: percorso, query e porta non distinguono i siti
+    host = urlparse(fonte).hostname or re.sub(r":\d*$", "", re.split(r"[/?#]", fonte, maxsplit=1)[0])
     host = host.lower()
     return host[4:] if host.startswith("www.") else host
-
-
-def _dominio_base(fonte: str) -> str:
-    parti = _dominio(fonte).split(".")
-    return ".".join(parti[-2:]) if len(parti) >= 2 else parti[0]
 
 
 PUNTI_FUORI_CATALOGO = (-50, 100)
 SOGLIA_AREA_PIENA = 80  # un'area a questo rischio o più impedisce il verde
 MIN_FONTI_UFFICIALE = 2  # bot con spunta ufficiale: fonti indipendenti per fiducia almeno media
+IMITAZIONE_MARCHIO = "nome_imita_marchio"  # regola dell'imitazione composta (punto A)
+IMITAZIONE_RINFORZI = {"nome_parole_esca", "dominio_con_marchio"}
+# taratura 18/11/2026: con contesto.risposte_complete (autovalutazione: tutte le risposte, nessun "Non so",
+# sezioni prelievo aperte) la certezza bassa non esclude il verde, ma la prova mancante costa questi punti
+MALUS_SENZA_PROVE = 20
 
 
 def _punti(segnale: dict, catalogo: dict, area: str) -> float:
@@ -76,7 +83,7 @@ def valida(verdetto) -> None:
     ctx = verdetto.get("contesto", {})
     if not isinstance(ctx, dict):
         raise ErroreVerdetto("'contesto' deve essere un oggetto")
-    for chiave in ("materiale_utente", "tecnica_completa"):
+    for chiave in ("materiale_utente", "tecnica_completa", "risposte_complete"):
         if not isinstance(ctx.get(chiave, False), bool):
             raise ErroreVerdetto(f"contesto.{chiave} deve essere true o false (senza virgolette)")
     fonti = ctx.get("fonti_indipendenti", 0)
@@ -92,6 +99,7 @@ def calcola(verdetto: dict, catalogo: dict) -> dict:
     r = copy.deepcopy(verdetto)
     aree = r["aree"]
     linee_rosse = []
+    diretti = set()  # codici di catalogo provati direttamente
     fonti_segnalazioni = set()
     ufficiale = False
     somma = 0.0
@@ -102,6 +110,8 @@ def calcola(verdetto: dict, catalogo: dict) -> dict:
             totale_area += _punti(seg, catalogo, area)
             voce = catalogo.get(seg.get("codice"))
             diretta = seg.get("tipo_prova") == "diretta"
+            if voce and diretta and not seg.get("fuori_catalogo"):
+                diretti.add(seg["codice"])
             if voce and voce["linea_rossa"] and not seg.get("fuori_catalogo") and diretta:
                 linee_rosse.append({"codice": seg["codice"], "tipo_prova": "diretta",
                                     "prova": seg.get("testo", "")})
@@ -109,11 +119,11 @@ def calcola(verdetto: dict, catalogo: dict) -> dict:
                 ufficiale = True
             if (seg.get("codice") == "segnalazione_truffa" and not diretta
                     and str(seg.get("fonte") or "").strip()):
-                fonti_segnalazioni.add(_dominio_base(str(seg["fonte"])))
+                fonti_segnalazioni.add(dominio_registrabile(_dominio(str(seg["fonte"]))))
         rischio = round(max(0.0, min(100.0, totale_area)))
         dati["rischio"] = rischio
         somma += rischio * peso
-    totale = round(somma / sum(PESI.values()))
+    totale = round(min(100.0, somma / DIVISORE))
 
     ctx = r.get("contesto", {})
     materiale = ctx.get("materiale_utente", False)
@@ -130,7 +140,11 @@ def calcola(verdetto: dict, catalogo: dict) -> dict:
         fiducia = "media"
 
     da_segnalazioni = len(fonti_segnalazioni) >= 2 and not ufficiale
-    if linee_rosse or da_segnalazioni:
+    # taratura 17/11/2026 (revisione esterna, punto A): marchio imitato + parola esca o dominio col
+    # marchio = clone evidente → rosso. Non è una linea rossa: la certezza non cambia.
+    da_imitazione = (IMITAZIONE_MARCHIO in diretti and bool(IMITAZIONE_RINFORZI & diretti)
+                     and not ufficiale)
+    if linee_rosse or da_segnalazioni or da_imitazione:
         esito = "rosso"
     elif totale <= SOGLIA_VERDE:
         esito = "verde"
@@ -138,24 +152,32 @@ def calcola(verdetto: dict, catalogo: dict) -> dict:
         esito = "giallo"
     else:
         esito = "rosso"
+    area_piena = any(aree[a]["rischio"] >= SOGLIA_AREA_PIENA for a in PESI)
+    riserva = False
     if esito == "verde" and fiducia == "bassa":
-        esito = "giallo"
+        riserva = (ctx.get("risposte_complete") is True and not area_piena
+                   and min(100, totale + MALUS_SENZA_PROVE) <= SOGLIA_VERDE)
+        if not riserva:
+            esito = "giallo"
     # taratura 13/11/2026: un'area piena non si diluisce nella media → mai verde
-    if esito == "verde" and any(aree[a]["rischio"] >= SOGLIA_AREA_PIENA for a in PESI):
+    if esito == "verde" and area_piena:
         esito = "giallo"
 
     # rischio finale (14/11/2026): il numero mostrato cade sempre nella zona del colore.
     # Una linea rossa è un'espulsione diretta: rischio massimo, non la media.
     if linee_rosse:
         finale = 100
-    elif da_segnalazioni:
+    elif da_segnalazioni or da_imitazione:
         finale = max(totale, SOGLIA_GIALLO + 1)
     elif esito == "giallo":
         finale = max(totale, SOGLIA_VERDE + 1)
+    elif riserva:
+        finale = min(100, totale + MALUS_SENZA_PROVE)
     else:
         finale = totale
 
     r.update({"pesi": dict(PESI), "punteggio_totale": totale, "rischio_finale": finale,
               "linee_rosse": linee_rosse,
-              "fiducia": fiducia, "verdetto": esito, "rosso_da_segnalazioni": da_segnalazioni})
+              "fiducia": fiducia, "verdetto": esito, "rosso_da_segnalazioni": da_segnalazioni,
+              "rosso_da_imitazione": da_imitazione, "verde_con_riserva": riserva})
     return r

@@ -4,9 +4,17 @@
 
 [🇮🇹 Italiano](README.md) · 🇬🇧 English
 
-Telegram bots that imitate well-known brands, promise earnings, or ask for a deposit "to unlock your withdrawal" are increasingly common. Verifica Bot ("Bot Check") helps you spot the warning signs before you tap. It collects clues, weighs them with public rules, and returns a 🟢 🟡 🔴 result with the reasons behind it and what to do or avoid.
+[![MIT License](https://img.shields.io/badge/license-MIT-0f766e)](LICENSE) ![Tests](https://img.shields.io/badge/tests-505%20Python%20%2B%20139%20JS-15803d) ![Installable app](https://img.shields.io/badge/app-installable%20%C2%B7%20offline-1d4ed8) ![Data collected](https://img.shields.io/badge/data%20collected-none-14213d)
 
-**Try it:** https://frank-85.github.io/verifica-bot-telegram/
+[![Verifica Bot: three sample results, green, yellow and red, on a phone](docs/immagini/vetrina-en.png)](https://frank-85.github.io/verifica-bot-telegram/)
+
+<p align="center">
+  <a href="https://frank-85.github.io/verifica-bot-telegram/"><b>▶ Try it in your browser</b></a> ·
+  <a href="#install-it-on-your-phone"><b>📱 Install it on your phone</b></a> ·
+  <a href="https://github.com/frank-85/verifica-bot-telegram/releases/latest/download/verifica-bot.zip"><b>⬇ Download (zip, works offline)</b></a>
+</p>
+
+Telegram bots that imitate well-known brands, promise earnings, or ask for a deposit "to unlock your withdrawal" are increasingly common. Verifica Bot ("Bot Check") helps you spot the warning signs before you tap. It collects clues, weighs them with public rules, and returns a 🟢 🟡 🔴 result with the reasons behind it and what to do or avoid.
 
 The app is currently in Italian. An English version is planned.
 
@@ -19,36 +27,54 @@ It walks you through a few steps:
 1. **The bot's name.** The tool checks whether it imitates a known brand (added, missing, or swapped letters, digits in place of letters) and whether it contains common bait words.
 2. **What the bot showed you.** You can paste the text or upload a screenshot. The text is read on your device and compared with a list of typical phrases, such as guaranteed returns, requests for a seed phrase, or withdrawals that require a deposit first.
 3. **The Mini App link**, if there is one.
-4. **A few simple questions.** "I don't know" is a valid answer.
+4. **A few simple questions**, only about what you can see. "I don't know" is a valid answer.
+5. **Your own notes, if you like**, in the last step: they appear in the report but do not change the score. Then a **summary** of what will be assessed, before the result.
 
-If an automatic check contradicts one of your answers, the check wins, and the report says so.
+The screenshot is optional. If an automatic check contradicts one of your answers, the check wins, and the report says so.
 
 You get a report with the result, the risk for each area, the reasons, what could not be verified, and recommended actions. You can print it or download it.
+
+![The four-step flow: questions, summary, result, public rules](docs/immagini/percorso-en.png)
+
+## Install it on your phone
+
+Verifica Bot is an installable web app (PWA): no app store, no account, no permissions requested.
+
+- **Android (Chrome):** open the [app page](https://frank-85.github.io/verifica-bot-telegram/) and tap **"Installa l'app"** (Install the app), or menu ⋮ → "Install app".
+- **iPhone (Safari):** open the page, tap **Share** → **"Add to Home Screen"**.
+- **Computer (Chrome, Edge):** use the install icon in the address bar.
+
+After the first visit it also works **offline**. Your device keeps only the app's code, never your answers or screenshots.
+
+Prefer not to install anything? [Download the zip](https://github.com/frank-85/verifica-bot-telegram/releases/latest/download/verifica-bot.zip), extract the folder, and open `index.html` in your browser.
 
 ## How it decides
 
 No AI picks the color. A rule engine computes it: the same clues always give the same result, and anyone can read why.
 
-- **37 signals** in a fixed catalog ([`segnali.json`](segnali.json)), each with a score.
-- **6 areas**: identity, promises, requests, technical, reputation, transparency. Identity, requests, and technical count double.
+- **38 signals** in a fixed catalog ([`segnali.json`](segnali.json)), each with a score.
+- **6 areas**: identity, promises, requests, technical, reputation, transparency. Identity, promises, requests, and technical count double.
+- **Score**: each area's risk (0-100) is multiplied by its weight, added up, and divided by 3, capped at 100. Areas with no signals don't pull the result down: a bot that asks for a deposit and a wallet connection comes out red even if everything else looks fine.
 - **Thresholds**: up to 30 is green, 31 to 60 is yellow, above 60 is red.
 - **10 red lines**: signals serious enough to turn the result red on their own when there is direct proof. One example is a request for your seed phrase or your Telegram login code.
-- **Caution rules against false greens**: no green when evidence is thin, and no green when even one area is at maximum risk. A serious danger must not be averaged away.
+- **Caution rules against false greens**: no green when even one area is at maximum risk, because a serious danger must not be diluted in the score. With thin evidence, green only comes "with reservations": in the self-assessment without screenshots, every question must be answered with no "I don't know", and the missing evidence adds 20 points to the risk.
+- **Impersonation rule**: if the name recalls a well-known brand and also contains bait words ("support", "airdrop"…) or points to a domain that uses the same brand, the result is red, unless Telegram's blue check is proven directly. An obvious clone must not look the same as the original service.
 
-Every result comes with a **confidence level** that says how solid the evidence was. A self-assessment alone never reaches the highest level.
+Every result comes with a **confidence level** that says how solid the evidence was. A self-assessment alone never reaches the highest level, except when a red line is proven directly, by an answer or by the material provided.
 
 ## Privacy
 
 - The app is **a single HTML file**. It runs in the browser, on phones too, and can be downloaded and opened offline.
 - What you type or upload **is not sent to anyone** and is not stored. It is gone when you close the page. No cookies, no analytics, no accounts.
 - **One optional connection:** if you upload a screenshot, the browser downloads the open-source library that reads the text ([Tesseract.js](https://github.com/naptha/tesseract.js), from cdn.jsdelivr.net). The image stays on your device. You can paste the text instead.
-- A Content-Security-Policy on the page blocks connections to any other address.
-- If you use the online version, GitHub Pages receives the technical data of your connection, as any website does. To avoid that, download [`index.html`](index.html) and open it from your device.
+- **Offline use:** when you open the page from the website, the browser keeps a copy of the app's code only (page and icons) so it can open without a connection. Answers, text, and screenshots are never stored. You can remove the copy by clearing the site's data in your browser settings.
+- A Content-Security-Policy on the page blocks connections to any other address, except the page's own site, from which the installable app loads its icons and offline handler.
+- If you use the online version, GitHub Pages receives the technical data of your connection, as any website does. To avoid that, [download the zip](https://github.com/frank-85/verifica-bot-telegram/releases/latest/download/verifica-bot.zip) and open `index.html` from your device.
 
 ## Limits
 
 - The tool only sees what is public or what you show it. Code running on a bot's servers is not visible from outside.
-- A new bot with no history cannot get a full green. There is not enough evidence either way.
+- With little evidence the result stays cautious: without a screenshot or text, green is at most "with reservations", with low certainty and 20 extra risk points.
 - The brand list ([`marchi.txt`](marchi.txt)) and the list of recognized phrases are necessarily incomplete.
 - Screenshot reading can make mistakes, especially with small images or languages other than Italian and English.
 - Checks on received files (command-line version only) use Microsoft Defender, so they work on Windows.
@@ -63,8 +89,11 @@ Every result comes with a **confidence level** that says how solid the evidence 
 | `controlli.py` | Command line for the Python engine. |
 | `costruisci_app.py` | Builds `index.html` from `app/` and the catalogs. |
 | `segnali.json`, `marchi.txt` | Signal catalog and frequently imitated brands. |
-| `skill/SKILL.md` | Instructions for using the engine with an AI assistant (Claude Code): the assistant gathers the evidence, the engine computes the result. |
-| `tests/` | 385 automated tests. |
+| `manifest.webmanifest`, `sw.js`, `icone/` | Installable app: app manifest, offline handler (stores only the app's own files), icons. |
+| `costruisci_icone.py` | Builds the icons from a single drawing (matching SVG and PNG). |
+| `strumenti/vetrina/`, `docs/immagini/` | The script that photographs the real app for this README's images, and the images. |
+| `verifica-bot/SKILL.md` | Instructions for using the engine with an AI assistant (Claude Code): the assistant gathers the evidence, the engine computes the result. |
+| `tests/` | 505 Python tests and 139 JavaScript tests. |
 
 The engine exists in two versions, Python and JavaScript. A set of **parity tests** feeds the same cases to both and checks that they return the same result, so a fix applied to only one side makes the tests fail.
 
@@ -74,11 +103,18 @@ Code, comments, and file names are in Italian.
 
 ## Running the tests and rebuilding the app
 
-You need Python (tested with 3.13), `pytest`, and Node.js (tested with version 24) for the JavaScript tests.
+You need Python (tested with 3.13), `pytest`, and Node.js (tested with Node 22 and 24) for the JavaScript tests.
 
 ```
 python -m pytest -q
-python -I costruisci_app.py --numero-test 385
+python -I costruisci_app.py --numero-test 644
+```
+
+Icons and README images (require Pillow and Microsoft Edge):
+
+```
+python -I costruisci_icone.py
+python -I strumenti/vetrina/componi.py
 ```
 
 Tuning is done in the Python engine and then carried over to the JavaScript one. The parity tests enforce this.

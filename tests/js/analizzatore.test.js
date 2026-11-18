@@ -137,9 +137,18 @@ for (const [frase, codice] of VERE_REVISIONE) {
 const codiciLink = (u) => analizzaLink(u, MARCHI).segnali.map((s) => s.codice);
 
 test("marchio nel sottodominio → dominio_con_marchio", () => {
-  assert.deepStrictEqual(codiciLink("https://binance.sito-falso.xyz/login"), ["dominio_con_marchio"]);
+  assert.deepStrictEqual(codiciLink("https://binance.sito-falso.xyz/login"), ["dominio_con_marchio", "dominio_tld_rischioso"]);
   assert.deepStrictEqual(codiciLink("https://secure-metamask.login.verifica.app"), ["dominio_con_marchio"]);
   assert.match(analizzaLink("https://binance.sito-falso.xyz", MARCHI).segnali[0].frase, /binance\.sito-falso\.xyz/);
+});
+
+test("A: estensione rischiosa → segnale dominio_tld_rischioso (5 punti), non più solo avviso", () => {
+  assert.deepStrictEqual(codiciLink("https://meteo-locale.top/app"), ["dominio_tld_rischioso"]);
+  const r = analizzaLink("https://meteo-locale.top/app", MARCHI);
+  assert.match(r.segnali[0].frase, /\.top/);
+  assert.ok(!r.avvisi.some((a) => /usa e getta/.test(a)), "niente doppione tra avviso e segnale");
+  assert.deepStrictEqual(codiciLink("https://meteo-locale.it/app"), []);
+  assert.deepStrictEqual(codiciLink("https://x.co.uk/app"), []);
 });
 
 test("sottodomini del sito ufficiale → nessun segnale", () => {

@@ -44,6 +44,19 @@ def test_rosso_da_segnalazioni_dichiarato():
     assert "Segnalato da terzi, non verificato direttamente" in md
 
 
+def test_a_rosso_da_imitazione_dichiarato():
+    md = genera_md(base({"identita": [seg("nome_imita_marchio"), seg("nome_parole_esca")]}))
+    assert "🔴" in md
+    assert "rischio **61/100** (imitazione evidente di un marchio; punteggio delle aree" in md
+    assert ("> Prevale la regola sull'imitazione: il nome richiama un marchio noto e contiene parole esca "
+            "o rimanda a un dominio che usa lo stesso marchio.") in md
+
+
+def test_a_senza_imitazione_nessuna_frase():
+    md = genera_md(base({"identita": [seg("nome_imita_marchio")]}))
+    assert "imitazione" not in md.lower()
+
+
 def test_sezioni_presenti():
     md = genera_md(base())
     for titolo in ["## Le sei aree", "## Cosa puoi fare", "## Cosa NON fare",
@@ -183,12 +196,12 @@ def test_fonti_affidabili_uguali_all_app():
 def test_resoconto_linea_rossa_mostra_100_e_media():
     md = genera_md(base({"richieste": [seg("richiesta_seed_o_codici")]}))
     assert "rischio **100/100**" in md
-    assert "linea rossa superata" in md and "media delle aree" in md
+    assert "linea rossa superata" in md and "punteggio delle aree" in md
 
 
 def test_resoconto_verde_ordinario_senza_nota_media():
     md = genera_md(base())
-    assert "rischio **0/100**" in md and "media delle aree" not in md
+    assert "rischio **0/100**" in md and "punteggio delle aree" not in md
 
 
 def test_resoconto_verdetto_vecchio_senza_rischio_finale():
@@ -196,3 +209,9 @@ def test_resoconto_verdetto_vecchio_senza_rischio_finale():
     del v["rischio_finale"]
     v["punteggio_totale"] = 12
     assert "rischio **12/100**" in genera_md(v)
+
+
+def test_resoconto_verde_con_riserva_spiega_i_20_punti():
+    md = genera_md(base(contesto={"materiale_utente": False, "tecnica_completa": False, "fonti_indipendenti": 0,
+                                  "risposte_complete": True}))
+    assert "rischio **20/100**" in md and "verde con riserva" in md and "punteggio delle aree 0/100" in md

@@ -8,7 +8,8 @@ from datetime import datetime
 from pathlib import Path
 
 KIT = Path(__file__).resolve().parent
-ORDINE_JS = ["motore.js", "aspetto.js", "nome.js", "sicurezza.js", "analizzatore.js", "assembla.js"]
+# sicurezza.js per primo: ha la regola unica del dominio base usata da motore.js e analizzatore.js
+ORDINE_JS = ["sicurezza.js", "motore.js", "aspetto.js", "nome.js", "analizzatore.js", "assembla.js"]
 USCITA = "index.html"
 
 
@@ -28,8 +29,11 @@ def costruisci(kit: Path = KIT, uscita: Path | None = None, numero_test: int | N
     catalogo = {v["codice"]: v for v in catalogo_lista}
     questionario = _json(app / "questionario.json")
     regole = _json(app / "analizzatore.json")
+    domande = [d for p in questionario["pagine"] for d in p["domande"]]
     _controlla_codici("questionario.json",
-                      [d["codice"] for a in questionario["aree"] for d in a["domande"]]
+                      [d["codice"] for d in domande]
+                      + [c for d in domande for c in d.get("assorbe", [])]
+                      + [d["mostra_se"]["codice"] for d in domande if d.get("mostra_se")]
                       + questionario.get("non_coperti", []), catalogo)
     _controlla_codici("analizzatore.json", [r["codice"] for r in regole], catalogo)
 

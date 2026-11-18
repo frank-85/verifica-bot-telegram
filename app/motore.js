@@ -2,9 +2,11 @@
    Funziona nel browser (funzioni globali) e in Node (module.exports). */
 "use strict";
 
-var PESI = { identita: 2, promesse: 1, richieste: 2, tecnica: 2, reputazione: 1, trasparenza: 1 };
+var DIVISORE = 3;
+var PESI = { identita: 2, promesse: 2, richieste: 2, tecnica: 2, reputazione: 1, trasparenza: 1 };
 var ORDINE_AREE = ["identita", "promesse", "richieste", "tecnica", "reputazione", "trasparenza"];
-var SOGLIE = { verde: 30, giallo: 60, areaPiena: 80, minFontiUfficiale: 2, fuoriCatalogo: [-50, 100] };
+var SOGLIE = { verde: 30, giallo: 60, areaPiena: 80, minFontiUfficiale: 2, fuoriCatalogo: [-50, 100], malusSenzaProve: 20 };
+var IMITAZIONE = { marchio: "nome_imita_marchio", rinforzi: ["nome_parole_esca", "dominio_con_marchio"] };
 
 class ErroreVerdetto extends Error {
   constructor(msg) { super(msg); this.name = "ErroreVerdetto"; }
@@ -35,15 +37,17 @@ function _hostname(fonte) {
   if (m) {
     host = m[1].replace(/^[^@]*@/, "").replace(/:\d*$/, "");
   } else {
-    host = s; // come urlparse senza schema: hostname None → si usa la stringa intera
+    // senza schema ("reddit.com/r/x"): solo il nome, come in punteggio._dominio
+    host = s.split(/[\/?#]/)[0].replace(/:\d*$/, "");
   }
   host = host.toLowerCase();
   return host.indexOf("www.") === 0 ? host.slice(4) : host;
 }
 
+/* Regola unica in sicurezza.js (caricato prima di motore.js nell'app, vedi costruisci_app.ORDINE_JS). */
+var _sicurezzaMotore = typeof module !== "undefined" ? require("./sicurezza.js") : null;
 function _dominioBase(fonte) {
-  var parti = _hostname(fonte).split(".");
-  return parti.length >= 2 ? parti.slice(-2).join(".") : parti[0];
+  return (_sicurezzaMotore ? _sicurezzaMotore.dominioBase : dominioBase)(_hostname(fonte));
 }
 
 function _punti(seg, catalogo, area) {
@@ -84,7 +88,7 @@ function valida(verdetto) {
   });
   var ctx = verdetto.contesto === undefined ? {} : verdetto.contesto;
   if (!_isObj(ctx)) throw new ErroreVerdetto("'contesto' deve essere un oggetto");
-  ["materiale_utente", "tecnica_completa"].forEach(function (k) {
+  ["materiale_utente", "tecnica_completa", "risposte_complete"].forEach(function (k) {
     var val = ctx[k] === undefined ? false : ctx[k];
     if (typeof val !== "boolean") throw new ErroreVerdetto("contesto." + k + " deve essere true o false");
   });
@@ -102,6 +106,7 @@ function calcola(verdetto, catalogo) {
   var r = JSON.parse(JSON.stringify(verdetto));
   var aree = r.aree;
   var lineeRosse = [];
+  var diretti = {}; // codici di catalogo provati direttamente
   var fontiSegnalazioni = {};
   var ufficiale = false;
   var somma = 0;
@@ -114,6 +119,7 @@ function calcola(verdetto, catalogo) {
       totaleArea += _punti(seg, catalogo, area);
       var voce = catalogo[seg.codice];
       var diretta = seg.tipo_prova === "diretta";
+      if (voce && diretta && !seg.fuori_catalogo) diretti[seg.codice] = true;
       if (voce && voce.linea_rossa && !seg.fuori_catalogo && diretta)
         lineeRosse.push({ codice: seg.codice, tipo_prova: "diretta", prova: seg.testo || "" });
       if (seg.codice === "bot_ufficiale_verificato" && diretta) ufficiale = true;
@@ -124,8 +130,8 @@ function calcola(verdetto, catalogo) {
     dati.rischio = rischio;
     somma += rischio * peso;
   });
-  var sommaPesi = ORDINE_AREE.reduce(function (t, a) { return t + PESI[a]; }, 0);
-  var totale = arrotondaPython(somma / sommaPesi);
+  // taratura 18/11/2026: somma pesata ÷ 3 con tetto 100 (non più media: le aree vuote diluivano il rischio)
+  var totale = arrotondaPython(Math.min(100, somma / DIVISORE));
 
   var ctx = r.contesto || {};
   var materiale = ctx.materiale_utente || false;
@@ -138,20 +144,30 @@ function calcola(verdetto, catalogo) {
   else fiducia = "media";
 
   var daSegnalazioni = Object.keys(fontiSegnalazioni).length >= 2 && !ufficiale;
+  // taratura 17/11/2026 (punto A): marchio imitato + parola esca o dominio col marchio → rosso (non linea rossa)
+  var daImitazione = !!diretti[IMITAZIONE.marchio] &&
+    IMITAZIONE.rinforzi.some(function (c) { return diretti[c]; }) && !ufficiale;
   var esito;
-  if (lineeRosse.length || daSegnalazioni) esito = "rosso";
+  if (lineeRosse.length || daSegnalazioni || daImitazione) esito = "rosso";
   else if (totale <= SOGLIE.verde) esito = "verde";
   else if (totale <= SOGLIE.giallo) esito = "giallo";
   else esito = "rosso";
-  if (esito === "verde" && fiducia === "bassa") esito = "giallo";
-  if (esito === "verde" && ORDINE_AREE.some(function (a) { return aree[a].rischio >= SOGLIE.areaPiena; }))
-    esito = "giallo";
+  // taratura 18/11/2026 (porting di punteggio.py): verde con riserva se le risposte sono complete
+  var areaPiena = ORDINE_AREE.some(function (a) { return aree[a].rischio >= SOGLIE.areaPiena; });
+  var riserva = false;
+  if (esito === "verde" && fiducia === "bassa") {
+    riserva = ctx.risposte_complete === true && !areaPiena &&
+      Math.min(100, totale + SOGLIE.malusSenzaProve) <= SOGLIE.verde;
+    if (!riserva) esito = "giallo";
+  }
+  if (esito === "verde" && areaPiena) esito = "giallo";
 
   // rischio finale (porting di punteggio.py): sempre nella zona del colore; linea rossa = 100.
   var finale;
   if (lineeRosse.length) finale = 100;
-  else if (daSegnalazioni) finale = Math.max(totale, SOGLIE.giallo + 1);
+  else if (daSegnalazioni || daImitazione) finale = Math.max(totale, SOGLIE.giallo + 1);
   else if (esito === "giallo") finale = Math.max(totale, SOGLIE.verde + 1);
+  else if (riserva) finale = Math.min(100, totale + SOGLIE.malusSenzaProve);
   else finale = totale;
 
   r.pesi = Object.assign({}, PESI);
@@ -161,11 +177,13 @@ function calcola(verdetto, catalogo) {
   r.fiducia = fiducia;
   r.verdetto = esito;
   r.rosso_da_segnalazioni = daSegnalazioni;
+  r.rosso_da_imitazione = daImitazione;
+  r.verde_con_riserva = riserva;
   return r;
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { PESI: PESI, ORDINE_AREE: ORDINE_AREE, SOGLIE: SOGLIE, ErroreVerdetto: ErroreVerdetto,
+  module.exports = { PESI: PESI, DIVISORE: DIVISORE, ORDINE_AREE: ORDINE_AREE, SOGLIE: SOGLIE, ErroreVerdetto: ErroreVerdetto,
     arrotondaPython: arrotondaPython, catalogoDaLista: catalogoDaLista, valida: valida, calcola: calcola,
     dominioBaseFonte: _dominioBase };
 }

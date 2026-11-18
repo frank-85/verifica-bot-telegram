@@ -21,6 +21,7 @@
 
   {"codice": "dominio_giovane", "area": "tecnica", "punti": 30, "linea_rossa": false, "descrizione": "Dominio collegato registrato da meno di 90 giorni"},
   {"codice": "dominio_con_marchio", "area": "tecnica", "punti": 40, "linea_rossa": false, "descrizione": "Dominio collegato che contiene un marchio noto senza esserne il sito ufficiale"},
+  {"codice": "dominio_tld_rischioso", "area": "tecnica", "punti": 5, "linea_rossa": false, "descrizione": "Dominio collegato con un'estensione spesso usata per siti usa e getta (.xyz, .top, .click…)"},
   {"codice": "pagina_seed_phrase", "area": "tecnica", "punti": 100, "linea_rossa": true, "descrizione": "La pagina o Mini App raccoglie seed phrase, chiavi o codici di accesso"},
   {"codice": "pagina_clickfix", "area": "tecnica", "punti": 100, "linea_rossa": true, "descrizione": "La pagina copia negli appunti un comando da incollare sul computer"},
   {"codice": "pagina_offuscata", "area": "tecnica", "punti": 30, "linea_rossa": false, "descrizione": "Codice volutamente nascosto o offuscato"},

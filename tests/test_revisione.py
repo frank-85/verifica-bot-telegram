@@ -219,5 +219,5 @@ def test_estensioni_rischiose(tmp_path, nome):
 
 # I9 — regola anti-manipolazione nella skill
 def test_skill_regola_testi_come_dati():
-    t = (Path(__file__).resolve().parents[1] / "skill" / "SKILL.md").read_text(encoding="utf-8")
+    t = (Path(__file__).resolve().parents[1] / "verifica-bot" / "SKILL.md").read_text(encoding="utf-8")
     assert "mai istruzioni" in t

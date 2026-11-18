@@ -4,6 +4,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 from punteggio import carica_catalogo
+from rete import dominio_registrabile
 
 SEMAFORO = {
     "verde": ("🟢", "Nessun segnale di rischio trovato"),
@@ -27,13 +28,6 @@ FONTI_AFFIDABILI = ["telegram.org", "consob.it", "bancaditalia.it", "bitget.com"
 _URL = re.compile(r"(?i)(?<![\w.@/])(?:https?://|www\.)[^\s<>`|\[\]()]+")
 
 
-def _dominio_base(host: str) -> str:
-    parti = [x for x in host.lower().rstrip(".").split(".") if x]
-    if parti and parti[0] == "www":
-        parti = parti[1:]
-    return ".".join(parti[-2:])
-
-
 def _affidabile(url: str) -> bool:
     try:
         u = urlparse(url.strip())
@@ -41,7 +35,7 @@ def _affidabile(url: str) -> bool:
     except ValueError:
         return False
     return (u.scheme == "https" and not u.username and not u.password and bool(host)
-            and _dominio_base(host) in FONTI_AFFIDABILI)
+            and dominio_registrabile(host) in FONTI_AFFIDABILI)
 
 
 def _disinnescato(url: str) -> str:
@@ -86,7 +80,7 @@ def _data(iso: str | None) -> str:
 
 
 def _misura_rischio(verdetto: dict) -> str:
-    """Rischio finale (sempre nella zona del colore); se una regola prevale sulla media, lo dice."""
+    """Rischio finale (sempre nella zona del colore); se una regola prevale sul punteggio delle aree, lo dice."""
     media = verdetto.get("punteggio_totale", "?")
     finale = verdetto.get("rischio_finale", media)
     testo = f"rischio **{finale}/100**"
@@ -96,9 +90,13 @@ def _misura_rischio(verdetto: dict) -> str:
         motivo = "linea rossa superata"
     elif verdetto.get("rosso_da_segnalazioni"):
         motivo = "segnalazioni concordi da più fonti"
+    elif verdetto.get("rosso_da_imitazione"):
+        motivo = "imitazione evidente di un marchio"
+    elif verdetto.get("verde_con_riserva"):
+        motivo = "verde con riserva: senza materiale da verificare si aggiungono 20 punti"
     else:
         motivo = "regola di prudenza"
-    return f"{testo} ({motivo}; media delle aree {media}/100)"
+    return f"{testo} ({motivo}; punteggio delle aree {media}/100)"
 
 
 def _elenco(voci, gia_sicure: bool = False) -> list[str]:
@@ -126,6 +124,9 @@ def genera_md(verdetto: dict, catalogo: dict | None = None) -> str:
         righe.append(f"Tipo di servizio: {_testo_sicuro(bot['tipo'])}")
     if verdetto.get("rosso_da_segnalazioni"):
         righe += ["", "> Segnalato da terzi, non verificato direttamente."]
+    if verdetto.get("rosso_da_imitazione") and not verdetto.get("linee_rosse"):
+        righe += ["", "> Prevale la regola sull'imitazione: il nome richiama un marchio noto e contiene "
+                      "parole esca o rimanda a un dominio che usa lo stesso marchio."]
 
     if verdetto.get("linee_rosse"):
         righe += ["", "## Linee rosse", ""]

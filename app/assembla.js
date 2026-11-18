@@ -10,7 +10,9 @@ var FONTE_RISPOSTA = "risposta dell'utente";
 var FONTE_ORIGINE = { screenshot: "lettura automatica dello screenshot", incollato: "lettura automatica del testo incollato" };
 var FONTE_NOME = "controllo del nome";
 var FONTE_LINK = "controllo del link";
+var RISPOSTE_AMMESSE = ["si", "no", "nonso"]; // una domanda può limitarle con "risposte"
 var MIN_LETTERE_MATERIALE = 40; // sotto questa soglia il testo non basta come materiale
+var MAX_NOTE = 2000;
 var FONTE_SPUNTA = "dichiarazione dell'utente (spunta non verificata dallo strumento)";
 
 var NON_FARE_SEMPRE = [
@@ -30,8 +32,23 @@ var FARE = {
 };
 
 function codiciAutomatici() {
-  return ["nome_imita_marchio", "nome_parole_esca", "dominio_con_marchio", "segnalazione_truffa",
+  return ["nome_imita_marchio", "nome_parole_esca", "dominio_con_marchio", "dominio_tld_rischioso", "segnalazione_truffa",
     "recensioni_positive_indipendenti"];
+}
+
+/* Domanda condizionale ("mostra_se"): compare solo se la domanda da cui dipende ha una delle risposte indicate.
+   Stessa regola per la pagina (cosa mostrare e chiedere) e per il calcolo (cosa conta). */
+function domandaVisibile(d, risposte) {
+  if (!d.mostra_se) return true;
+  return d.mostra_se.risposte.indexOf((risposte || {})[d.mostra_se.codice]) >= 0;
+}
+
+function domandeVisibili(questionario, risposte) {
+  var out = [];
+  questionario.pagine.forEach(function (p) {
+    p.domande.forEach(function (d) { if (domandaVisibile(d, risposte)) out.push(d); });
+  });
+  return out;
 }
 
 function risorseDaPayload(p) {
@@ -64,12 +81,16 @@ function costruisciVerdetto(input, risorse) {
   var contrasti = [];
   var nonVerificato = [];
   var risposte = input.risposte || {};
-  var testoDomanda = {};
-  var areaDomanda = {};
-  risorse.questionario.aree.forEach(function (a) {
-    a.domande.forEach(function (d) { testoDomanda[d.codice] = d.testo; areaDomanda[d.codice] = a.area; });
-  });
-  var mancanti = Object.keys(testoDomanda).filter(function (c) { return ["si", "no", "nonso"].indexOf(risposte[c]) < 0; });
+  // solo le domande visibili contano: quelle condizionali nascoste non si chiedono e non pesano
+  var domande = domandeVisibili(risorse.questionario, risposte);
+  var visibile = {};
+  domande.forEach(function (d) { visibile[d.codice] = true; });
+  // domanda che copre ogni codice: la sua o quella che lo assorbe (revisione 18/11, punto 6)
+  var domandaDi = {};
+  domande.forEach(function (d) { domandaDi[d.codice] = d; });
+  domande.forEach(function (d) { (d.assorbe || []).forEach(function (c) { if (!domandaDi[c]) domandaDi[c] = d; }); });
+  // ogni domanda accetta solo le sue risposte (la seed phrase: solo Sì o No)
+  var mancanti = domande.filter(function (d) { return (d.risposte || RISPOSTE_AMMESSE).indexOf(risposte[d.codice]) < 0; });
   if (mancanti.length) throw new Error("risposte mancanti: " + mancanti.length);
 
   function metti(codice, testo, fonte, automatico) {
@@ -77,19 +98,28 @@ function costruisciVerdetto(input, risorse) {
       if (automatico && segnali[codice].fonte === FONTE_RISPOSTA) { segnali[codice].testo = testo; segnali[codice].fonte = fonte; }
       return;
     }
-    if (automatico && risposte[codice] === "no") contrasti.push({ codice: codice, frase: testo });
+    var d = domandaDi[codice];
+    if (automatico && d) {
+      // discrepanza = la risposta nega il segnale (non "Non so"); nelle domande in positivo il segnale scatta col "no"
+      var r = risposte[d.codice], rispostaSegnale = d.segnale_se === "no" ? "no" : "si";
+      if (r && r !== "nonso" && r !== rispostaSegnale) contrasti.push({ codice: codice, frase: testo });
+    }
     segnali[codice] = { codice: codice, tipo_prova: "diretta", testo: testo, fonte: fonte };
     ordine.push(codice);
   }
 
   // 1. risposte
-  Object.keys(testoDomanda).forEach(function (codice) {
-    if (risposte[codice] === "si" && codice === "bot_ufficiale_verificato") {
+  domande.forEach(function (d) {
+    var codice = d.codice, r = risposte[codice];
+    var rispostaSegnale = d.segnale_se === "no" ? "no" : "si"; // domande in positivo: il segnale scatta con "no"
+    if (r === "si" && codice === "bot_ufficiale_verificato") {
       // la spunta dichiarata pesa (-50) ma non è una prova diretta: non annulla le segnalazioni né alza la certezza
-      segnali[codice] = { codice: codice, tipo_prova: "segnalazione", testo: testoDomanda[codice], fonte: FONTE_SPUNTA };
+      segnali[codice] = { codice: codice, tipo_prova: "segnalazione", testo: d.testo, fonte: FONTE_SPUNTA };
       ordine.push(codice);
-    } else if (risposte[codice] === "si") metti(codice, testoDomanda[codice], FONTE_RISPOSTA, false);
-    else if (risposte[codice] === "nonso") nonVerificato.push("Senza risposta: " + testoDomanda[codice]);
+    } else if (r === rispostaSegnale) {
+      // la domanda in positivo non descrive il rischio: nel report si mostra la descrizione del segnale
+      metti(codice, rispostaSegnale === "no" ? cat[codice].descrizione : d.testo, FONTE_RISPOSTA, false);
+    } else if (r === "nonso") nonVerificato.push("Senza risposta: " + d.testo);
   });
 
   // 2. controllo del nome (username + nome visualizzato)
@@ -150,7 +180,8 @@ function costruisciVerdetto(input, risorse) {
   var nFontiLink = Object.keys(domini).length;
   function lettere(s) { return (String(s).match(/\p{L}/gu) || []).length; }
   var testiSostanziosi = testi.filter(function (t) { return lettere(t.testo) >= MIN_LETTERE_MATERIALE; });
-  var nonsoRichieste = Object.keys(testoDomanda).some(function (c) { return areaDomanda[c] === "richieste" && risposte[c] === "nonso"; });
+  // conta l'area del segnale nel catalogo, non la pagina del questionario
+  var nonsoRichieste = domande.some(function (d) { return cat[d.codice].area === "richieste" && risposte[d.codice] === "nonso"; });
   // materiale sufficiente = testo vero letto dallo strumento + sezioni prelievo/pagamenti viste + nessun "Non so" sulle richieste
   var materiale = testiSostanziosi.length > 0 && input.sezioniViste === true && !nonsoRichieste;
   var limiti = [];
@@ -163,13 +194,18 @@ function costruisciVerdetto(input, risorse) {
     data: new Date().toISOString().slice(0, 19),
     bot: { username: username, tipo: "", link: input.linkMiniApp ? [String(input.linkMiniApp).trim()] : [] },
     aree: aree,
+    // 18/11/2026: lo screenshot non è bloccante. Risposte complete (nessun "Non so", sezioni prelievo aperte)
+    // → il motore ammette il verde con riserva anche senza materiale: +20 punti, certezza bassa
     contesto: { materiale_utente: materiale, tecnica_completa: false,
-      fonti_indipendenti: (materiale ? 1 : 0) + nFontiLink },
+      fonti_indipendenti: (materiale ? 1 : 0) + nFontiLink,
+      risposte_complete: input.sezioniViste === true && !domande.some(function (d) { return risposte[d.codice] === "nonso"; }) },
     cosa_fare: [], cosa_non_fare: NON_FARE_SEMPRE.slice(), non_verificato: nonVerificato,
     fonti: segnalazioni.concat(positivi).map(function (l) { return { titolo: l.base, url: l.url }; }),
     origine: "autovalutazione guidata"
   };
   var v = _usa("calcola")(grezzo, cat);
+  var note = String(input.note || "").trim().slice(0, MAX_NOTE);
+  if (note) v.note_utente = note; // solo nel report: le parole libere non pesano sul punteggio
   v.cosa_fare = FARE[v.verdetto].slice();
 
   var nScreen = testi.filter(function (t) { return t.origine === "screenshot"; }).length;
@@ -184,10 +220,32 @@ function costruisciVerdetto(input, risorse) {
   basataSu.push(nFontiLink === 1 ? "1 fonte esterna" : nFontiLink + " fonti esterne");
   if (input.sezioniViste === false) basataSu.push("sezioni prelievo/pagamenti non viste");
 
-  return { verdetto: v, contrasti: contrasti, basataSu: basataSu, avvisi: avvisi };
+  // perché la certezza è bassa: un codice per ogni requisito del materiale che manca
+  var motiviCertezzaBassa = [];
+  if (v.fiducia === "bassa") {
+    if (!testi.length) motiviCertezzaBassa.push("nessun_materiale");
+    else if (!testiSostanziosi.length) motiviCertezzaBassa.push("testo_breve");
+    if (input.sezioniViste !== true) motiviCertezzaBassa.push("sezioni_non_confermate");
+    if (nonsoRichieste) motiviCertezzaBassa.push("nonso_richieste");
+  }
+
+  return { verdetto: v, contrasti: contrasti, basataSu: basataSu, avvisi: avvisi,
+    motiviCertezzaBassa: motiviCertezzaBassa };
+}
+
+/* Riepilogo per la schermata di conferma: quante domande visibili hanno una risposta, e quanti "Non so". */
+function contaRisposte(questionario, risposte) {
+  var c = { risposte: 0, nonso: 0 };
+  domandeVisibili(questionario, risposte || {}).forEach(function (d) {
+    var v = (risposte || {})[d.codice];
+    if (v) c.risposte++;
+    if (v === "nonso") c.nonso++;
+  });
+  return c;
 }
 
 if (typeof module !== "undefined") {
   module.exports = { costruisciVerdetto: costruisciVerdetto, risorseDaPayload: risorseDaPayload,
-    codiciAutomatici: codiciAutomatici };
+    codiciAutomatici: codiciAutomatici, domandaVisibile: domandaVisibile, domandeVisibili: domandeVisibili,
+    contaRisposte: contaRisposte };
 }

@@ -87,7 +87,7 @@ def scheletro(username: str) -> dict:
         "bot": {"username": username, "tipo": "", "link": []},
         "verdetto": None, "fiducia": None, "punteggio_totale": None, "rischio_finale": None,
         "pesi": dict(PESI),
-        "linee_rosse": [], "rosso_da_segnalazioni": False,
+        "linee_rosse": [], "rosso_da_segnalazioni": False, "rosso_da_imitazione": False,
         "aree": {a: {"rischio": 0, "segnali": []} for a in PESI},
         "contesto": {"materiale_utente": False, "tecnica_completa": False, "fonti_indipendenti": 0},
         "cosa_fare": [], "cosa_non_fare": [], "non_verificato": [], "fonti": [],

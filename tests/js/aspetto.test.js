@@ -44,7 +44,9 @@ test("notaProssimita: mai quando prevale una regola", () => {
 test("motivoRegola: perché il rischio finale è diverso dalla media", () => {
   assert.strictEqual(A.motivoRegola(verdetto(100, 44, { linee_rosse: [{ codice: "x" }] })), "linea_rossa");
   assert.strictEqual(A.motivoRegola(verdetto(61, 12, { rosso_da_segnalazioni: true })), "segnalazioni");
+  assert.strictEqual(A.motivoRegola(verdetto(61, 27, { rosso_da_imitazione: true })), "imitazione");
   assert.strictEqual(A.motivoRegola(verdetto(31, 5)), "prudenza");
+  assert.strictEqual(A.motivoRegola(verdetto(20, 0, { verde_con_riserva: true })), "riserva");
   assert.strictEqual(A.motivoRegola(verdetto(44, 44)), null);
   assert.strictEqual(A.motivoRegola({ punteggio_totale: 29, linee_rosse: [{ codice: "x" }] }), null); // verdetto vecchio
 });

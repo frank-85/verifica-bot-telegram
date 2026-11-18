@@ -10,7 +10,9 @@ def test_node_test_verdi():
     node = trova_node()
     if not node:
         pytest.skip("Node.js non trovato")
-    r = subprocess.run([node, "--test", "tests/js/*.test.js"], cwd=KIT, capture_output=True, timeout=120)
+    # reporter fisso: senza terminale Node 22 sceglie TAP ("# fail 0"), Node 24 spec ("ℹ fail 0")
+    r = subprocess.run([node, "--test", "--test-reporter=spec", "tests/js/*.test.js"],
+                       cwd=KIT, capture_output=True, timeout=120)
     uscita = r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace")
     assert r.returncode == 0, uscita[-3000:]
     assert "ℹ fail 0" in uscita

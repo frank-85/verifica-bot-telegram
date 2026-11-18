@@ -4,13 +4,14 @@
 
 var _nome = typeof module !== "undefined" ? require("./nome.js") : null;
 function _analizzaNome(u, m) { return (_nome ? _nome.analizzaNome : analizzaNome)(u, m); }
+var _sicurezzaAnalizzatore = typeof module !== "undefined" ? require("./sicurezza.js") : null;
+function _registrabile(host) { return (_sicurezzaAnalizzatore ? _sicurezzaAnalizzatore.dominioBase : dominioBase)(host); }
 
 /* Negazione legata al verbo e nella stessa frase: "never enter…", "non inserire mai…". */
 var NEGAZIONE = /\b(never|do not|don't|dont|non|mai)\s+(\w+\s+){0,2}(share|send|give|enter|type|paste|import|condivid\w*|dar\w*|invia\w*|inser\w*|comunic\w*|incoll\w*|digit\w*)\b/u;
 var FINESTRA_NEGAZIONE = 60;
 var MAX_FRASE = 120;
 var TLD_RISCHIOSI = ["zip", "mov", "top", "xyz", "click", "gq", "tk", "ml", "cf", "ga", "icu", "buzz"];
-var SECONDO_LIVELLO = ["co", "com", "org", "net", "gov", "ac", "edu"];
 
 function normalizzaTesto(t) {
   return String(t || "").normalize("NFKC").toLowerCase().replace(/\s+/gu, " ").trim();
@@ -56,14 +57,6 @@ function analizzaTesto(testo, regole) {
   return ordine.map(function (c) { return trovati[c]; });
 }
 
-function _registrabile(host) {
-  var parti = host.split(".").filter(Boolean);
-  if (parti[0] === "www") parti = parti.slice(1);
-  if (parti.length >= 3 && SECONDO_LIVELLO.indexOf(parti[parti.length - 2]) >= 0 && parti[parti.length - 1].length === 2)
-    return parti.slice(-3).join(".");
-  return parti.slice(-2).join(".");
-}
-
 /* Marchi in TUTTO l'indirizzo, sottodomini compresi (porting di rete.marchi_nel_host).
    Sito ufficiale (nome registrato = marchio) escluso con i suoi sottodomini;
    nei sottodomini i marchi generici ("wallet") non contano. */
@@ -103,15 +96,17 @@ function analizzaLink(url, marchi) {
     avvisi.push("Il dominio usa caratteri ingannevoli (punycode): può imitare un nome noto");
   var reg = _registrabile(host);
   var tld = reg.split(".").pop();
-  if (TLD_RISCHIOSI.indexOf(tld) >= 0) avvisi.push("Estensione del dominio spesso usata per siti usa e getta (." + tld + ")");
   if (u.protocol === "http:") avvisi.push("Il collegamento non è cifrato (http)");
+  var mostrato = host.replace(/^www\./, "");
   var imitazioni = _marchiNelHost(host, reg, marchi);
   if (imitazioni.length) {
-    var mostrato = host.replace(/^www\./, "");
     segnali.push({ codice: "dominio_con_marchio", area: "tecnica",
       frase: "L'indirizzo " + mostrato + " richiama il marchio " + imitazioni.join(", ") +
         " senza esserne il sito ufficiale" });
   }
+  // taratura 17/11/2026: da semplice avviso a segnale con peso basso (5 punti)
+  if (TLD_RISCHIOSI.indexOf(tld) >= 0) segnali.push({ codice: "dominio_tld_rischioso", area: "tecnica",
+    frase: "L'indirizzo " + mostrato + " usa l'estensione ." + tld + ", spesso usata per siti usa e getta" });
   return { valido: true, host: host, segnali: segnali, avvisi: avvisi };
 }
 

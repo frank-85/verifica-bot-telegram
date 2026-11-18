@@ -12,24 +12,30 @@ const QUESTIONARIO = JSON.parse(leggi("app/questionario.json"));
 const RISORSE = risorseDaPayload({ catalogo: CATALOGO, questionario: QUESTIONARIO,
   regole: JSON.parse(leggi("app/analizzatore.json")), marchi: leggi("marchi.txt") });
 
-const tuttiCodiciDomande = () => QUESTIONARIO.aree.flatMap((a) => a.domande.map((d) => d.codice));
-function tutteNo() {
+const tuttiCodiciDomande = () => QUESTIONARIO.pagine.flatMap((a) => a.domande.map((d) => d.codice));
+const tutteDomande = () => QUESTIONARIO.pagine.flatMap((a) => a.domande);
+/* Risposte che non accendono alcun segnale: "No" alle domande sul rischio, "Sì" a quelle in positivo. */
+function risposteSicure() {
   const r = {};
-  for (const c of tuttiCodiciDomande()) r[c] = "no";
+  for (const d of tutteDomande()) r[d.codice] = d.segnale_se === "no" ? "si" : "no";
   return r;
 }
 function input(extra) {
-  return Object.assign({ username: "ProvaBot", nomeVisualizzato: "", risposte: tutteNo(), sezioniViste: true,
+  return Object.assign({ username: "ProvaBot", nomeVisualizzato: "", risposte: risposteSicure(), sezioniViste: true,
     testi: [], linkMiniApp: "", linkSegnalazioni: [], linkPositivi: [] }, extra);
 }
 
-test("solo risposte No, nessun materiale → giallo, certezza bassa", () => {
+// 18/11/2026 (Francesco): lo screenshot non è bloccante. Risposte complete e pulite → verde con riserva:
+// la prova mancante aggiunge 20 punti e la certezza resta bassa.
+test("solo risposte sicure, nessun materiale → verde con riserva, rischio 20, certezza bassa", () => {
   const { verdetto } = costruisciVerdetto(input({}), RISORSE);
-  assert.strictEqual(verdetto.verdetto, "giallo");
+  assert.strictEqual(verdetto.verdetto, "verde");
   assert.strictEqual(verdetto.fiducia, "bassa");
+  assert.strictEqual(verdetto.verde_con_riserva, true);
+  assert.strictEqual(verdetto.rischio_finale, verdetto.punteggio_totale + 20);
 });
 
-test("risposte No + testo innocuo analizzato → verde, certezza media", () => {
+test("risposte sicure + testo innocuo analizzato → verde, certezza media", () => {
   const { verdetto, basataSu } = costruisciVerdetto(input({ username: "wallet",
     testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE);
   assert.strictEqual(verdetto.verdetto, "verde");
@@ -38,7 +44,7 @@ test("risposte No + testo innocuo analizzato → verde, certezza media", () => {
 });
 
 test("Sì a una linea rossa → rosso, certezza alta", () => {
-  const r = tutteNo(); r.richiesta_seed_o_codici = "si";
+  const r = risposteSicure(); r.richiesta_seed_o_codici = "si";
   const { verdetto } = costruisciVerdetto(input({ risposte: r }), RISORSE);
   assert.strictEqual(verdetto.verdetto, "rosso");
   assert.strictEqual(verdetto.fiducia, "alta");
@@ -55,7 +61,7 @@ test("risposta No smentita dal testo → rosso con contrasto", () => {
 });
 
 test("Sì + stesso codice trovato dal controllo → un solo segnale, nessun contrasto", () => {
-  const r = tutteNo(); r.prelievo_condizionato = "si";
+  const r = risposteSicure(); r.prelievo_condizionato = "si";
   const { verdetto, contrasti } = costruisciVerdetto(input({ risposte: r,
     testi: [{ origine: "incollato", testo: "deposit to withdraw" }] }), RISORSE);
   assert.strictEqual(verdetto.aree.richieste.segnali.filter((s) => s.codice === "prelievo_condizionato").length, 1);
@@ -87,14 +93,14 @@ test("username normalizzato; vuoto → errore", () => {
 });
 
 test("nome che imita un marchio → segnale dal controllo del nome", () => {
-  const { verdetto } = costruisciVerdetto(input({ username: "MetamasksAppWebBot" }), RISORSE);
+  const { verdetto } = costruisciVerdetto(input({ username: "MetamasksAppWebEsempioBot" }), RISORSE);
   const codici = verdetto.aree.identita.segnali.map((s) => s.codice);
   assert.ok(codici.includes("nome_imita_marchio"));
   assert.ok(codici.includes("nome_parole_esca"));
 });
 
 test("Non so e sezioni non viste → in non verificato", () => {
-  const r = tutteNo(); r.richiesta_deposito = "nonso";
+  const r = risposteSicure(); r.richiesta_deposito = "nonso";
   const { verdetto } = costruisciVerdetto(input({ risposte: r, sezioniViste: false }), RISORSE);
   assert.ok(verdetto.non_verificato.some((t) => /prelievo/.test(t)));
   const fuori = verdetto.non_verificato.filter((t) => t.startsWith("Non verificabile da questo strumento"));
@@ -104,17 +110,115 @@ test("Non so e sezioni non viste → in non verificato", () => {
 
 test("copertura del catalogo: ogni codice ha una provenienza, nessun codice inventato", () => {
   const cat = new Set(CATALOGO.map((c) => c.codice));
-  const domande = tuttiCodiciDomande();
-  for (const c of domande) assert.ok(cat.has(c), c);
-  assert.strictEqual(new Set(domande).size, domande.length, "domande duplicate");
-  const coperti = new Set([...domande, ...QUESTIONARIO.non_coperti, ...codiciAutomatici()]);
+  // codici prodotti o coperti dalle domande: codice, codice_se_si, assorbe (accorpati in un'altra domanda)
+  const daDomande = tutteDomande().flatMap((d) => [d.codice].concat(d.codice_se_si ? [d.codice_se_si] : [], d.assorbe || []));
+  for (const c of daDomande) assert.ok(cat.has(c), c);
+  assert.strictEqual(new Set(daDomande).size, daDomande.length, "codici duplicati tra le domande");
+  for (const c of QUESTIONARIO.non_coperti) assert.ok(!daDomande.includes(c), "sia domanda sia non coperto: " + c);
+  const coperti = new Set([...daDomande, ...QUESTIONARIO.non_coperti, ...codiciAutomatici()]);
   for (const c of cat) assert.ok(coperti.has(c), "senza provenienza: " + c);
+});
+
+// --- domande ridotte e accorpate (17/11/2026) ---
+const risp = (extra) => Object.assign(risposteSicure(), extra);
+const conta = (v, codice) => Object.values(v.aree).reduce((n, a) => n + a.segnali.filter((s) => s.codice === codice).length, 0);
+
+test("questionario ridotto: 19 domande su 4 pagine, ogni id unico", () => {
+  assert.strictEqual(QUESTIONARIO.pagine.length, 4);
+  assert.strictEqual(tutteDomande().length, 19);
+  const ids = tutteDomande().map((d) => d.id);
+  assert.strictEqual(new Set(ids).size, ids.length);
+});
+
+test("domande condizionali: mostra_se punta a una domanda precedente della stessa pagina", () => {
+  for (const p of QUESTIONARIO.pagine) {
+    p.domande.forEach((d, i) => {
+      if (!d.mostra_se) return;
+      const prima = p.domande.slice(0, i).map((x) => x.codice);
+      assert.ok(prima.includes(d.mostra_se.codice), d.id);
+      assert.ok(d.mostra_se.risposte.length && d.mostra_se.risposte.every((r) => ["si", "no", "nonso"].includes(r)), d.id);
+    });
+  }
+  const condizionali = tutteDomande().filter((d) => d.mostra_se).map((d) => d.id).sort();
+  assert.deepStrictEqual(condizionali, ["q_consob", "q_garantito", "q_inviti"]);
+});
+
+test("senza promesse di guadagno le 3 domande condizionali non servono e non contano", () => {
+  const r = risp({ promessa_guadagno: "no" });
+  for (const c of ["rendimento_garantito", "referral_piramidale", "consob_oscurato"]) delete r[c];
+  const v = costruisciVerdetto(input({ risposte: r }), RISORSE).verdetto; // nessun errore "risposte mancanti"
+  // una risposta rimasta da prima (domanda poi nascosta) viene ignorata
+  const vecchia = costruisciVerdetto(input({ risposte: risp({ promessa_guadagno: "no", rendimento_garantito: "si" }) }), RISORSE).verdetto;
+  assert.strictEqual(conta(vecchia, "rendimento_garantito"), 0);
+  assert.ok(!v.non_verificato.some((t) => /garantiti/.test(t)));
+});
+
+test("con promesse di guadagno (Sì o Non so) le domande condizionali sono obbligatorie e contano", () => {
+  for (const g of ["si", "nonso"]) {
+    const r = risp({ promessa_guadagno: g }); delete r.rendimento_garantito;
+    assert.throws(() => costruisciVerdetto(input({ risposte: r }), RISORSE), /risposte mancanti/, g);
+    const v = costruisciVerdetto(input({ risposte: risp({ promessa_guadagno: g, rendimento_garantito: "si" }) }), RISORSE).verdetto;
+    assert.strictEqual(v.verdetto, "rosso", g);
+  }
+});
+
+test("accorpate: seed in chat o nella Mini App → una sola linea rossa, nessun doppio conteggio", () => {
+  const v = costruisciVerdetto(input({ risposte: risp({ richiesta_seed_o_codici: "si" }) }), RISORSE).verdetto;
+  assert.strictEqual(conta(v, "richiesta_seed_o_codici"), 1);
+  assert.strictEqual(conta(v, "pagina_seed_phrase"), 0);
+  assert.strictEqual(v.linee_rosse.length, 1);
+});
+
+// --- semplificazione 17/11/2026: all'utente si chiede solo ciò che vede ---
+test("gestore: si chiede solo se è dichiarato; Sì → nulla, No → non dichiarato, mai 'verificabile'", () => {
+  const per = (x) => costruisciVerdetto(input({ risposte: risp({ gestore_non_dichiarato: x }) }), RISORSE).verdetto;
+  for (const x of ["si", "no", "nonso"]) assert.strictEqual(conta(per(x), "gestore_dichiarato_verificabile"), 0, x);
+  assert.deepStrictEqual(["si", "no", "nonso"].map((x) => conta(per(x), "gestore_non_dichiarato")), [0, 1, 0]);
+  // la verifica della società (registro delle imprese) è un lavoro da analisi completa
+  assert.ok(QUESTIONARIO.non_coperti.includes("gestore_dichiarato_verificabile"));
+});
+
+test("nessuna domanda chiede all'utente di fare verifiche da analista", () => {
+  for (const d of tutteDomande()) {
+    assert.ok(!/hai (potuto )?verificat|registro delle imprese|partita iva che hai/i.test(d.testo + " " + d.aiuto), d.id);
+    assert.strictEqual(d.codice_se_si, undefined, d.id);
+  }
+});
+
+test("solo Sì/No dove la cosa salta all'occhio: seed phrase, comando da incollare, file ricevuto", () => {
+  const soloSiNo = tutteDomande().filter((d) => d.risposte).map((d) => d.codice).sort();
+  assert.deepStrictEqual(soloSiNo, ["file_pericoloso_estensione", "richiesta_comando_pc", "richiesta_seed_o_codici"]);
+  for (const codice of soloSiNo) {
+    assert.deepStrictEqual(tutteDomande().find((d) => d.codice === codice).risposte, ["si", "no"], codice);
+    assert.throws(() => costruisciVerdetto(input({ risposte: risp({ [codice]: "nonso" }) }), RISORSE), /risposte mancanti/, codice);
+  }
+});
+
+test("seed phrase: solo Sì o No, perché una richiesta così si nota", () => {
+  const seed = tutteDomande().find((d) => d.codice === "richiesta_seed_o_codici");
+  assert.deepStrictEqual(seed.risposte, ["si", "no"]);
+  assert.ok(!/Mini App/.test(seed.testo) && /Mini App/.test(seed.aiuto), "la Mini App sta nell'aiuto, non nella domanda");
+  // "Non so" non è una risposta ammessa: vale come risposta mancante
+  assert.throws(() => costruisciVerdetto(input({ risposte: risp({ richiesta_seed_o_codici: "nonso" }) }), RISORSE), /risposte mancanti/);
+  for (const d of tutteDomande()) {
+    if (d.risposte) assert.ok(d.risposte.every((x) => ["si", "no", "nonso"].includes(x)) && d.risposte.includes("si"), d.id);
+  }
+});
+
+test("Non so sulle richieste: conta l'area del segnale, non la pagina", () => {
+  const motiviDi = (r) => costruisciVerdetto(input({ risposte: r, testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE).motiviCertezzaBassa;
+  assert.deepStrictEqual(motiviDi(risp({ richiesta_dati_personali: "nonso" })), ["nonso_richieste"]);
+  assert.deepStrictEqual(motiviDi(risp({ nessun_sito: "nonso" })), []); // sito: area trasparenza
+});
+
+test("le domande tolte finiscono tra i controlli non coperti dall'autovalutazione", () => {
+  for (const c of ["nome_incoerente_servizio", "recensioni_sospette"]) assert.ok(QUESTIONARIO.non_coperti.includes(c), c);
 });
 
 test("il verdetto ha lo schema v1 e materiale analizzato imposta il contesto", () => {
   const { verdetto } = costruisciVerdetto(input({ testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE);
   assert.strictEqual(verdetto.versione_schema, 1);
-  assert.deepStrictEqual(verdetto.contesto, { materiale_utente: true, tecnica_completa: false, fonti_indipendenti: 1 });
+  assert.deepStrictEqual(verdetto.contesto, { materiale_utente: true, tecnica_completa: false, fonti_indipendenti: 1, risposte_complete: true });
   for (const k of ["cosa_fare", "cosa_non_fare", "non_verificato", "fonti"]) assert.ok(Array.isArray(verdetto[k]), k);
 });
 
@@ -125,14 +229,16 @@ test("revisione: risposte mancanti → errore che chiede di rispondere", () => {
 
 const TESTO_LUNGO = "Benvenuto nel bot del meteo: scegli la tua città e ricevi le previsioni ogni mattina.";
 
-test("revisione: testo troppo corto non conta come materiale → niente verde", () => {
+// 18/11/2026: senza materiale vero il verde pieno resta escluso; è possibile solo il verde con riserva
+test("revisione: testo troppo corto non conta come materiale → al massimo verde con riserva", () => {
   const { verdetto } = costruisciVerdetto(input({ testi: [{ origine: "incollato", testo: "hello" }] }), RISORSE);
-  assert.notStrictEqual(verdetto.verdetto, "verde");
   assert.strictEqual(verdetto.contesto.materiale_utente, false);
+  assert.strictEqual(verdetto.fiducia, "bassa");
+  assert.ok(verdetto.verdetto !== "verde" || verdetto.verde_con_riserva);
 });
 
 test("revisione: tutte Non so + testo lungo → niente verde", () => {
-  const r = {}; for (const c of tuttiCodiciDomande()) r[c] = "nonso";
+  const r = tutteNonso();
   const { verdetto } = costruisciVerdetto(input({ risposte: r, testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE);
   assert.notStrictEqual(verdetto.verdetto, "verde");
 });
@@ -142,20 +248,239 @@ test("revisione: sezioni prelievo non viste → niente verde", () => {
   assert.notStrictEqual(verdetto.verdetto, "verde");
 });
 
-test("revisione: tutte No + testo lungo + sezioni viste → verde certezza media", () => {
+test("revisione: risposte sicure + testo lungo + sezioni viste → verde certezza media", () => {
   const { verdetto } = costruisciVerdetto(input({ testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE);
   assert.strictEqual(verdetto.verdetto, "verde");
   assert.strictEqual(verdetto.fiducia, "media");
 });
 
 test("revisione: spunta dichiarata non annulla due segnalazioni", () => {
-  const r = tutteNo(); r.bot_ufficiale_verificato = "si";
+  const r = risposteSicure(); r.bot_ufficiale_verificato = "si";
   const { verdetto } = costruisciVerdetto(input({ risposte: r, linkSegnalazioni: ["https://x.com/a", "https://y.org/b"] }), RISORSE);
   assert.strictEqual(verdetto.verdetto, "rosso");
 });
 
-test("revisione: spunta dichiarata + link positivi, senza materiale → niente verde", () => {
-  const r = tutteNo(); r.bot_ufficiale_verificato = "si";
+// --- domande in positivo (17/11/2026): niente negazioni, la polarità sta in segnale_se ---
+const NEGAZIONI = /\b(non|nessun\w*|manca\w*|mancano|senza|né)\b|sconosciut|incoerent/i;
+const IN_POSITIVO = { nessuna_storia_online: "q_storia",
+  nessun_sito: "q_sito", nessun_termini_privacy: "q_termini", gestore_non_dichiarato: "q_gestore" };
+
+test("domande in positivo: nessuna negazione nel testo delle domande", () => {
+  for (const d of tutteDomande()) assert.ok(!NEGAZIONI.test(d.testo), d.id + ": " + d.testo);
+  assert.ok(!NEGAZIONI.test(QUESTIONARIO.copertura.testo));
+});
+
+test("domande in positivo: segnale_se vale solo 'no' e solo sulle domande girate", () => {
+  for (const d of tutteDomande()) {
+    assert.ok(d.segnale_se === undefined || d.segnale_se === "no", d.id);
+    assert.strictEqual(d.segnale_se === "no", d.codice in IN_POSITIVO, d.id);
+  }
+});
+
+for (const [codice, id] of Object.entries(IN_POSITIVO)) {
+  test("domanda in positivo " + id + ": No → " + codice + ", Sì → nessun segnale", () => {
+    const area = CATALOGO.find((c) => c.codice === codice).area;
+    const no = risposteSicure(); no[codice] = "no";
+    const conNo = costruisciVerdetto(input({ risposte: no }), RISORSE).verdetto;
+    const seg = conNo.aree[area].segnali.find((s) => s.codice === codice);
+    assert.ok(seg);
+    // nel report la prova descrive il rischio, non ripete la domanda in positivo
+    assert.strictEqual(seg.testo, CATALOGO.find((c) => c.codice === codice).descrizione);
+    const conSi = costruisciVerdetto(input({ risposte: risposteSicure() }), RISORSE).verdetto;
+    assert.ok(!conSi.aree[area].segnali.some((s) => s.codice === codice));
+  });
+}
+
+test("domande in positivo: Non so resta senza segnale, finisce tra i non verificati", () => {
+  const r = risposteSicure(); r.nessun_sito = "nonso";
+  const v = costruisciVerdetto(input({ risposte: r }), RISORSE).verdetto;
+  assert.ok(!v.aree.trasparenza.segnali.some((s) => s.codice === "nessun_sito"));
+  assert.ok(v.non_verificato.some((t) => /^Senza risposta: Il bot indica il sito/.test(t)));
+});
+
+test("i codici delle domande in positivo non sono rilevati in automatico (i contrasti restano validi)", () => {
+  const automatici = new Set([...codiciAutomatici(), ...JSON.parse(leggi("app/analizzatore.json")).map((r) => r.codice)]);
+  for (const codice of Object.keys(IN_POSITIVO)) assert.ok(!automatici.has(codice), codice);
+});
+
+// --- correzione A: imitazione composta → rosso, rischio almeno 61 ---
+/* "Non so" a tutto ciò che lo ammette; "No" alle domande solo Sì/No (es. la seed phrase). */
+function tutteNonso() {
+  const r = {};
+  for (const d of tutteDomande()) r[d.codice] = (d.risposte || ["si", "no", "nonso"]).includes("nonso") ? "nonso" : "no";
+  return r;
+}
+const imit = (extra) => costruisciVerdetto(input(Object.assign({ risposte: tutteNonso(), sezioniViste: false }, extra)), RISORSE).verdetto;
+
+test("A: @B1nance_Support_bot + dominio con marchio → rosso da imitazione, 83 (somma ÷ 3)", () => {
+  const v = imit({ username: "B1nance_Support_bot", linkMiniApp: "https://binance-airdrop-claim.xyz/app" });
+  assert.strictEqual(v.rosso_da_imitazione, true);
+  assert.strictEqual(v.verdetto, "rosso");
+  assert.strictEqual(v.rischio_finale, 83);
+  assert.strictEqual(v.fiducia, "bassa");
+  assert.ok(v.aree.tecnica.segnali.some((s) => s.codice === "dominio_tld_rischioso"));
+});
+
+test("A: @B1nance_Support_bot senza link → rosso da imitazione", () => {
+  const v = imit({ username: "B1nance_Support_bot" });
+  assert.strictEqual(v.rosso_da_imitazione, true);
+  assert.strictEqual(v.verdetto, "rosso");
+});
+
+for (const username of ["B1nanceBot", "BinanceP2PEsempioBot", "wallet"]) {
+  test("A: @" + username + " → regola non attiva, giallo come prima", () => {
+    const v = imit({ username });
+    assert.strictEqual(v.rosso_da_imitazione, false);
+    assert.strictEqual(v.verdetto, "giallo");
+    assert.strictEqual(v.rischio_finale, Math.max(31, v.punteggio_totale));
+  });
+}
+
+test("A: la spunta solo dichiarata non spegne la regola", () => {
+  const r = tutteNonso(); r.bot_ufficiale_verificato = "si";
+  assert.strictEqual(imit({ username: "B1nance_Support_bot", risposte: r }).rosso_da_imitazione, true);
+});
+
+// --- correzione B: motivi della certezza bassa ---
+const motivi = (extra) => costruisciVerdetto(input(extra), RISORSE).motiviCertezzaBassa;
+
+test("B: nessun testo né screenshot → solo nessun_materiale", () => {
+  assert.deepStrictEqual(motivi({}), ["nessun_materiale"]);
+});
+
+test("B: testo troppo breve → solo testo_breve", () => {
+  assert.deepStrictEqual(motivi({ testi: [{ origine: "incollato", testo: "hello" }] }), ["testo_breve"]);
+});
+
+test("B: testo lungo ma sezioni prelievo non confermate → solo sezioni_non_confermate", () => {
+  assert.deepStrictEqual(motivi({ sezioniViste: false, testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }),
+    ["sezioni_non_confermate"]);
+});
+
+test("B: testo lungo ma Non so su una domanda delle richieste → solo nonso_richieste", () => {
+  const r = risposteSicure(); r.richiesta_deposito = "nonso";
+  assert.deepStrictEqual(motivi({ risposte: r, testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }),
+    ["nonso_richieste"]);
+});
+
+test("B: due motivi insieme (testo breve + sezioni non confermate)", () => {
+  assert.deepStrictEqual(motivi({ sezioniViste: false, testi: [{ origine: "incollato", testo: "hello" }] }),
+    ["testo_breve", "sezioni_non_confermate"]);
+});
+
+test("B: certezza non bassa → nessun motivo", () => {
+  assert.deepStrictEqual(motivi({ testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), []);
+  const r = risposteSicure(); r.richiesta_seed_o_codici = "si"; // linea rossa → certezza alta
+  assert.deepStrictEqual(motivi({ risposte: r }), []);
+});
+
+test("B: caso della revisione (@wallet, testo incollato, tutte Non so) → mai nessun_materiale", () => {
+  const r = tutteNonso();
+  const out = costruisciVerdetto(input({ username: "wallet", risposte: r, sezioniViste: false,
+    testi: [{ origine: "incollato", testo: "Welcome to Wallet. Buy, sell and store crypto. Terms of service apply." }] }), RISORSE);
+  assert.strictEqual(out.verdetto.fiducia, "bassa");
+  assert.ok(!out.motiviCertezzaBassa.includes("nessun_materiale"));
+  assert.deepStrictEqual(out.motiviCertezzaBassa, ["sezioni_non_confermate", "nonso_richieste"]);
+});
+
+test("B: con testo incollato non compare mai nessun_materiale", () => {
+  for (const testo of ["hello", TESTO_LUNGO]) {
+    for (const sezioniViste of [true, false]) {
+      assert.ok(!motivi({ sezioniViste, testi: [{ origine: "incollato", testo }] }).includes("nessun_materiale"));
+    }
+  }
+});
+
+test("revisione: spunta dichiarata + link positivi, senza materiale → al massimo verde con riserva", () => {
+  const r = risposteSicure(); r.bot_ufficiale_verificato = "si";
   const { verdetto } = costruisciVerdetto(input({ risposte: r, linkPositivi: ["https://a.com/1", "https://b.com/2"] }), RISORSE);
-  assert.notStrictEqual(verdetto.verdetto, "verde");
+  assert.strictEqual(verdetto.fiducia, "bassa");
+  assert.ok(verdetto.verdetto !== "verde" || verdetto.verde_con_riserva);
+});
+
+/* --- schermata di conferma prima dell'esito (18/11/2026) --- */
+const { contaRisposte, domandeVisibili } = require(path.join(KIT, "app", "assembla.js"));
+
+test("contaRisposte: conta solo le domande visibili e i Non so", () => {
+  const r = risposteSicure();
+  const c = contaRisposte(QUESTIONARIO, r);
+  assert.strictEqual(c.risposte, domandeVisibili(QUESTIONARIO, r).length);
+  assert.ok(c.risposte < tutteDomande().length); // le condizionali nascoste non contano
+  assert.strictEqual(c.nonso, 0);
+});
+
+test("contaRisposte: i Non so si contano a parte", () => {
+  const r = risposteSicure();
+  const prima = tutteDomande().find((d) => !d.mostra_se && !d.risposte);
+  r[prima.codice] = "nonso";
+  const c = contaRisposte(QUESTIONARIO, r);
+  assert.strictEqual(c.nonso, 1);
+});
+
+test("contaRisposte: senza risposte → zero", () => {
+  assert.deepStrictEqual(contaRisposte(QUESTIONARIO, {}), { risposte: 0, nonso: 0 });
+});
+
+
+/* --- verde con riserva senza materiale (18/11/2026) --- */
+test("riserva: un solo \"Non so\" → niente verde", () => {
+  const r = risposteSicure();
+  const d = tutteDomande().find((x) => !x.mostra_se && !x.risposte);
+  r[d.codice] = "nonso";
+  const { verdetto } = costruisciVerdetto(input({ risposte: r }), RISORSE);
+  assert.strictEqual(verdetto.verdetto, "giallo");
+  assert.strictEqual(verdetto.verde_con_riserva, false);
+});
+
+test("riserva: sezioni prelievo non aperte → niente verde", () => {
+  const { verdetto } = costruisciVerdetto(input({ sezioniViste: false }), RISORSE);
+  assert.strictEqual(verdetto.verdetto, "giallo");
+  assert.strictEqual(verdetto.verde_con_riserva, false);
+});
+
+test("riserva: piccoli segnali + 20 punti oltre 30 → giallo", () => {
+  const r = risposteSicure();
+  for (const d of tutteDomande()) if (["nessun_sito", "nessun_termini_privacy"].includes(d.codice)) r[d.codice] = d.segnale_se === "no" ? "no" : "si";
+  const { verdetto } = costruisciVerdetto(input({ risposte: r }), RISORSE);
+  assert.strictEqual(verdetto.punteggio_totale, 13); // 40 ÷ 3
+  assert.strictEqual(verdetto.verdetto, "giallo");
+  assert.strictEqual(verdetto.verde_con_riserva, false);
+});
+
+test("riserva: con materiale vero nessun malus", () => {
+  const { verdetto } = costruisciVerdetto(input({ username: "wallet", testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE);
+  assert.strictEqual(verdetto.verdetto, "verde");
+  assert.strictEqual(verdetto.verde_con_riserva, false);
+  assert.strictEqual(verdetto.rischio_finale, verdetto.punteggio_totale);
+});
+
+test("note dell'utente: nel verdetto, ripulite, senza effetto sul punteggio", () => {
+  const senza = costruisciVerdetto(input({}), RISORSE).verdetto;
+  const con = costruisciVerdetto(input({ note: "  mi ha chiesto la seed phrase, non so se fidarmi  " }), RISORSE).verdetto;
+  assert.strictEqual(con.note_utente, "mi ha chiesto la seed phrase, non so se fidarmi");
+  assert.strictEqual(con.rischio_finale, senza.rischio_finale);
+  assert.strictEqual(con.verdetto, senza.verdetto);
+  assert.strictEqual(senza.note_utente, undefined);
+  assert.strictEqual(costruisciVerdetto(input({ note: "x".repeat(5000) }), RISORSE).verdetto.note_utente.length, 2000);
+});
+
+
+/* --- revisione indipendente 18/11/2026 --- */
+test("discrepanza segnalata anche per un segnale assorbito da un'altra domanda (punto 6)", () => {
+  const r = risposteSicure(); // "No" alla domanda sulle esche, che assorbe urgenza_pressione
+  const { verdetto, contrasti } = costruisciVerdetto(input({ risposte: r,
+    testi: [{ origine: "incollato", testo: "Offerta a tempo limitato: agisci ora, restano poche ore per partecipare." }] }), RISORSE);
+  assert.ok(verdetto.aree.promesse.segnali.some((s) => s.codice === "urgenza_pressione"));
+  assert.ok(contrasti.some((c) => c.codice === "urgenza_pressione"), JSON.stringify(contrasti));
+});
+
+test("nessuna discrepanza se la risposta conferma il segnale o è \"Non so\"", () => {
+  const r = risposteSicure();
+  const esche = tutteDomande().find((d) => (d.assorbe || []).includes("urgenza_pressione"));
+  for (const v of ["si", "nonso"]) {
+    r[esche.codice] = v;
+    const { contrasti } = costruisciVerdetto(input({ risposte: r,
+      testi: [{ origine: "incollato", testo: "Offerta a tempo limitato: agisci ora, restano poche ore per partecipare." }] }), RISORSE);
+    assert.ok(!contrasti.some((c) => c.codice === "urgenza_pressione"), v);
+  }
 });

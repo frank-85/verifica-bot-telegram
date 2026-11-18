@@ -13,8 +13,8 @@ sys.path.insert(0, str(KIT))
 import costruisci_app  # noqa: E402
 
 CSP = ("default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; "
-       "style-src 'unsafe-inline'; img-src data: blob:; connect-src https://cdn.jsdelivr.net blob: data:; "
-       "worker-src blob: https://cdn.jsdelivr.net; font-src 'none'; form-action 'none'; base-uri 'none'")
+       "style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://cdn.jsdelivr.net blob: data:; "
+       "worker-src 'self' blob: https://cdn.jsdelivr.net; manifest-src 'self'; font-src 'none'; form-action 'none'; base-uri 'none'")
 FRASI_VIETATE = ["è una truffa", "truffatore", "truffatori", "è uno scam", "scammer"]
 
 
@@ -50,7 +50,10 @@ def test_nessuna_api_vietata(generato, vietato):
 
 def test_nessuna_risorsa_esterna_statica(generato):
     assert not re.search(r'\bsrc="https?:', generato)
-    assert not re.search(r"<link\b", generato)
+    # dal 18/11 (app installabile) i <link> sono ammessi solo verso file dello stesso sito
+    collegamenti = re.findall(r'<link\b[^>]*\bhref="([^"]*)"', generato)
+    assert len(collegamenti) == len(re.findall(r"<link\b", generato)) == 4
+    assert all(not re.match(r"(https?:)?//", h) for h in collegamenti), collegamenti
 
 
 def test_francesco_solo_nella_firma(generato):
@@ -79,17 +82,39 @@ def test_dati_completi(dati):
     for k in ("catalogo", "marchi", "questionario", "regole", "generato", "numero_test"):
         assert k in dati, k
     assert dati["numero_test"] == 123
-    assert len(dati["catalogo"]) == 37
+    assert len(dati["catalogo"]) == 38
 
 
 def test_codice_inventato_nel_questionario_blocca(tmp_path):
     kit = tmp_path / "kit"
     shutil.copytree(KIT, kit, ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache", "scaricati"))
     q = json.loads((kit / "app" / "questionario.json").read_text(encoding="utf-8"))
-    q["aree"][0]["domande"][0]["codice"] = "codice_inventato"
+    q["pagine"][0]["domande"][0]["codice"] = "codice_inventato"
     (kit / "app" / "questionario.json").write_bytes(json.dumps(q, ensure_ascii=False).encode("utf-8"))
     with pytest.raises(SystemExit, match="codice_inventato"):
         costruisci_app.costruisci(kit, tmp_path / "x.html")
+
+
+def test_codice_inventato_negli_accorpamenti_blocca(tmp_path):
+    kit = tmp_path / "kit"
+    shutil.copytree(KIT, kit, ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache", "scaricati"))
+    q = json.loads((kit / "app" / "questionario.json").read_text(encoding="utf-8"))
+    q["pagine"][0]["domande"][0]["assorbe"] = ["codice_inventato"]
+    (kit / "app" / "questionario.json").write_bytes(json.dumps(q, ensure_ascii=False).encode("utf-8"))
+    with pytest.raises(SystemExit, match="codice_inventato"):
+        costruisci_app.costruisci(kit, tmp_path / "x.html")
+
+
+def test_domande_condizionali_nella_pagina(generato):
+    # la pagina mostra/nasconde le domande con la stessa regola del motore e chiede solo quelle visibili
+    assert generato.count("function domandaVisibile(") == 1
+    assert "fs.hidden = !domandaVisibile(d, stato.risposte)" in generato
+    assert ".filter(function (d) { return domandaVisibile(d, stato.risposte); })" in generato
+
+
+def test_domande_solo_si_no_nella_pagina(generato):
+    # i pulsanti mostrati sono solo le risposte ammesse dalla domanda (seed phrase: niente "Non so")
+    assert "RISPOSTE_TUTTE.filter(function (o) { return (d.risposte || RISPOSTE_AMMESSE).indexOf(o[0]) >= 0; })" in generato
 
 
 def test_nomi_globali_js_non_si_scontrano():
@@ -151,12 +176,40 @@ def test_revisione_report_autovalutazione_disinnesca_sempre(generato):
     assert "sempre: autoval" in generato
 
 
+MESSAGGI_CERTEZZA_BASSA = {
+    "nessun_materiale": "Non hai fornito testo o screenshot del bot: aggiungili per una valutazione più solida.",
+    "testo_breve": "Il testo fornito è troppo breve per essere analizzato in modo affidabile: "
+                   "incolla messaggi più completi.",
+    "sezioni_non_confermate": "Non hai confermato di aver aperto le sezioni prelievo, pagamenti e inviti: "
+                              "sono quelle dove compaiono più spesso le richieste di denaro.",
+    "nonso_richieste": "Hai risposto \\\"Non so\\\" ad alcune domande sulle richieste del bot: "
+                       "sono le più importanti per la valutazione.",
+}
+
+
+@pytest.mark.parametrize("codice", list(MESSAGGI_CERTEZZA_BASSA))
+def test_b_un_messaggio_per_ogni_motivo_di_certezza_bassa(generato, codice):
+    assert f'{codice}: "{MESSAGGI_CERTEZZA_BASSA[codice]}"' in generato
+
+
+def test_b_niente_messaggio_unico_sbagliato(generato):
+    assert "non ha potuto analizzare materiale proveniente dal bot" not in generato
+    assert "motiviCertezzaBassa: r.motiviCertezzaBassa" in generato  # passati dal questionario al report
+
+
+def test_a_frase_prevale_imitazione(generato):
+    assert "Prevale la regola sull'imitazione. " in generato
+    assert ("Il nome richiama un marchio noto e contiene parole esca o rimanda a un dominio "
+            "che usa lo stesso marchio") in generato
+    assert 'motivo === "imitazione"' in generato  # anche nel sottotitolo dell'esito
+
+
 def test_app_mostra_rischio_finale(generato, dati):
     # il KPI e le schede dei casi mostrano il rischio finale, non la media
     assert generato.count("function rischioFinale(v)") == 1  # una sola definizione, in aspetto.js
     assert 'rischioFinale(v) + "/100' in generato
     assert 'classe: "valore", testo: v.punteggio_totale' not in generato and '"Rischio " + v.punteggio_totale' not in generato
-    assert "Media delle 6 aree" in generato
+    assert "Punteggio delle aree" in generato and "Media delle 6 aree" not in generato
 
 
 # ---------- restyling B2 (Task 2): sistema visivo, esito, tema ----------
@@ -223,7 +276,7 @@ def test_b2_barra_del_rischio(generato):
 
 def test_b2_esito_note_e_ordine(generato):
     for testo in ("Verde · non è una garanzia", '"Giallo · "', '"Rosso · "', "notaProssimita(v)", "motivoRegola(v)",
-                  "Rischio complessivo", "Media delle 6 aree: "):
+                  "Rischio complessivo", "Punteggio delle aree: "):
         assert testo in generato, testo
     for funzione in ("rischioFinale", "zonaRischio", "posizioneIndicatore", "notaProssimita", "motivoRegola"):
         assert generato.count("function %s(" % funzione) == 1, funzione
@@ -267,7 +320,7 @@ def test_b2_avanzamento_con_nome_del_passo(generato):
     assert 'classe: "passo-nome"' in generato
     assert "nomePasso(p)" in generato and generato.count("function nomePasso(") == 1
     corpo = generato[generato.index("function nomePasso("):generato.index("function passoPremessa(")]
-    for nome in ('"Identificazione del bot"', '"Materiale del bot"', '"Controlli finali"', ".titolo"):
+    for nome in ('"Identificazione del bot"', '"Materiale del bot"', '"Ultimo controllo"', ".titolo"):
         assert nome in corpo, nome
     assert '"Passo " + p + " di " + ULTIMO' in generato
 
@@ -346,3 +399,81 @@ def test_nessun_caso_reale_incorporato(generato, dati):
     # versione pubblica: nessuna verifica gia' svolta su bot reali dentro la pagina
     assert "verdetti" not in dati
     assert "Casi reali" not in generato and 'data-scheda="casi"' not in generato
+
+
+# ---------- schermata di conferma e passo finale leggero (18/11/2026) ----------
+
+def _corpo(generato, inizio, fine):
+    return generato[generato.index(inizio):generato.index(fine)]
+
+
+def test_conferma_prima_dell_esito(generato):
+    corpo = _corpo(generato, "function passoRiepilogo(", "function disegnaProva(")
+    assert "Tutto pronto" in corpo and "contaRisposte(Q, stato.risposte)" in corpo
+    assert "Mostra l'esito" in generato and "Calcola il semaforo" not in generato
+    # la gratificazione non anticipa il colore: niente verde/ambra/rosso nella schermata di conferma
+    for colore in ("--verde", "--ambra", "--rosso", "t-verde"):
+        assert colore not in corpo, colore
+    assert "certezza" in corpo  # senza materiale lo dice prima dell'esito, con la via per rimediare
+    assert "var RIEPILOGO = ULTIMO + 1" in generato
+    assert "if (p > RIEPILOGO) { disegnaRisultato(sezione)" in generato
+
+
+def test_conferma_animazione_solo_senza_riduzione_movimento(generato):
+    css = _css(generato)
+    assert ".conferma-segno" in css
+    movimento = _blocchi_media(css, "(prefers-reduced-motion: no-preference)")
+    assert ".conferma-segno" in movimento
+
+
+def test_passo_finale_link_facoltativi_raccolti(generato):
+    corpo = _corpo(generato, "function passoCopertura(", "function passoRiepilogo(")
+    assert corpo.index('el("details"') < corpo.index('"linkSegnalazioni"')  # i link restano a scomparsa
+
+
+# ---------- verde con riserva e note (18/11/2026) ----------
+
+def test_riepilogo_senza_materiale_non_bloccante(generato):
+    corpo = _corpo(generato, "function passoRiepilogo(", "function disegnaProva(")
+    assert "non potrà essere verde" not in corpo
+    assert "20 punti di prudenza" in corpo and "Aggiungi materiale" in corpo
+
+
+def test_esito_verde_con_riserva_spiegato(generato):
+    assert 'motivo === "riserva"' in generato
+    assert "Verde con riserva" in generato
+
+
+def test_giallo_senza_segnali_da_confermare(generato):
+    assert "Nessun segnale grave · da confermare" in generato
+
+
+def test_note_facoltative(generato):
+    corpo = _corpo(generato, "function passoCopertura(", "function passoRiepilogo(")
+    assert '"note"' in corpo and "microfono della tastiera" in corpo and "non cambiano il punteggio" in corpo
+    assert "Le tue note" in generato and "note: stato.note" in generato
+
+
+# ---------- revisione indipendente 18/11/2026 ----------
+
+def test_gruppi_di_risposta_hanno_un_nome_accessibile(generato):
+    corpo = _corpo(generato, "function scelta(", "function nomePasso(")
+    assert '"aria-labelledby": etichetta' in corpo
+    assert generato.count('id: "l_" + d.id') == 1 and 'id: "l_" + Q.copertura.id' in generato
+
+
+def test_focus_sul_titolo_del_passo_dopo_avanti(generato):
+    assert 'classe: "passo-nome", tabindex: "-1"' in generato
+    corpo = _corpo(generato, "function avanti(", "function disegnaRisultato(")
+    assert "titoloPasso()" in corpo
+
+
+def test_riepilogo_promette_i_20_punti_solo_come_possibilita(generato):
+    corpo = _corpo(generato, "function passoRiepilogo(", "function disegnaProva(")
+    assert "il verde è possibile solo" in corpo and "con riserva" in corpo and "altrimenti l'esito è giallo" in corpo
+    assert "MIN_LETTERE_MATERIALE" in corpo  # come il motore: conta solo il testo di almeno 40 lettere
+
+
+def test_libreria_non_promette_zero_cache(generato):
+    assert "Nulla viene salvato sul dispositivo e il servizio" not in generato
+    assert "il browser può tenerla in cache come per qualsiasi sito" in generato

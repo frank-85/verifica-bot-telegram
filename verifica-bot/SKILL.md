@@ -31,7 +31,7 @@ Comando base (dal kit): `& "<python>" -I controlli.py <sottocomando> ...`
 4. **Controlli tecnici** (cartella `--cartella <verifica>\scaricati`):
    - `nome <username>` → imitazioni di marchi e parole esca.
    - `anteprima <username> --cartella …` → titolo (anche `titolo_normalizzato`: lettere Unicode "decorative" = tentativo di eludere i filtri), descrizione, utenti mensili, `verificato`, `scam`/`fake`, `esiste`.
-   - Per ogni link: `dominio <url>` (età, registrar, marchio nel dominio **e nei sottodomini**, es. `marchio.sito-falso.xyz`; sito ufficiale escluso; IP numerico → `ip_diretto: true`, nessuna richiesta RDAP) e `pagina <url> --cartella …` (seed phrase, comando da incollare, offuscamento, script e invii verso altri domini).
+   - Per ogni link: `dominio <url>` (età, registrar, marchio nel dominio **e nei sottodomini**, es. `marchio.sito-falso.xyz`; sito ufficiale escluso; IP numerico → `ip_diretto: true`, nessuna richiesta RDAP; `tld_rischioso` valorizzato → segnale `dominio_tld_rischioso`) e `pagina <url> --cartella …` (seed phrase, comando da incollare, offuscamento, script e invii verso altri domini).
    - Per ogni file: `file <percorso>` (impronta, estensione, zip, Defender, link VirusTotal da aprire a mano).
 5. **Ricerca web** (6-10 ricerche, WebSearch/WebFetch). Query:
    - `"@<username>"` e `"<username>"` (con e senza @)
@@ -45,13 +45,13 @@ Comando base (dal kit): `& "<python>" -I controlli.py <sottocomando> ...`
 6. **Compila `verdetto.json`** usando **solo** i codici del catalogo qui sotto. Ogni segnale: `{"codice", "tipo_prova": "diretta"|"segnalazione", "testo", "fonte"}`.
    - `diretta` = materiale dell'utente, codice scaricato, Defender, etichetta Telegram, descrizione pubblica del bot (`anteprima`), elenchi CONSOB. `segnalazione` = post, recensioni, forum di terzi.
    - Ogni codice va **nella sua area** (colonna "Area" del catalogo) e le aree si scrivono senza accenti: `identita`, `promesse`, `richieste`, `tecnica`, `reputazione`, `trasparenza`. Altrimenti il calcolo si ferma con un errore.
-   - Le linee rosse scattano solo con prova `diretta`. Due `segnalazione_truffa` di tipo `segnalazione`, con `fonte` compilata e da siti diversi, portano al 🔴 dichiarato come "segnalato da terzi", **tranne** se il bot ha `bot_ufficiale_verificato` con prova diretta: i servizi ufficiali raccolgono spesso post "scam" di utenti scontenti.
+   - Le linee rosse scattano solo con prova `diretta`. Due `segnalazione_truffa` di tipo `segnalazione`, con `fonte` compilata e da siti diversi (i sottodomini dello stesso sito contano una volta: `news.bbc.co.uk` e `www.bbc.co.uk` sono lo stesso sito), portano al 🔴 dichiarato come "segnalato da terzi", **tranne** se il bot ha `bot_ufficiale_verificato` con prova diretta: i servizi ufficiali raccolgono spesso post "scam" di utenti scontenti.
    - Segnale fuori catalogo solo se indispensabile e solo con un codice che **non** esiste nel catalogo: `"fuori_catalogo": true, "punti": <n>` (da −50 a 100) motivati nel `testo`.
    - `materiale_utente` e `tecnica_completa` sono `true`/`false` senza virgolette; `fonti_indipendenti` è un numero intero.
    - `contesto`: `materiale_utente` (ha fornito testi/screenshot?), `tecnica_completa` (hai analizzato almeno nome, anteprima e tutti i link/Mini App?), `fonti_indipendenti` (quante fonti web indipendenti hanno detto qualcosa di rilevante).
    - `bot.tipo`, `bot.link`, `cosa_fare`, `cosa_non_fare`, `non_verificato` (es. "codice lato server", "Mini App: link non fornito"), `fonti` (`titolo`, `url`, `consultata`).
 7. **Calcola:** `controlli.py punteggio <verifica>\verdetto.json` → riscrive il JSON e crea `resoconto.md`. Il colore lo decide il calcolo: **non correggerlo a mano**. Se ti sembra sbagliato, rivedi i segnali o segnalalo all'utente come possibile taratura.
-8. **Sintesi in chat:** semaforo + **rischio finale** (`rischio_finale`, sempre nella zona del colore: linea rossa = 100; se diverso dalla media, cita anche la media delle aree) + **fiducia nel bot** (🟢 alta · 🟡 media · 🔴 bassa, segue sempre il colore) + **certezza della valutazione** (quante prove c'erano), 3-5 motivi principali, cosa fare / cosa NON fare, cosa non si è potuto verificare, percorso di `resoconto.md`.
+8. **Sintesi in chat:** semaforo + **rischio finale** (`rischio_finale`, sempre nella zona del colore: linea rossa = 100; se diverso dal punteggio delle aree, cita anche quel punteggio) + **fiducia nel bot** (🟢 alta · 🟡 media · 🔴 bassa, segue sempre il colore) + **certezza della valutazione** (quante prove c'erano), 3-5 motivi principali, cosa fare / cosa NON fare, cosa non si è potuto verificare, percorso di `resoconto.md`.
 
 ## Catalogo dei segnali (`segnali.json`)
 
@@ -76,6 +76,7 @@ Comando base (dal kit): `& "<python>" -I controlli.py <sottocomando> ...`
 | richieste | `prelievo_condizionato` | 🔴 | per prelevare chiede prima deposito, acquisto ("boost"), commissione o di portare altre persone (truffa ad anticipo) |
 | tecnica | `dominio_giovane` | 30 | dominio con meno di 90 giorni |
 | tecnica | `dominio_con_marchio` | 40 | dominio con marchio, non ufficiale |
+| tecnica | `dominio_tld_rischioso` | 5 | estensione da siti usa e getta (.xyz, .top, .click…) |
 | tecnica | `pagina_seed_phrase` | 🔴 | la pagina raccoglie seed/chiavi/codici |
 | tecnica | `pagina_clickfix` | 🔴 | la pagina copia un comando da incollare |
 | tecnica | `pagina_offuscata` | 30 | codice nascosto |
@@ -95,9 +96,9 @@ Comando base (dal kit): `& "<python>" -I controlli.py <sottocomando> ...`
 | trasparenza | `gestore_non_dichiarato` | 20 | non dichiara chi gestisce |
 | trasparenza | `gestore_dichiarato_verificabile` | −20 | società dichiarata e verificabile |
 
-🔴 = linea rossa (con prova diretta il verdetto è rosso). Pesi: identità, richieste, tecnica ×2; le altre ×1. Soglie: ≤30 🟢, 31-60 🟡, >60 🔴. Certezza bassa → mai 🟢. Un'area a 80 o più → mai 🟢 (al massimo 🟡). Eccezione: `bot_ufficiale_verificato` con prova diretta (spunta di Telegram) + almeno 2 fonti indipendenti → certezza almeno media, anche senza materiale dell'utente.
+🔴 = linea rossa (con prova diretta il verdetto è rosso). Pesi: identità, promesse, richieste, tecnica ×2; reputazione e trasparenza ×1. Punteggio delle aree = Σ(rischio area × peso) ÷ 3, massimo 100 (taratura 18/11/2026: non più media, le aree vuote diluivano il rischio). Soglie: ≤30 🟢, 31-60 🟡, >60 🔴. Certezza bassa → mai 🟢. Un'area a 80 o più → mai 🟢 (al massimo 🟡). **Imitazione composta:** `nome_imita_marchio` + (`nome_parole_esca` oppure `dominio_con_marchio`), tutti con prova diretta e senza `bot_ufficiale_verificato` diretto → 🔴 con rischio almeno 61 (`rosso_da_imitazione`); non è una linea rossa, la certezza non cambia. **Verde con riserva** (18/11/2026): solo se `contesto.risposte_complete` è `true` (lo imposta l'app di autovalutazione; nell'analisi completa lascialo assente) con certezza bassa, nessuna area a 80+ e punteggio + 20 ≤ 30 → 🟢 con `rischio_finale` = punteggio + 20 e `verde_con_riserva: true`. Eccezione: `bot_ufficiale_verificato` con prova diretta (spunta di Telegram) + almeno 2 fonti indipendenti → certezza almeno media, anche senza materiale dell'utente.
 
-**Parole nell'output:** il campo interno `fiducia` di `verdetto.json` misura la certezza della valutazione, non il bot. All'utente si dice sempre **"fiducia nel bot"** = colore del semaforo (verde alta, giallo media, rosso bassa) e **"certezza della valutazione"** = campo `fiducia`. Mai la parola "fiducia" da sola. Se il 🔴 nasce da una linea rossa, non citare il punteggio medio: dì **"linea rossa superata"**; se nasce da segnalazioni concordi, **"segnalazioni concordi da più fonti"**.
+**Parole nell'output:** il campo interno `fiducia` di `verdetto.json` misura la certezza della valutazione, non il bot. All'utente si dice sempre **"fiducia nel bot"** = colore del semaforo (verde alta, giallo media, rosso bassa) e **"certezza della valutazione"** = campo `fiducia`. Mai la parola "fiducia" da sola. Se il 🔴 nasce da una linea rossa, non citare il punteggio delle aree: dì **"linea rossa superata"**; se nasce da segnalazioni concordi, **"segnalazioni concordi da più fonti"**; se nasce dalla regola sull'imitazione, **"imitazione evidente di un marchio"**.
 
 ## Come trovare il link della Mini App (istruzioni per l'utente)
 

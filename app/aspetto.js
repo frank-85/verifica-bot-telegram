@@ -7,7 +7,7 @@ function _soglieAspetto() { return _dipAspetto ? _dipAspetto.SOGLIE : globalThis
 
 var MARGINE_PROSSIMITA = 5; // la nota "vicino alla soglia" compare negli ultimi 5 punti di una zona
 
-/* Rischio finale (sempre nella zona del colore); i verdetti vecchi ricadono sulla media. */
+/* Rischio finale (sempre nella zona del colore); i verdetti vecchi ricadono sul punteggio delle aree. */
 function rischioFinale(v) {
   return typeof v.rischio_finale === "number" && isFinite(v.rischio_finale) ? v.rischio_finale : v.punteggio_totale;
 }
@@ -24,15 +24,17 @@ function posizioneIndicatore(n) {
   return Math.max(0, Math.min(100, x));
 }
 
-/* Perché il rischio finale differisce dalla media (null se coincidono o se manca il campo). */
+/* Perché il rischio finale differisce dal punteggio delle aree (null se coincidono o se manca il campo). */
 function motivoRegola(v) {
   if (typeof v.rischio_finale !== "number" || v.rischio_finale === v.punteggio_totale) return null;
   if (v.linee_rosse && v.linee_rosse.length) return "linea_rossa";
   if (v.rosso_da_segnalazioni) return "segnalazioni";
+  if (v.rosso_da_imitazione) return "imitazione";
+  if (v.verde_con_riserva) return "riserva";
   return "prudenza";
 }
 
-/* "Vicino alla soglia": solo testo, solo quando il numero è la media (nessuna regola prevale). */
+/* "Vicino alla soglia": solo testo, solo quando il numero è il punteggio delle aree (nessuna regola prevale). */
 function notaProssimita(v) {
   var n = rischioFinale(v);
   if (n !== v.punteggio_totale) return null;

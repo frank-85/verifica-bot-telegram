@@ -11,18 +11,18 @@ def marchi_di(r):
 
 
 def test_normalizza_varianti():
-    varianti = ["@MetamasksAppWebBot", "t.me/MetamasksAppWebBot",
-                "https://t.me/MetamasksAppWebBot?start=abc", "metamasksappwebbot",
-                "https://telegram.me/MetamasksAppWebBot/", "  @MetamasksAppWebBot  "]
-    assert {normalizza_username(x).lower() for x in varianti} == {"metamasksappwebbot"}
+    varianti = ["@MetamasksAppWebEsempioBot", "t.me/MetamasksAppWebEsempioBot",
+                "https://t.me/MetamasksAppWebEsempioBot?start=abc", "metamasksappwebesempiobot",
+                "https://telegram.me/MetamasksAppWebEsempioBot/", "  @MetamasksAppWebEsempioBot  "]
+    assert {normalizza_username(x).lower() for x in varianti} == {"metamasksappwebesempiobot"}
 
 
 def test_normalizza_mantiene_maiuscole():
-    assert normalizza_username("@MetamasksAppWebBot") == "MetamasksAppWebBot"
+    assert normalizza_username("@MetamasksAppWebEsempioBot") == "MetamasksAppWebEsempioBot"
 
 
 def test_plurale_imita_il_marchio():
-    r = analizza_nome("MetamasksAppWebBot")
+    r = analizza_nome("MetamasksAppWebEsempioBot")
     imit = [i for i in r["imitazioni"] if i["marchio"] == "metamask"]
     assert imit and imit[0]["tipo"] == "contiene"
     assert "metamask+s" in imit[0]["dettaglio"]
@@ -59,7 +59,7 @@ def test_nome_pulito():
 def test_commenti_in_marchi_ignorati(tmp_path):
     f = tmp_path / "marchi.txt"
     f.write_bytes("# commento metamask\nzorro\n\n".encode("utf-8"))
-    assert analizza_nome("MetamasksAppWebBot", f)["imitazioni"] == []
+    assert analizza_nome("MetamasksAppWebEsempioBot", f)["imitazioni"] == []
     assert marchi_di(analizza_nome("ZorroxBot", f)) == {"zorro"}
 
 
@@ -104,13 +104,13 @@ from nome import e_link_invito  # noqa: E402
 
 def test_normalizza_formati_telegram():
     casi = {
-        "https://t.me/s/MetamasksAppWebBot": "MetamasksAppWebBot",
-        "t.me/MetamasksAppWebBot/123": "MetamasksAppWebBot",
-        "https://t.me/MetamasksAppWebBot?startapp=abc": "MetamasksAppWebBot",
-        "tg://resolve?domain=MetamasksAppWebBot&start=ref123": "MetamasksAppWebBot",
+        "https://t.me/s/MetamasksAppWebEsempioBot": "MetamasksAppWebEsempioBot",
+        "t.me/MetamasksAppWebEsempioBot/123": "MetamasksAppWebEsempioBot",
+        "https://t.me/MetamasksAppWebEsempioBot?startapp=abc": "MetamasksAppWebEsempioBot",
+        "tg://resolve?domain=MetamasksAppWebEsempioBot&start=ref123": "MetamasksAppWebEsempioBot",
         "TG://RESOLVE?DOMAIN=wallet": "wallet",
-        "https://web.telegram.org/k/#@MetamasksAppWebBot": "MetamasksAppWebBot",
-        "https://web.telegram.org/a/#MetamasksAppWebBot": "MetamasksAppWebBot",
+        "https://web.telegram.org/k/#@MetamasksAppWebEsempioBot": "MetamasksAppWebEsempioBot",
+        "https://web.telegram.org/a/#MetamasksAppWebEsempioBot": "MetamasksAppWebEsempioBot",
         "web.telegram.org/k/#@wallet": "wallet",
         "  @wallet  ": "wallet",
     }

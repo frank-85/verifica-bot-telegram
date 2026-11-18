@@ -10,6 +10,7 @@ function esegui(op, caso, payload) {
     const nome = require(path.join(APP, "nome.js"));
     return nome.analizzaNome(caso, nome.caricaMarchi(payload.marchi));
   }
+  if (op === "dominio") return require(path.join(APP, "sicurezza.js")).dominioBase(caso);
   if (op === "assembla") {
     const assembla = require(path.join(APP, "assembla.js"));
     return assembla.costruisciVerdetto(caso, assembla.risorseDaPayload(payload));

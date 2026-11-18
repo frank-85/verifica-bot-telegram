@@ -1,0 +1,5 @@
+# Fine riga uniformi (LF) per tutti i file di testo; immagini e archivi restano binari
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.zip binary

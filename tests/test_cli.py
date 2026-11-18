@@ -14,7 +14,7 @@ def cli(*argomenti):
 
 
 def test_nome_cli():
-    codice, out, _ = cli("nome", "@MetamasksAppWebBot")
+    codice, out, _ = cli("nome", "@MetamasksAppWebEsempioBot")
     assert codice == 0
     dati = json.loads(out)
     assert "metamask" in {i["marchio"] for i in dati["imitazioni"]}

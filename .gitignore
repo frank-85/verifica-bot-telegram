@@ -10,6 +10,9 @@ resoconto*.md
 
 # Materiale personale: screenshot, appunti, note di lavoro, impostazioni locali.
 *.png
+# eccezioni: icone dell'app e immagini del README sono pubbliche per scelta
+!icone/*.png
+!docs/immagini/*.png
 *.jpg
 *.jpeg
 *.webp
@@ -35,3 +38,8 @@ note*/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# file temporanei dello script che genera le immagini del README
+strumenti/vetrina/profilo/
+strumenti/vetrina/*.html
+!strumenti/vetrina/guida_scena.html

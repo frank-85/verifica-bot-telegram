@@ -1,44 +1,33 @@
 {
-  "aree": [
-    {"area": "identita", "titolo": "Identità dichiarata", "domande": [
-      {"id": "q_incoerente", "codice": "nome_incoerente_servizio", "testo": "Il nome del bot è incoerente con il servizio offerto?", "aiuto": "Esempio: un bot chiamato \"Meteo Italia\" che propone investimenti."},
-      {"id": "q_brand_finanza", "codice": "imitazione_brand_finanza", "testo": "Il bot usa il nome o il logo di un marchio noto (banca, exchange, wallet) e ti chiede denaro, l'accesso al wallet o ti propone investimenti?", "aiuto": "Controlla la foto profilo e la descrizione in cima alla chat: i marchi autentici raramente contattano per primi gli utenti."},
-      {"id": "q_spunta", "codice": "bot_ufficiale_verificato", "testo": "Accanto al nome è presente il badge blu di verifica di Telegram?", "aiuto": "È il simbolo blu accanto al nome, in cima alla chat. Un'emoji ✅ inserita nel nome NON ha valore: è un espediente frequente."}
+  "pagine": [
+    {"id": "p_chi", "titolo": "Chi è il bot", "domande": [
+      {"id": "q_spunta", "codice": "bot_ufficiale_verificato", "testo": "Accanto al nome c'è il badge blu di verifica di Telegram?", "aiuto": "È il simbolo blu in cima alla chat. Un'emoji ✅ scritta nel nome non conta: è un trucco frequente."},
+      {"id": "q_etichetta", "codice": "etichetta_scam_telegram", "testo": "Accanto al nome compare l'etichetta SCAM o FAKE?", "aiuto": "È una scritta rossa accanto al nome, messa da Telegram stesso."},
+      {"id": "q_brand_finanza", "codice": "imitazione_brand_finanza", "testo": "Il bot usa il nome o il logo di un marchio noto (banca, exchange, wallet) e ti chiede soldi, l'accesso al wallet o di investire?", "aiuto": "Guarda la foto profilo e la descrizione in cima alla chat: i marchi autentici raramente scrivono per primi."},
+      {"id": "q_storia", "codice": "nessuna_storia_online", "segnale_se": "no", "testo": "Cercando il nome del bot online trovi risultati concreti (sito, articoli, discussioni)?", "aiuto": "Un servizio affidabile di norma lascia tracce pubbliche."}
     ]},
-    {"area": "promesse", "titolo": "Promesse e incentivi", "domande": [
-      {"id": "q_garantito", "codice": "rendimento_garantito", "testo": "Promette rendimenti garantiti o fissi (\"3% al giorno\", \"guadagno sicuro\")?", "aiuto": "Nessun investimento legittimo garantisce un rendimento fisso."},
+    {"id": "p_promesse", "titolo": "Cosa promette", "domande": [
       {"id": "q_guadagno", "codice": "promessa_guadagno", "testo": "Promette guadagni in denaro?", "aiuto": "Valgono anche formule come \"guadagna soldi veri\" o \"profitti ogni giorno\"."},
-      {"id": "q_fretta", "codice": "urgenza_pressione", "testo": "Esercita pressione sui tempi (offerte a scadenza, posti limitati, \"agisci ora\")?", "aiuto": "Il conto alla rovescia serve a ridurre il tempo di riflessione."},
-      {"id": "q_inviti", "codice": "referral_piramidale", "testo": "I guadagni dipendono dal reclutamento di altre persone?", "aiuto": "Esempio: \"invita 10 amici per sbloccare il premio\"."},
-      {"id": "q_regalo", "codice": "bonus_regalo_esca", "testo": "Offre regali, airdrop o bonus gratuiti?", "aiuto": "Il regalo iniziale spesso serve a indurre il passo successivo."}
+      {"id": "q_garantito", "codice": "rendimento_garantito", "mostra_se": {"codice": "promessa_guadagno", "risposte": ["si", "nonso"]}, "testo": "I guadagni sono garantiti o fissi (\"3% al giorno\", \"guadagno sicuro\")?", "aiuto": "Gli investimenti veri hanno sempre un rischio: un rendimento fisso garantito è un segnale d'allarme."},
+      {"id": "q_inviti", "codice": "referral_piramidale", "mostra_se": {"codice": "promessa_guadagno", "risposte": ["si", "nonso"]}, "testo": "Per guadagnare devi invitare altre persone?", "aiuto": "Esempio: \"invita 10 amici per sbloccare il premio\"."},
+      {"id": "q_consob", "codice": "consob_oscurato", "mostra_se": {"codice": "promessa_guadagno", "risposte": ["si", "nonso"]}, "testo": "Il servizio compare negli avvisi o tra i siti oscurati da CONSOB o Banca d'Italia?", "aiuto": "Puoi verificarlo nella sezione \"Avvisi ai risparmiatori\" del sito consob.it."},
+      {"id": "q_esche", "codice": "bonus_regalo_esca", "assorbe": ["urgenza_pressione"], "testo": "Usa esche come regali, airdrop, bonus gratuiti o offerte a tempo?", "aiuto": "Regali e conti alla rovescia servono a farti agire prima di riflettere."}
     ]},
-    {"area": "richieste", "titolo": "Richieste all'utente", "domande": [
-      {"id": "q_seed", "codice": "richiesta_seed_o_codici", "testo": "Ti ha chiesto la seed phrase (12 o 24 parole), la chiave privata, una password o il codice di accesso di Telegram?", "aiuto": "Nessun servizio legittimo li richiede. Chi li ottiene controlla il tuo account o i tuoi fondi."},
-      {"id": "q_comando", "codice": "richiesta_comando_pc", "testo": "Ti ha chiesto di incollare o eseguire un comando sul computer (Win+R, PowerShell, Terminale)?", "aiuto": "Di solito viene presentato come una \"verifica che sei umano\"."},
+    {"id": "p_richieste", "titolo": "Cosa ti chiede", "domande": [
+      {"id": "q_seed", "codice": "richiesta_seed_o_codici", "assorbe": ["pagina_seed_phrase"], "risposte": ["si", "no"], "testo": "Ti chiede la seed phrase (12/24 parole), una chiave privata, una password o un codice di accesso?", "aiuto": "Vale sia in chat sia nella Mini App, compreso un campo \"importa il tuo wallet\" o \"sincronizza\". Chi ottiene questi dati controlla il tuo account o i tuoi fondi."},
+      {"id": "q_comando", "codice": "richiesta_comando_pc", "assorbe": ["pagina_clickfix"], "risposte": ["si", "no"], "testo": "Ti chiede di incollare o eseguire un comando sul computer (Win+R, PowerShell, Terminale)?", "aiuto": "Spesso la pagina copia il comando negli appunti da sola e lo presenta come \"verifica che sei umano\". Chiudi la pagina e lascia stare gli appunti."},
       {"id": "q_prelievo", "codice": "prelievo_condizionato", "testo": "Per prelevare ti chiede prima un deposito, un acquisto, una commissione o di invitare altre persone?", "aiuto": "Apri la sezione prelievi (\"withdraw\") e leggi le condizioni."},
-      {"id": "q_wallet", "codice": "richiesta_wallet_connect", "testo": "Ti chiede di collegare un portafoglio di criptovalute (wallet)?", "aiuto": "Un pulsante \"Connect wallet\" non è pericoloso di per sé: presta però attenzione a ciò che approvi in seguito."},
       {"id": "q_deposito", "codice": "richiesta_deposito", "testo": "Ti chiede un deposito o un pagamento?", "aiuto": "Anche di piccolo importo, anche \"per attivare l'account\"."},
-      {"id": "q_dati", "codice": "richiesta_dati_personali", "testo": "Ti chiede dati personali o documenti (carta d'identità, selfie, indirizzo)?", "aiuto": "Valuta se il servizio ne ha realmente bisogno."},
-      {"id": "q_contatti", "codice": "richiesta_numero_contatti", "testo": "Ti chiede il numero di telefono o l'accesso ai contatti senza una ragione evidente?", "aiuto": "Telegram mostra la richiesta \"Condividi il tuo numero\": puoi rifiutare."}
+      {"id": "q_wallet", "codice": "richiesta_wallet_connect", "testo": "Ti chiede di collegare un wallet di criptovalute?", "aiuto": "Il pulsante \"Connect wallet\" da solo è innocuo: conta ciò che approvi dopo."},
+      {"id": "q_dati", "codice": "richiesta_dati_personali", "assorbe": ["richiesta_numero_contatti"], "testo": "Ti chiede dati personali (documenti, selfie, numero di telefono, contatti)?", "aiuto": "Chiediti se il servizio ne ha davvero bisogno. Alla richiesta \"Condividi il tuo numero\" puoi rifiutare."},
+      {"id": "q_file", "codice": "file_pericoloso_estensione", "risposte": ["si", "no"], "testo": "Ti ha inviato un file da aprire (.exe, .apk, .scr, .bat o un archivio .zip/.rar)?", "aiuto": "Lascialo chiuso. Controlla l'estensione completa: \"foto.jpg.exe\" è un programma."}
     ]},
-    {"area": "tecnica", "titolo": "Mini App e file", "domande": [
-      {"id": "q_pagina_seed", "codice": "pagina_seed_phrase", "testo": "La Mini App presenta un campo per inserire 12/24 parole, una chiave privata o un codice?", "aiuto": "Spesso compare come \"importa il tuo wallet\" o \"sincronizza\"."},
-      {"id": "q_appunti", "codice": "pagina_clickfix", "testo": "La pagina ha copiato un contenuto negli appunti e ti ha chiesto di incollarlo altrove?", "aiuto": "In questo caso non incollare nulla e chiudi la pagina."},
-      {"id": "q_file", "codice": "file_pericoloso_estensione", "testo": "Ti ha inviato un file da aprire (.exe, .apk, .scr, .bat o un archivio .zip/.rar)?", "aiuto": "Non aprirlo. Controlla l'estensione completa: \"foto.jpg.exe\" è un programma."}
-    ]},
-    {"area": "reputazione", "titolo": "Reputazione", "domande": [
-      {"id": "q_etichetta", "codice": "etichetta_scam_telegram", "testo": "Telegram mostra l'etichetta SCAM o FAKE accanto al nome?", "aiuto": "È una dicitura rossa accanto al nome, applicata da Telegram stesso."},
-      {"id": "q_consob", "codice": "consob_oscurato", "testo": "Il sito collegato compare negli avvisi o tra i siti oscurati da CONSOB o Banca d'Italia?", "aiuto": "Puoi verificarlo nella sezione \"Avvisi ai risparmiatori\" del sito consob.it."},
-      {"id": "q_recensioni", "codice": "recensioni_sospette", "testo": "Le recensioni positive appaiono uniformi, eccessivamente entusiaste o tutte molto recenti?", "aiuto": "Testi ripetuti o molte recensioni pubblicate nello stesso giorno sono un segnale d'allarme."},
-      {"id": "q_storia", "codice": "nessuna_storia_online", "testo": "Cercando il nome del bot online non emergono risultati significativi?", "aiuto": "Un servizio affidabile lascia di norma tracce pubbliche: sito, articoli, discussioni."}
-    ]},
-    {"area": "trasparenza", "titolo": "Trasparenza del gestore", "domande": [
-      {"id": "q_sito", "codice": "nessun_sito", "testo": "Il bot non indica alcun sito del servizio?", "aiuto": "Controlla la descrizione del bot e il menu."},
-      {"id": "q_termini", "codice": "nessun_termini_privacy", "testo": "Mancano i termini di servizio o l'informativa sulla privacy?", "aiuto": "Di norma si trovano nel menu o nel sito collegato."},
-      {"id": "q_gestore", "codice": "gestore_non_dichiarato", "testo": "Il gestore del servizio è sconosciuto o non dichiarato?", "aiuto": "Cerca una ragione sociale, un indirizzo, una partita IVA o un numero di registrazione."},
-      {"id": "q_gestore_ok", "codice": "gestore_dichiarato_verificabile", "testo": "Il servizio dichiara una società che hai potuto verificare (sito ufficiale, registro delle imprese)?", "aiuto": "Rispondi Sì solo se hai effettuato la verifica."}
+    {"id": "p_gestore", "titolo": "Chi lo gestisce", "domande": [
+      {"id": "q_sito", "codice": "nessun_sito", "segnale_se": "no", "testo": "Il bot indica il sito del servizio?", "aiuto": "Guarda la descrizione del bot e il menu."},
+      {"id": "q_termini", "codice": "nessun_termini_privacy", "segnale_se": "no", "testo": "Trovi i termini di servizio e l'informativa sulla privacy?", "aiuto": "Di norma sono nel menu o nel sito collegato. Rispondi Sì solo se ci sono entrambi."},
+      {"id": "q_gestore", "codice": "gestore_non_dichiarato", "segnale_se": "no", "testo": "Il bot dichiara chi lo gestisce (nome della società, partita IVA o indirizzo)?", "aiuto": "Guarda la descrizione del bot, il menu o il sito collegato."}
     ]}
   ],
-  "copertura": {"id": "sezioni_viste", "testo": "Hai aperto anche le sezioni prelievo / pagamenti / inviti?", "aiuto": "Le condizioni più rilevanti si trovano spesso in queste sezioni, non nella schermata di benvenuto."},
-  "non_coperti": ["dominio_giovane", "pagina_offuscata", "pagina_script_esterni", "pagina_invio_dati_esterno", "wallet_lib_presente", "file_malevolo_defender"]
+  "copertura": {"id": "sezioni_viste", "testo": "Hai aperto anche le sezioni prelievo / pagamenti / inviti?", "aiuto": "Le condizioni più importanti si trovano spesso lì, più che nella schermata di benvenuto."},
+  "non_coperti": ["nome_incoerente_servizio", "recensioni_sospette", "gestore_dichiarato_verificabile", "dominio_giovane", "pagina_offuscata", "pagina_script_esterni", "pagina_invio_dati_esterno", "wallet_lib_presente", "file_malevolo_defender"]
 }

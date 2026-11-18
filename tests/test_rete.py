@@ -6,6 +6,8 @@ from datetime import date
 from email.message import Message
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import rete  # noqa: E402
@@ -166,6 +168,65 @@ def test_dominio_rete_assente(monkeypatch):
 def test_dominio_registrabile():
     assert rete.dominio_registrabile("a.b.esempio.co.uk") == "esempio.co.uk"
     assert rete.dominio_registrabile("www.esempio.it") == "esempio.it"
+
+
+# correzione D: una sola regola per il dominio base (stessi casi in tests/js/sicurezza.test.js)
+CASI_DOMINIO_BASE = {
+    "a.b.example.com": "example.com",
+    "news.bbc.co.uk": "bbc.co.uk",
+    "forum.example.co.uk": "example.co.uk",
+    "www.example.com.br": "example.com.br",
+    "foo.edu.au": "foo.edu.au",
+    "corsi.foo.edu.au": "foo.edu.au",
+    "localhost": "localhost",
+    "192.168.1.10": "192.168.1.10",
+    "::1": "::1",
+    "[2001:db8::1]": "2001:db8::1",
+    "Example.COM.": "example.com",
+    "": "",
+}
+
+
+@pytest.mark.parametrize("host,atteso", list(CASI_DOMINIO_BASE.items()))
+def test_d_dominio_registrabile_casi(host, atteso):
+    assert rete.dominio_registrabile(host) == atteso
+
+
+def test_d_una_sola_regola_python():
+    """punteggio e resoconto non hanno più un loro calcolo del dominio base: usano rete."""
+    import punteggio
+    import resoconto
+    assert not hasattr(punteggio, "_dominio_base") and not hasattr(resoconto, "_dominio_base")
+    assert punteggio.dominio_registrabile is rete.dominio_registrabile
+    assert resoconto.dominio_registrabile is rete.dominio_registrabile
+    kit = Path(__file__).resolve().parents[1]
+    definizioni = [p.name for p in kit.glob("*.py") if "SECONDO_LIVELLO = " in p.read_text(encoding="utf-8")]
+    assert definizioni == ["rete.py"]
+
+
+def test_a_tld_rischioso_nel_controllo_dominio(monkeypatch):
+    _senza_rete(monkeypatch, "binance-airdrop-claim.xyz")
+    assert rete.dominio("https://binance-airdrop-claim.xyz/app", date(2026, 11, 17))["tld_rischioso"] == "xyz"
+    _senza_rete(monkeypatch, "esempio.it")
+    assert rete.dominio("https://esempio.it", date(2026, 11, 17))["tld_rischioso"] is None
+
+
+def test_a_tld_rischiosi_uguali_in_python_e_js():
+    import re as re_mod
+    kit = Path(__file__).resolve().parents[1]
+    testo = (kit / "app" / "analizzatore.js").read_text(encoding="utf-8")
+    js = set(re_mod.findall(r'"(\w+)"', re_mod.search(r"TLD_RISCHIOSI = \[(.*?)\]", testo).group(1)))
+    assert js == rete.TLD_RISCHIOSI
+
+
+def test_d_secondo_livello_uguale_in_python_e_js():
+    import re as re_mod
+    kit = Path(__file__).resolve().parents[1]
+    testo = (kit / "app" / "sicurezza.js").read_text(encoding="utf-8")
+    js = set(re_mod.findall(r'"(\w+)"', re_mod.search(r"SECONDO_LIVELLO = \[(.*?)\]", testo).group(1)))
+    assert js == rete.SECONDO_LIVELLO and "edu" in js
+    for f in ("motore.js", "analizzatore.js", "assembla.js"):
+        assert "SECONDO_LIVELLO" not in (kit / "app" / f).read_text(encoding="utf-8"), f
 
 
 # --- M2: marchio nei sottodomini, sito ufficiale escluso, IP mai inviati a RDAP ---

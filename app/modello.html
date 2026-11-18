@@ -3,9 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; style-src 'unsafe-inline'; img-src data: blob:; connect-src https://cdn.jsdelivr.net blob: data:; worker-src blob: https://cdn.jsdelivr.net; font-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://cdn.jsdelivr.net blob: data:; worker-src 'self' blob: https://cdn.jsdelivr.net; manifest-src 'self'; font-src 'none'; form-action 'none'; base-uri 'none'">
 <meta name="description" content="Semaforo di affidabilità per bot e Mini App Telegram: autovalutazione guidata e verificata, metodo trasparente. Tutto sul tuo dispositivo.">
 <title>Verifica Bot</title>
+<meta name="theme-color" content="#14213d">
+<meta name="application-name" content="Verifica Bot">
+<meta name="apple-mobile-web-app-title" content="Verifica Bot">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone/icona.svg" type="image/svg+xml">
+<link rel="icon" href="icone/icona-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icone/apple-touch-icon.png">
 <style>
 /* ===== Sistema visivo B2: token (una riga della palette della spec = un gruppo di token) ===== */
 :root {
@@ -73,7 +82,11 @@ p { margin: 0 0 .8em; }
 /* ===== testata, selettore del tema, schede ===== */
 header.testata { background: var(--sfondo); border-bottom: 1px solid var(--bordo); padding: 12px 0 0; }
 .testata-riga { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
-header.testata h1 { font-size: 1.375rem; font-weight: 800; letter-spacing: .01em; color: var(--firma); margin: 0; }
+header.testata h1 { font-size: 1.375rem; font-weight: 800; letter-spacing: .01em; color: var(--firma); margin: 0; display: flex; align-items: center; gap: 10px; }
+.logo { flex: none; border-radius: 7px; }
+.installa { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 0; padding: 10px 12px; border: 1px solid var(--bordo); border-radius: 10px; background: var(--tenue); font-size: .9375rem; }
+.installa[hidden] { display: none; }
+.installa span { flex: 1 1 200px; color: var(--secondario); }
 header.testata p { color: var(--secondario); max-width: 640px; margin: 8px 0 0; font-size: .9375rem; }
 .tema { display: inline-flex; border: 1px solid var(--bordo); border-radius: 99px; background: var(--tenue); }
 .tema button { border: 0; background: transparent; color: var(--secondario); font: inherit; font-size: 13px; font-weight: 600;
@@ -181,7 +194,20 @@ footer.piede { border-top: 1px solid var(--bordo); padding: 18px 0 30px; color: 
 .esito-sotto { font-size: 15px; font-weight: 600; margin: 6px 0 0; color: var(--su-tinta); }
 @keyframes entra { from { opacity: 0; } to { opacity: 1; } }
 @keyframes cresce { from { transform: scale(.86); } to { transform: scale(1); } }
+/* schermata di conferma: colore neutro (primario), mai verde/giallo/rosso per non anticipare l'esito */
+.conferma { text-align: center; padding: 8px 0 4px; }
+.conferma-segno { width: 72px; height: 72px; margin: 4px auto 12px; border: 3px solid var(--primario); border-radius: 50%; position: relative; box-sizing: border-box; }
+.conferma-segno::after { content: ""; position: absolute; left: 23px; top: 12px; width: 16px; height: 30px; border: solid var(--primario); border-width: 0 4px 4px 0; transform: rotate(45deg); }
+.conferma h3 { font-size: 22px; margin: 0 0 4px; }
+.riepilogo { list-style: none; padding: 0; margin: 16px auto 0; max-width: 420px; text-align: left; }
+.riepilogo li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--bordo); }
+.riepilogo li span:first-child { color: var(--secondario); }
+.riepilogo li span:last-child { font-weight: 600; text-align: right; }
+.bottone.grande { font-size: 17px; padding: 14px 26px; }
+.note-utente { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 8px; }
 @media (prefers-reduced-motion: no-preference) {
+  .conferma-segno { animation: cresce .35s ease-out both; }
+  .conferma-segno::after { animation: entra .3s .25s ease-out both; }
   .esito { animation: entra .25s ease-out both; }
   .esito .forma { animation: cresce .3s ease-out both; }
   .rotella { animation: gira .9s linear infinite; }
@@ -288,7 +314,7 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
 <header class="testata">
   <div class="contenitore">
     <div class="testata-riga">
-      <h1>Verifica Bot</h1>
+      <h1><svg class="logo" viewBox="0 0 1 1" width="30" height="30" aria-hidden="true" focusable="false"><rect width="1" height="1" rx="0.22" fill="#14213d"/><path d="M0.5000 0.1500 Q0.6200 0.2350 0.7700 0.2450 L0.7700 0.5000 Q0.7500 0.7400 0.5000 0.8700 Q0.2500 0.7400 0.2300 0.5000 L0.2300 0.2450 Q0.3800 0.2350 0.5000 0.1500Z" fill="#f8fafc"/><circle cx="0.5" cy="0.335" r="0.062" fill="#dc2626"/><circle cx="0.5" cy="0.49" r="0.062" fill="#f59e0b"/><circle cx="0.5" cy="0.645" r="0.062" fill="#16a34a"/></svg>Verifica Bot</h1>
       <div class="tema" id="selettore-tema" role="group" aria-label="Tema">
         <button type="button" data-tema="auto" aria-pressed="true">Automatico</button>
         <button type="button" data-tema="chiaro" aria-pressed="false">Chiaro</button>
@@ -296,6 +322,10 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
       </div>
     </div>
     <p>Semaforo di affidabilità per bot e Mini App Telegram. Regole trasparenti, nessuna AI durante l'uso: l'analisi avviene sul tuo dispositivo.</p>
+    <div class="installa" id="installa" hidden>
+      <span>Usala come un'app: si apre a parte, con la sua icona, e funziona anche offline.</span>
+      <button type="button" class="bottone primario" id="installa-bottone">Installa l'app</button>
+    </div>
     <nav class="schede" role="tablist" aria-label="Sezioni">
       <button type="button" role="tab" data-scheda="prova" aria-selected="true">Verifica un bot</button>
       <button type="button" role="tab" data-scheda="come" aria-selected="false">Come funziona</button>
@@ -327,6 +357,7 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
   <div>
     <p><strong>Dove vanno i tuoi dati? Da nessuna parte.</strong> Questo strumento funziona interamente sul tuo dispositivo. Le risposte, i testi e gli screenshot che inserisci vengono elaborati solo nel tuo browser e spariscono quando chiudi la pagina: non vengono salvati, non vengono inviati all'autore, né ad Anthropic, né a Telegram, né a terzi. Non usiamo cookie, statistiche o tracciamenti, e non raccogliamo nome, email, telefono, posizione o dati del dispositivo.</p>
     <p><strong>Unica eccezione:</strong> se carichi uno screenshot, il browser scarica una volta la libreria open source che ne legge il testo (da cdn.jsdelivr.net); come per qualunque sito, quel servizio vede il tuo indirizzo IP, ma <strong>non</strong> riceve l'immagine né le tue risposte. Se preferisci, incolla il testo invece dell'immagine.</p>
+    <p><strong>Uso offline:</strong> quando apri la pagina dal sito, il browser conserva una copia del <strong>solo codice dell'app</strong> (questa pagina e le sue icone) per aprirla anche senza connessione, anche se la installi sulla schermata Home. Le tue risposte, i testi e gli screenshot <strong>non vengono mai conservati</strong>. Puoi eliminare la copia cancellando i dati del sito dalle impostazioni del browser.</p>
     <p><strong>Consiglio:</strong> prima di caricare uno screenshot, ritaglia o copri dati tuoi (numero di telefono, nome, saldo, indirizzi di wallet). Il report che scarichi o stampi resta tuo e sul tuo dispositivo: condividilo con attenzione.</p>
   </div>
 </template>
@@ -420,6 +451,14 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
       " o più): da sola impedisce l'esito verde. Le altre barre indicano solo quanto pesa ciascuna area, senza giudizio di colore." }));
   }
 
+  // correzione B: un messaggio per ogni motivo della certezza bassa, con l'azione per alzarla
+  var MOTIVI_CERTEZZA_BASSA = {
+    nessun_materiale: "Non hai fornito testo o screenshot del bot: aggiungili per una valutazione più solida.",
+    testo_breve: "Il testo fornito è troppo breve per essere analizzato in modo affidabile: incolla messaggi più completi.",
+    sezioni_non_confermate: "Non hai confermato di aver aperto le sezioni prelievo, pagamenti e inviti: sono quelle dove compaiono più spesso le richieste di denaro.",
+    nonso_richieste: "Hai risposto \"Non so\" ad alcune domande sulle richieste del bot: sono le più importanti per la valutazione."
+  };
+
   function basataSuVetrina(v) {
     var c = v.contesto || {};
     return ["analisi completa con la skill /verifica-bot",
@@ -437,10 +476,11 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
 
   function sottotitolo(v) {
     var motivo = motivoRegola(v), vicino = notaProssimita(v);
-    if (v.verdetto === "verde") return "Verde · non è una garanzia" + (vicino ? " · " + vicino : "");
+    if (v.verdetto === "verde") return motivo === "riserva" ? "Verde con riserva · senza materiale sufficiente" : "Verde · non è una garanzia" + (vicino ? " · " + vicino : "");
     if (v.verdetto === "giallo") return "Giallo · " + (motivo === "prudenza" ? "regola di prudenza" : vicino || "procedi con cautela");
     return "Rosso · " + (v.linee_rosse && v.linee_rosse.length ? "linea rossa superata"
       : motivo === "segnalazioni" || v.rosso_da_segnalazioni ? "segnalazioni concordi"
+      : motivo === "imitazione" || v.rosso_da_imitazione ? "imitazione di un marchio"
       : motivo === "prudenza" ? "regola di prudenza" : "fermati e verifica");
   }
 
@@ -454,7 +494,7 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
       el("div", { classe: "etichette" }, el("span", { testo: "basso" }), el("span", { testo: "medio" }), el("span", { testo: "alto" })));
   }
 
-  /* Quando prevale una regola il numero mostrato non è la media: lo si dice, con la media accanto. */
+  /* Quando prevale una regola il numero mostrato non è il punteggio delle aree: lo si dice, con il punteggio accanto. */
   function notaRegola(v) {
     var motivo = motivoRegola(v), corpo;
     if (!motivo) return null;
@@ -464,12 +504,25 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
     } else if (motivo === "segnalazioni") {
       corpo = [el("strong", { testo: "Prevale la regola sulle segnalazioni. " }),
         "Segnalazioni da almeno due siti distinti portano il rischio mostrato nella zona rossa. "];
+    } else if (motivo === "imitazione") {
+      corpo = [el("strong", { testo: "Prevale la regola sull'imitazione. " }),
+        "Il nome richiama un marchio noto e contiene parole esca o rimanda a un dominio che usa lo stesso marchio: il rischio mostrato passa nella zona rossa. "];
+    } else if (motivo === "riserva") {
+      corpo = [el("strong", { testo: "Verde con riserva. " }),
+        "L'esito si basa sulle tue risposte, senza screenshot o testo sufficienti da verificare: al rischio si aggiungono 20 punti di prudenza e la certezza resta bassa. "];
     } else {
       corpo = [el("strong", { testo: "Prevale una regola di prudenza. " }),
         "L'esito verde è escluso (certezza bassa oppure un'area al rischio massimo): il rischio mostrato resta nella zona del colore assegnato. "];
     }
     return el("p", { classe: "nota-regola t-" + v.verdetto }, corpo,
-      "Media delle 6 aree: ", el("span", { classe: "mono", testo: v.punteggio_totale + "/100" }), ".");
+      "Punteggio delle aree: ", el("span", { classe: "mono", testo: v.punteggio_totale + "/100" }), ".");
+  }
+
+  /* Un giallo nato solo dalla prudenza, con punteggio da verde, non ha segnali di rischio: il titolo non li inventa. */
+  function etichettaEsito(v) {
+    if (v.verdetto === "giallo" && motivoRegola(v) === "prudenza" && v.punteggio_totale <= SOGLIE.verde)
+      return "Nessun segnale grave · da confermare";
+    return ESITI[v.verdetto].etichetta;
   }
 
   function mostraReport(v, contenitore, opzioni) {
@@ -496,7 +549,7 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
         el("span", { testo: (v.data ? String(v.data).slice(0, 10) + " · " : "") + (autoval ? "autovalutazione guidata" : "analisi completa") })),
       el("div", { classe: "esito t-" + v.verdetto },
         forma(v.verdetto),
-        el("h2", { classe: "esito-titolo", testo: es.etichetta }),
+        el("h2", { classe: "esito-titolo", testo: etichettaEsito(v) }),
         el("p", { classe: "esito-sotto", testo: sottotitolo(v) })),
       barraRischio(v),
       el("ul", { classe: "chips" },
@@ -526,9 +579,15 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
         el("ul", { classe: "pulito" }, opzioni.avvisi.map(function (a) { return el("li", { testo: a }); }))));
     }
     principale.appendChild(el("p", { classe: "piccolo muted basata-su" }, el("strong", { testo: "Basata su: " }), basataSu.join(" · ")));
-    if (autoval && v.verdetto === "verde") principale.appendChild(el("p", { classe: "piccolo muted", testo: "Un esito verde ottenuto in autovalutazione raggiunge al massimo una certezza media: la certezza alta è riservata alle analisi complete. Nessun controllo può garantire la sicurezza di un servizio." }));
-    if (autoval && v.fiducia === "bassa") principale.appendChild(el("p", { classe: "piccolo muted", testo: "Certezza bassa: lo strumento non ha potuto analizzare materiale proveniente dal bot. Aggiungi uno screenshot o incolla il testo per ottenere una valutazione più solida." }));
+    if (autoval && v.verdetto === "verde" && !v.verde_con_riserva) principale.appendChild(el("p", { classe: "piccolo muted", testo: "Un esito verde ottenuto in autovalutazione raggiunge al massimo una certezza media: la certezza alta è riservata alle analisi complete. Nessun controllo può garantire la sicurezza di un servizio." }));
+    var motiviBassa = (opzioni.motiviCertezzaBassa || []).filter(function (m) { return MOTIVI_CERTEZZA_BASSA[m]; });
+    if (autoval && v.fiducia === "bassa" && motiviBassa.length) principale.appendChild(el("div", { classe: "piccolo muted" },
+      el("strong", { testo: "Perché la certezza è bassa:" }),
+      el("ul", { classe: "pulito" }, motiviBassa.map(function (m) { return el("li", { testo: MOTIVI_CERTEZZA_BASSA[m] }); }))));
     nodo.appendChild(principale);
+    if (v.note_utente) nodo.appendChild(el("div", { classe: "card" }, el("h3", { testo: "Le tue note" }),
+      el("p", { classe: "note-utente", testo: v.note_utente }),
+      el("p", { classe: "piccolo muted", testo: "Riportate così come le hai scritte: non cambiano il punteggio." })));
 
     /* 2. cosa fare, prima dei dettagli */
     var fare = elenco("Cosa fare", v.cosa_fare, "consiglio"), nonFare = elenco("Cosa non fare", v.cosa_non_fare, "consiglio");
@@ -656,12 +715,14 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
           return el("tr", null, el("td", { classe: "breve", testo: NOMI_AREE[a] }), el("td", { classe: "num mono", testo: "×" + PESI[a] }), el("td", { classe: "lungo", testo: descr }));
         })))),
       el("ul", { classe: "pulito" },
-        el("li", { testo: "Media delle aree = media pesata del rischio delle 6 aree (0-100)." }),
-        el("li", { testo: "Il rischio complessivo mostrato cade sempre nella zona del colore: una linea rossa provata vale 100 (come un'espulsione diretta), le segnalazioni concordi almeno " + (SOGLIE.giallo + 1) + ", una regola di prudenza che impedisce il verde almeno " + (SOGLIE.verde + 1) + ". Negli altri casi coincide con la media." }),
+        el("li", { testo: "Punteggio delle aree = rischio di ogni area moltiplicato per il suo peso, sommato e diviso per " + DIVISORE + ", fino a un massimo di 100. Le aree senza segnali non abbassano il punteggio." }),
+        el("li", { testo: "Il rischio complessivo mostrato cade sempre nella zona del colore: una linea rossa provata vale 100 (come un'espulsione diretta), le segnalazioni concordi e l'imitazione evidente di un marchio almeno " + (SOGLIE.giallo + 1) + ", una regola di prudenza che impedisce il verde almeno " + (SOGLIE.verde + 1) + ", il verde con riserva aggiunge " + SOGLIE.malusSenzaProve + " punti. Negli altri casi coincide con il punteggio delle aree." }),
         el("li", { testo: "Verde fino a " + SOGLIE.verde + ", giallo fino a " + SOGLIE.giallo + ", rosso oltre." }),
         el("li", { testo: "Una linea rossa supportata da prova diretta determina sempre l'esito rosso, con certezza alta." }),
         el("li", { testo: "Segnalazioni provenienti da almeno due siti distinti determinano l'esito rosso (salvo bot ufficiale verificato)." }),
-        el("li", { testo: "L'esito verde è escluso con certezza bassa e quando un'area raggiunge " + SOGLIE.areaPiena + " o più: un pericolo grave non viene diluito nella media." }))));
+        el("li", { testo: "Un nome che richiama un marchio noto e contiene parole esca, o rimanda a un dominio con lo stesso marchio, determina l'esito rosso (salvo bot ufficiale verificato)." }),
+        el("li", { testo: "L'esito verde è escluso quando un'area raggiunge " + SOGLIE.areaPiena + " o più: un pericolo grave non viene diluito nel punteggio." }),
+        el("li", { testo: "Con certezza bassa il verde è escluso, con un'eccezione nell'autovalutazione: se hai risposto a tutte le domande senza \"Non so\" e hai aperto le sezioni prelievo e pagamenti, il verde è possibile anche senza screenshot, ma la prova mancante aggiunge 20 punti al rischio (verde con riserva)." }))));
 
     s.appendChild(el("div", { classe: "card" },
       el("h3", { testo: "Certezza della valutazione" }),
@@ -669,13 +730,14 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
       el("ul", { classe: "pulito" },
         el("li", null, el("strong", { testo: "Alta: " }), "una linea rossa provata, oppure un'analisi completa con più fonti indipendenti, materiale analizzato e controlli tecnici."),
         el("li", null, el("strong", { testo: "Media: " }), "almeno una fonte. Nell'autovalutazione richiede materiale autentico analizzato dallo strumento (screenshot o testo), la consultazione delle sezioni prelievo/pagamenti e nessun \"Non so\" sulle richieste. È il livello massimo raggiungibile in autovalutazione."),
-        el("li", null, el("strong", { testo: "Bassa: " }), "solo dichiarazioni, senza materiale analizzato. Con certezza bassa l'esito verde non è possibile.")),
+        el("li", null, el("strong", { testo: "Bassa: " }), "solo dichiarazioni, senza materiale analizzato. Il verde è possibile solo \"con riserva\": risposte complete e 20 punti di prudenza in più.")),
       el("p", { classe: "muted", testo: "Nell'autovalutazione lo strumento non si basa soltanto sulle risposte: analizza autonomamente il nome, gli screenshot o il testo e il link. Se un controllo contraddice una risposta, prevale il controllo e il report ne dà evidenza." })));
 
     s.appendChild(el("div", { classe: "card" },
-      el("h3", { testo: "Perché un'area al massimo esclude il verde" }),
+      el("h3", { testo: "Come sono nate le regole attuali" }),
       el("p", { testo: "Nelle prove, un servizio che consentiva il prelievo solo dopo un deposito o dopo aver invitato altre persone otteneva un esito verde, con rischio 29/100. Il calcolo era corretto, ma un pericolo gravissimo veniva diluito nella media." }),
-      el("p", { testo: "Ne sono derivate due correzioni: la nuova linea rossa \"prelievo condizionato\" e la regola per cui un'area al rischio massimo esclude il verde. Il caso è diventato un test automatico: un'eventuale regressione verrebbe rilevata immediatamente." })));
+      el("p", { testo: "Ne sono derivate due correzioni: la nuova linea rossa \"prelievo condizionato\" e la regola per cui un'area al rischio massimo esclude il verde. Il caso è diventato un test automatico: un'eventuale regressione verrebbe rilevata immediatamente." }),
+      el("p", { testo: "In seguito il calcolo stesso è stato rivisto: con la media delle 6 aree, quelle senza segnali abbassavano il rischio, e un bot che prometteva guadagni, chiedeva un deposito e il collegamento del wallet restava giallo. Dal 18 novembre 2026 il punteggio è una somma pesata divisa per " + DIVISORE + ": lo stesso bot risulta rosso, mentre un bot anonimo ma innocuo resta verde." })));
 
     var gruppi = {};
     DATI.catalogo.forEach(function (c) { (gruppi[c.area] = gruppi[c.area] || []).push(c); });
@@ -692,8 +754,16 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
             })))));
       })));
 
+    s.appendChild(el("div", { classe: "card" }, el("h3", { testo: "Installala sul telefono" }),
+      el("p", { testo: "Verifica Bot si può usare come un'app: icona sulla schermata Home, apertura a schermo intero e funzionamento anche senza connessione. Non passa da nessuno store e non chiede permessi." }),
+      el("ul", { classe: "pulito" },
+        el("li", null, el("strong", { testo: "Android (Chrome): " }), "tocca \"Installa l'app\" in alto, oppure il menu ⋮ → \"Installa app\"."),
+        el("li", null, el("strong", { testo: "iPhone (Safari): " }), "tocca Condividi → \"Aggiungi alla schermata Home\"."),
+        el("li", null, el("strong", { testo: "Computer (Chrome, Edge): " }), "usa l'icona di installazione nella barra degli indirizzi.")),
+      el("p", { classe: "piccolo muted", testo: "Per usarla senza installare nulla puoi anche scaricare il file dalla pagina del progetto su GitHub e aprirlo nel browser." })));
+
     s.appendChild(el("div", { classe: "card", id: "privacy" }, el("h3", { testo: "Privacy e dati" }), modello("t-privacy"),
-      el("p", { classe: "piccolo muted", testo: "Garanzia tecnica: la pagina include una regola di sicurezza (Content-Security-Policy) che blocca le connessioni verso qualsiasi indirizzo diverso da quello della libreria di lettura. Neppure verso quell'indirizzo il codice invia dati: lo utilizza esclusivamente per scaricare la libreria, configurata per non salvare nulla sul dispositivo." })));
+      el("p", { classe: "piccolo muted", testo: "Garanzia tecnica: la pagina include una regola di sicurezza (Content-Security-Policy) che blocca le connessioni verso qualsiasi indirizzo diverso da quello della libreria di lettura, oltre alla pagina stessa, da cui l'app installabile carica le proprie icone e il gestore offline. Neppure verso la libreria il codice invia dati: la utilizza esclusivamente per scaricarla. Lo strumento non salva nulla; il browser può tenerla in cache come per qualsiasi sito." })));
     s.lastChild.appendChild(el("p", { classe: "piccolo muted", testo: "Se consulti questa pagina online, il servizio che la ospita (GitHub Pages) riceve, come qualsiasi sito web, i dati tecnici della connessione, tra cui l'indirizzo IP. Ciò che scrivi o carichi nella pagina non viene trasmesso. Per escludere anche questo passaggio puoi scaricare il file e aprirlo dal tuo dispositivo." }));
     s.appendChild(el("div", { classe: "card" }, el("h3", { testo: "AI e trasparenza" }), modello("t-ai")));
     s.appendChild(el("div", { classe: "card" }, el("h3", { testo: "Avvertenze e natura dell'esito" }), modello("t-premessa")));
@@ -713,10 +783,11 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
   var stato;
   function nuovoStato() {
     return { passo: 0, username: "", nomeVisualizzato: "", linkMiniApp: "", screenshot: [], incollato: "",
-      risposte: {}, sezioniViste: null, linkSegnalazioni: "", linkPositivi: "", messaggio: "" };
+      risposte: {}, sezioniViste: null, linkSegnalazioni: "", linkPositivi: "", note: "", messaggio: "" };
   }
-  var PASSI_AREE = Q.aree.length;
-  var ULTIMO = 3 + PASSI_AREE; // 0 premessa, 1 bot, 2 materiale, 3..(2+n) aree, 3+n copertura, poi report
+  var PASSI_AREE = Q.pagine.length;
+  var ULTIMO = 3 + PASSI_AREE; // 0 premessa, 1 bot, 2 materiale, 3..(2+n) aree, 3+n copertura
+  var RIEPILOGO = ULTIMO + 1; // conferma prima dell'esito, poi il report
 
   function righe(t) { return String(t || "").split(/\s+/).map(function (x) { return x.trim(); }).filter(Boolean); }
 
@@ -725,7 +796,7 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
     if (stato.incollato.trim()) testi.push({ origine: "incollato", testo: stato.incollato });
     return { username: stato.username, nomeVisualizzato: stato.nomeVisualizzato, risposte: stato.risposte,
       sezioniViste: stato.sezioniViste, testi: testi, linkMiniApp: stato.linkMiniApp.trim(),
-      linkSegnalazioni: righe(stato.linkSegnalazioni), linkPositivi: righe(stato.linkPositivi) };
+      linkSegnalazioni: righe(stato.linkSegnalazioni), linkPositivi: righe(stato.linkPositivi), note: stato.note };
   }
 
   function campo(etichetta, chiave, aiuto, multi) {
@@ -739,8 +810,8 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
   }
 
   /* Risposte come pulsanti grandi: ogni pulsante è un'etichetta che contiene un vero radio (tastiera e lettori di schermo). */
-  function scelta(nome, valoreAttuale, opzioni, alCambio) {
-    return el("div", { classe: "scelte", role: "radiogroup" }, opzioni.map(function (o) {
+  function scelta(nome, valoreAttuale, opzioni, alCambio, etichetta) {
+    return el("div", { classe: "scelte", role: "radiogroup", "aria-labelledby": etichetta }, opzioni.map(function (o) {
       var r = el("input", { type: "radio", name: nome, value: o[0] });
       r.checked = valoreAttuale === o[0];
       r.addEventListener("change", function () { alCambio(o[0]); });
@@ -752,8 +823,9 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
     if (p === 0) return "Prima di iniziare";
     if (p === 1) return "Identificazione del bot";
     if (p === 2) return "Materiale del bot";
-    if (p < 3 + PASSI_AREE) return Q.aree[p - 3].titolo;
-    return "Controlli finali";
+    if (p < 3 + PASSI_AREE) return Q.pagine[p - 3].titolo;
+    if (p === RIEPILOGO) return "Riepilogo";
+    return "Ultimo controllo";
   }
 
   function passoPremessa(corpo) {
@@ -769,9 +841,9 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
   }
 
   function passoBot(corpo) {
-    corpo.appendChild(campo("Username del bot (obbligatorio)", "username", "Esempio: @NomeDelBot, il link t.me/NomeDelBot o un link copiato da Telegram Web. È indicato nel profilo del bot."));
-    corpo.appendChild(campo("Nome visualizzato (facoltativo)", "nomeVisualizzato", "Il nome riportato in cima alla chat, trascritto esattamente: consente di individuare caratteri che imitano lettere comuni."));
-    corpo.appendChild(campo("Link della Mini App (facoltativo)", "linkMiniApp", "Se il bot apre una pagina web, incolla qui il relativo indirizzo. La pagina non viene aperta: ne viene analizzato soltanto il dominio."));
+    corpo.appendChild(campo("Username del bot (obbligatorio)", "username", "Es. @NomeDelBot o t.me/NomeDelBot: lo trovi nel profilo del bot."));
+    corpo.appendChild(campo("Nome visualizzato (facoltativo)", "nomeVisualizzato", "Il nome in cima alla chat, copiato com'è: serve a scoprire lettere contraffatte."));
+    corpo.appendChild(campo("Link della Mini App (facoltativo)", "linkMiniApp", "Se il bot apre una pagina web, incolla l'indirizzo. La pagina non viene aperta: si controlla solo il dominio."));
   }
 
   function elencoScreenshot(lista) {
@@ -795,9 +867,11 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
   }
 
   function passoMateriale(corpo) {
-    corpo.appendChild(el("p", { testo: "Questo passaggio determina la solidità della valutazione: lo strumento analizza il materiale e individua autonomamente le formulazioni a rischio. In assenza di materiale la certezza resta bassa e l'esito verde non è possibile." }));
+    corpo.appendChild(el("p", { testo: "Facoltativo, ma utile: lo strumento legge i testi e trova da solo le frasi a rischio. Senza materiale la valutazione si basa solo sulle tue risposte e la certezza resta bassa." }));
     corpo.appendChild(el("div", { classe: "messaggio info" }, el("strong", { testo: "Privacy: " }),
-      "le immagini restano sul tuo dispositivo. Per analizzarle, il browser scarica una volta la libreria open source di lettura da cdn.jsdelivr.net (circa 10-15 MB tra programma e dati linguistici; nulla viene salvato sul dispositivo e il servizio riceve solo il tuo indirizzo IP, non l'immagine). Prima del caricamento, oscura numero di telefono, nome, saldo e indirizzi di wallet."));
+      "le immagini restano sul tuo dispositivo. Prima di caricarle, oscura numero di telefono, nome, saldo e indirizzi di wallet.",
+      el("details", { classe: "aiuto" }, el("summary", { testo: "Come vengono lette" }),
+        el("p", { testo: "Il browser scarica una volta la libreria open source di lettura da cdn.jsdelivr.net (circa 10-15 MB tra programma e dati linguistici). Lo strumento non salva nulla e il servizio riceve solo il tuo indirizzo IP, non l'immagine; il browser può tenerla in cache come per qualsiasi sito." }))));
     var lista = el("ul", { classe: "elenco-file", "aria-label": "Screenshot caricati" });
     var file = el("input", { type: "file", id: "c_file", accept: "image/*", multiple: true, "aria-describedby": "c_file_avviso" });
     file.addEventListener("change", function () {
@@ -818,46 +892,89 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
     corpo.appendChild(campo("In alternativa, incolla il testo dei messaggi o della descrizione", "incollato", "Funziona anche offline. Puoi incollare più messaggi in sequenza.", true));
   }
 
+  var RISPOSTE_TUTTE = [["si", "Sì"], ["no", "No"], ["nonso", "Non so"]];
+
   function passoArea(corpo, area) {
-    corpo.appendChild(el("p", { classe: "muted", testo: "In caso di dubbio rispondi \"Non so\": la voce verrà registrata tra gli elementi non verificati, senza incidere sul livello di rischio." }));
+    corpo.appendChild(el("p", { classe: "muted", testo: "Se non sei sicuro, rispondi \"Non so\": non aumenta il rischio, ma finisce tra le cose da verificare." }));
+    var campi = [];
+    function aggiornaVisibili() {
+      campi.forEach(function (c) { c.fs.hidden = !domandaVisibile(c.d, stato.risposte); });
+    }
     area.domande.forEach(function (d) {
-      corpo.appendChild(el("fieldset", { classe: "domanda" }, el("legend", { testo: d.testo }),
-        scelta(d.id, stato.risposte[d.codice], [["si", "Sì"], ["no", "No"], ["nonso", "Non so"]], function (v) { stato.risposte[d.codice] = v; }),
-        el("details", { classe: "aiuto" }, el("summary", { testo: "Dove verificarlo" }), el("p", { testo: d.aiuto }))));
+      var fs = el("fieldset", { classe: "domanda" }, el("legend", { id: "l_" + d.id, testo: d.testo }),
+        scelta(d.id, stato.risposte[d.codice], RISPOSTE_TUTTE.filter(function (o) { return (d.risposte || RISPOSTE_AMMESSE).indexOf(o[0]) >= 0; }),
+          function (v) { stato.risposte[d.codice] = v; aggiornaVisibili(); }, "l_" + d.id),
+        el("details", { classe: "aiuto" }, el("summary", { testo: "Dove verificarlo" }), el("p", { testo: d.aiuto })));
+      fs.hidden = !domandaVisibile(d, stato.risposte); // le domande condizionali compaiono solo quando servono
+      campi.push({ d: d, fs: fs });
+      corpo.appendChild(fs);
     });
   }
 
   function passoCopertura(corpo) {
-    corpo.appendChild(el("fieldset", { classe: "domanda" }, el("legend", { testo: Q.copertura.testo }),
+    corpo.appendChild(el("fieldset", { classe: "domanda" }, el("legend", { id: "l_" + Q.copertura.id, testo: Q.copertura.testo }),
       scelta(Q.copertura.id, stato.sezioniViste === null ? null : stato.sezioniViste ? "si" : "no", [["si", "Sì"], ["no", "No"]],
-        function (v) { stato.sezioniViste = v === "si"; }),
+        function (v) { stato.sezioniViste = v === "si"; }, "l_" + Q.copertura.id),
       el("details", { classe: "aiuto" }, el("summary", { testo: "Perché è importante" }), el("p", { testo: Q.copertura.aiuto }))));
-    corpo.appendChild(campo("Link a segnalazioni trovate (facoltativo, uno per riga)", "linkSegnalazioni", "Articoli, forum o avvisi che segnalano problemi con questo bot. Segnalazioni da due siti distinti determinano l'esito rosso.", true));
-    corpo.appendChild(campo("Link a fonti positive indipendenti (facoltativo, uno per riga)", "linkPositivi", "Ad esempio il sito ufficiale del servizio che cita il bot, oppure un articolo di una testata autorevole.", true));
-    corpo.appendChild(el("p", { classe: "piccolo muted", testo: "I link servono solo a conteggiare fonti e siti: non vengono aperti e nel report compaiono disattivati." }));
+    /* i link sono facoltativi e da utenti esperti: restano a scomparsa, aperti solo se già compilati */
+    var extra = el("details", { classe: "aiuto" }, el("summary", { testo: "Hai trovato segnalazioni o fonti online? (facoltativo)" }),
+      campo("Link a segnalazioni (uno per riga)", "linkSegnalazioni", "Articoli o forum che segnalano problemi con questo bot. Da due siti diversi l'esito è rosso.", true),
+      campo("Link a fonti positive indipendenti (uno per riga)", "linkPositivi", "Ad esempio il sito ufficiale che cita il bot o un articolo di una testata nota.", true),
+      el("p", { classe: "piccolo muted", testo: "I link non vengono aperti: si contano solo i siti, e nel report compaiono disattivati." }));
+    if (stato.linkSegnalazioni.trim() || stato.linkPositivi.trim()) extra.open = true;
+    corpo.appendChild(campo("Note (facoltativo)", "note", "Qualcosa che le domande non coprivano. Le note compaiono nel report ma non cambiano il punteggio. Da telefono puoi dettarle con il microfono della tastiera.", true));
+    corpo.appendChild(extra);
+  }
+
+  /* Conferma prima dell'esito: un momento di chiusura in colore neutro, con il riepilogo di cosa verrà valutato. */
+  function passoRiepilogo(corpo) {
+    var conta = contaRisposte(Q, stato.risposte);
+    var letti = stato.screenshot.filter(function (s) { return s.testo && s.testo.trim(); });
+    var materiale = [letti.length ? letti.length + " screenshot" : "", stato.incollato.trim() ? "testo incollato" : ""].filter(Boolean).join(" + ");
+    // come il motore: conta come materiale solo un testo di almeno MIN_LETTERE_MATERIALE lettere
+    function lettere(t) { return (String(t).match(/\p{L}/gu) || []).length; }
+    var sufficiente = letti.map(function (s) { return s.testo; }).concat([stato.incollato])
+      .some(function (t) { return lettere(t) >= MIN_LETTERE_MATERIALE; });
+    if (materiale && !sufficiente) materiale += " (troppo breve)";
+    var segno = el("div", { classe: "conferma-segno", "aria-hidden": "true" });
+    function riga(a, b) { return el("li", null, el("span", { testo: a }), el("span", { testo: b })); }
+    corpo.appendChild(el("div", { classe: "conferma" }, segno,
+      el("h3", { testo: "Tutto pronto" }),
+      el("p", { classe: "muted", testo: "Hai completato tutti i passaggi. L'esito si calcola sul tuo dispositivo, in un istante." }),
+      el("ul", { classe: "riepilogo" },
+        riga("Bot", "@" + (normalizzaUsername(stato.username) || stato.username.trim())),
+        riga("Materiale analizzato", materiale || "nessuno"),
+        riga("Domande", conta.risposte + " risposte" + (conta.nonso ? ", di cui " + conta.nonso + " \"Non so\"" : "")),
+        riga("Sezioni prelievo e pagamenti", stato.sezioniViste ? "consultate" : "non consultate"))));
+    if (!sufficiente) {
+      corpo.appendChild(el("div", { classe: "messaggio info" },
+        el("p", { testo: "Puoi vedere subito l'esito. Senza screenshot o testo sufficienti la valutazione si basa sulle tue risposte e la certezza resta bassa: il verde è possibile solo \"con riserva\" (20 punti di prudenza in più), altrimenti l'esito è giallo." }),
+        el("button", { type: "button", classe: "bottone", testo: "Aggiungi materiale", onclick: function () { stato.passo = 2; disegnaProva(); window.scrollTo(0, 0); } })));
+    }
   }
 
   function disegnaProva() {
     var sezione = svuota(document.getElementById("prova"));
     var p = stato.passo;
-    if (p > ULTIMO) { disegnaRisultato(sezione); return aggiornaBarra(); }
+    if (p > RIEPILOGO) { disegnaRisultato(sezione); return aggiornaBarra(); }
     var card = el("div", { classe: "card" });
     card.appendChild(el("div", { classe: "passo-testa" },
-      el("div", { classe: "passo-conta", testo: p === 0 ? nomePasso(p) : "Passo " + p + " di " + ULTIMO }),
-      p > 0 ? el("h2", { classe: "passo-nome", testo: nomePasso(p) }) : null));
-    card.appendChild(el("div", { classe: "avanzamento", "aria-hidden": "true" }, el("div", { style: "width:" + Math.round(p / ULTIMO * 100) + "%" })));
+      el("div", { classe: "passo-conta", testo: p === 0 ? nomePasso(p) : p === RIEPILOGO ? "Pronto" : "Passo " + p + " di " + ULTIMO }),
+      p > 0 ? el("h2", { classe: "passo-nome", tabindex: "-1", testo: nomePasso(p) }) : null));
+    card.appendChild(el("div", { classe: "avanzamento", "aria-hidden": "true" }, el("div", { style: "width:" + Math.round(Math.min(p, ULTIMO) / ULTIMO * 100) + "%" })));
     var corpo = el("div");
     if (p === 0) passoPremessa(corpo);
     else if (p === 1) passoBot(corpo);
     else if (p === 2) passoMateriale(corpo);
-    else if (p < 3 + PASSI_AREE) passoArea(corpo, Q.aree[p - 3]);
-    else passoCopertura(corpo);
+    else if (p < 3 + PASSI_AREE) passoArea(corpo, Q.pagine[p - 3]);
+    else if (p === ULTIMO) passoCopertura(corpo);
+    else passoRiepilogo(corpo);
     card.appendChild(corpo);
     var avviso = stato.messaggio ? el("div", { classe: "messaggio errore", role: "alert", testo: stato.messaggio }) : null;
     if (avviso) card.appendChild(avviso);
     card.appendChild(el("div", { classe: "azioni azioni-fisse" },
       p > 0 ? el("button", { type: "button", classe: "bottone", testo: "← Indietro", onclick: function () { stato.messaggio = ""; stato.passo--; disegnaProva(); window.scrollTo(0, 0); } }) : null,
-      el("button", { type: "button", classe: "bottone primario", testo: p === 0 ? "Ho letto, avvia la verifica" : p === ULTIMO ? "Calcola il semaforo" : "Avanti →", onclick: avanti })));
+      el("button", { type: "button", classe: "bottone primario" + (p === RIEPILOGO ? " grande" : ""), testo: p === 0 ? "Ho letto, avvia la verifica" : p === RIEPILOGO ? "Mostra l'esito →" : "Avanti →", onclick: avanti })));
     sezione.appendChild(card);
     aggiornaBarra();
     /* con la barra fissa il pulsante è sempre in vista: il messaggio deve esserlo altrettanto */
@@ -875,13 +992,21 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
     }
     if (stato.passo === 2 && stato.screenshot.some(function (s) { return s.testo === null; })) { stato.messaggio = "Attendi il completamento dell'analisi degli screenshot."; return disegnaProva(); }
     if (stato.passo >= 3 && stato.passo < 3 + PASSI_AREE &&
-        Q.aree[stato.passo - 3].domande.some(function (d) { return !stato.risposte[d.codice]; })) {
+        Q.pagine[stato.passo - 3].domande.filter(function (d) { return domandaVisibile(d, stato.risposte); })
+          .some(function (d) { return !stato.risposte[d.codice]; })) {
       stato.messaggio = "Per proseguire rispondi a tutte le domande (è ammessa anche la risposta \"Non so\")."; return disegnaProva();
     }
     if (stato.passo === ULTIMO && stato.sezioniViste === null) { stato.messaggio = "Indica se hai consultato le sezioni prelievo / pagamenti / inviti."; return disegnaProva(); }
     stato.passo++;
     disegnaProva();
     window.scrollTo(0, 0);
+    titoloPasso();
+  }
+
+  /* la scheda viene ridisegnata da capo: il focus va sul titolo del nuovo passo (tastiera e lettori di schermo) */
+  function titoloPasso() {
+    var h = document.querySelector("#prova .passo-nome");
+    if (h && h.focus) h.focus({ preventScroll: true });
   }
 
   function disegnaRisultato(sezione) {
@@ -895,6 +1020,7 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
     var area = el("div");
     sezione.appendChild(area);
     mostraReport(r.verdetto, area, { contrasti: r.contrasti, basataSu: r.basataSu, avvisi: r.avvisi,
+      motiviCertezzaBassa: r.motiviCertezzaBassa,
       extraAzioni: [el("button", { type: "button", classe: "bottone", testo: "← Modifica le risposte", onclick: function () { stato.passo = ULTIMO; disegnaProva(); window.scrollTo(0, 0); } }),
         el("button", { type: "button", classe: "bottone", testo: "Verifica un altro bot", onclick: function () { stato = nuovoStato(); stato.passo = 1; disegnaProva(); window.scrollTo(0, 0); } })] });
   }
@@ -902,6 +1028,23 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
   stato = nuovoStato();
   disegnaProva();
   mostraCome();
+
+  /* App installabile: il gestore offline si registra solo sul sito pubblicato (https) o in prova su localhost, mai dal file aperto in locale */
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+    navigator.serviceWorker.register("sw.js").catch(function () { /* senza gestore l'app funziona comunque online */ });
+  }
+  var invitoInstalla = null, boxInstalla = document.getElementById("installa");
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault(); // il pulsante compare solo quando il browser offre davvero l'installazione
+    invitoInstalla = e;
+    boxInstalla.hidden = false;
+  });
+  document.getElementById("installa-bottone").addEventListener("click", function () {
+    if (!invitoInstalla) return;
+    invitoInstalla.prompt();
+    invitoInstalla.userChoice.then(function () { invitoInstalla = null; boxInstalla.hidden = true; });
+  });
+  window.addEventListener("appinstalled", function () { invitoInstalla = null; boxInstalla.hidden = true; });
 })();
 </script>
 </body>

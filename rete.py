@@ -25,7 +25,10 @@ TIMEOUT = 15
 MAX_BYTE = 2_000_000
 MAX_SCRIPT = 10
 GIOVANE_GIORNI = 90
-SECONDO_LIVELLO = {"co", "com", "org", "net", "gov", "ac"}
+# Unica regola del "dominio base" in Python (stesso elenco in app/sicurezza.js, un test li tiene allineati)
+SECONDO_LIVELLO = {"co", "com", "org", "net", "gov", "ac", "edu"}
+# Estensioni spesso usate per siti usa e getta (stesso elenco in app/analizzatore.js) → dominio_tld_rischioso
+TLD_RISCHIOSI = {"zip", "mov", "top", "xyz", "click", "gq", "tk", "ml", "cf", "ga", "icu", "buzz"}
 TIPI_TESTO = ("text/", "application/javascript", "application/x-javascript",
               "application/xhtml", "application/json", "application/ecmascript")
 
@@ -164,7 +167,14 @@ def leggi_rdap(dati: dict, oggi: date) -> dict:
 
 
 def dominio_registrabile(host: str) -> str:
-    parti = [p for p in host.lower().strip(".").split(".") if p]
+    """Nome registrato di un host: news.bbc.co.uk → bbc.co.uk. Un indirizzo IP resta com'è.
+
+    Unica regola del progetto (punteggio e resoconto la richiamano); in JS è sicurezza.dominioBase.
+    """
+    host = host.lower().strip(".")
+    if _e_ip(host):
+        return host.strip("[]")
+    parti = [p for p in host.split(".") if p]
     if parti and parti[0] == "www":
         parti = parti[1:]
     if len(parti) >= 3 and parti[-2] in SECONDO_LIVELLO and len(parti[-1]) == 2:
@@ -226,8 +236,10 @@ def dominio(url_o_dominio: str, oggi: date | None = None) -> dict:
         risolve = True
     except (OSError, ValueError):
         risolve = False
+    tld = dom.rsplit(".", 1)[-1]
     base = {"dominio": dom, "host": host, "risolve": risolve,
-            "contiene_marchio": marchi_nel_host(host)}
+            "contiene_marchio": marchi_nel_host(host),
+            "tld_rischioso": tld if tld in TLD_RISCHIOSI else None}
     if _host_vietato(host):
         return _non_verificato("indirizzo locale", **base)
     try:
