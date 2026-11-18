@@ -165,3 +165,20 @@ def test_dentro_l_app_installata_nessun_invito(generato):
     assert '"(display-mode: standalone)"' in generato and "navigator.standalone === true" in generato
     blocco = _blocco_installa(generato)
     assert "if (appAperta) return;" in blocco
+
+
+# --- percezione di sicurezza (18/11/2026): l'installazione si spiega da sola ---
+
+def test_invito_installa_rassicura(generato):
+    box = generato[generato.index('id="installa"'):generato.index('id="installa-bottone"')]
+    assert "Nessun file da scaricare e nessun permesso" in box
+    assert "è questa stessa pagina, salvata sul dispositivo" in box and "Puoi rimuoverla quando vuoi" in box
+
+
+def test_test_automatici_su_github():
+    flusso = (KIT / ".github" / "workflows" / "test.yml").read_text(encoding="utf-8")
+    assert "python -m pytest -q" in flusso and "node --test" in flusso
+    assert "ubuntu-latest" in flusso and "windows-latest" in flusso
+    assert "permissions:" in flusso and "contents: read" in flusso  # nessun permesso di scrittura
+    for versione in ('"22"', '"24"'):
+        assert versione in flusso

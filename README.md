@@ -4,7 +4,7 @@
 
 🇮🇹 Italiano · [🇬🇧 English](README.en.md)
 
-[![Licenza MIT](https://img.shields.io/badge/licenza-MIT-0f766e)](LICENSE) ![Test](https://img.shields.io/badge/test-507%20Python%20%2B%20139%20JS-15803d) ![App installabile](https://img.shields.io/badge/app-installabile%20%C2%B7%20offline-1d4ed8) ![Dati raccolti](https://img.shields.io/badge/dati%20raccolti-zero-14213d)
+[![Licenza MIT](https://img.shields.io/badge/licenza-MIT-0f766e)](LICENSE) [![Test](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml) [![CodeQL](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml) ![App installabile](https://img.shields.io/badge/app-installabile%20%C2%B7%20offline-1d4ed8) ![Dati raccolti](https://img.shields.io/badge/dati%20raccolti-zero-14213d)
 
 [![Verifica Bot: tre esiti di esempio, verde, giallo e rosso, su telefono](docs/immagini/vetrina.png)](https://frank-85.github.io/verifica-bot-telegram/)
 
@@ -62,6 +62,18 @@ Il colore non lo sceglie un'intelligenza artificiale. Lo calcola un motore a reg
 
 Ogni esito è accompagnato dalla **certezza della valutazione**, che dice quanto erano solide le prove. Con la sola autovalutazione la certezza non arriva mai al livello più alto, salvo quando una linea rossa è provata direttamente, da una risposta o dal materiale fornito.
 
+## Sicurezza verificabile
+
+Non devi fidarti sulla parola: queste prove sono pubbliche e puoi controllarle tu.
+
+- **Test automatici** ([![Test](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml)): 509 test Python e 139 JavaScript girano sui server di GitHub, su Linux e Windows, a ogni modifica del codice.
+- **Analisi di sicurezza del codice** ([![CodeQL](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml)): GitHub CodeQL cerca falle note nel JavaScript, nel Python e nei flussi automatici, a ogni modifica e ogni settimana.
+- **Antivirus:** lo zip della Release è analizzato su [VirusTotal](https://www.virustotal.com/gui/file/d1ec1436933c9b7f58b1bfad0474ce8528f5cc6c7ff45b3ab9d8264db3c9b349) da decine di motori antivirus. Impronta SHA-256 dello zip: `d1ec1436933c9b7f58b1bfad0474ce8528f5cc6c7ff45b3ab9d8264db3c9b349`. Se l'impronta del file che scarichi è diversa, non è quello pubblicato qui.
+- **Nessun programma da installare:** l'app è una pagina web. Installarla sul telefono non scarica un file `.apk` e non chiede permessi (contatti, file, posizione, notifiche).
+- **Codice aperto:** tutto ciò che fa l'app è leggibile in questo repository.
+
+Queste verifiche non sono una certificazione e nessuno può garantire l'assenza assoluta di difetti. Dimostrano però che il codice è controllato da strumenti esterni, in modo ripetibile e pubblico.
+
 ## Privacy
 
 - L'app è **un unico file HTML**. Funziona nel browser, anche da telefono, e si può scaricare e aprire senza connessione.
@@ -93,7 +105,7 @@ Ogni esito è accompagnato dalla **certezza della valutazione**, che dice quanto
 | `costruisci_icone.py` | Genera le icone da un unico disegno (SVG e PNG coerenti). |
 | `strumenti/vetrina/`, `docs/immagini/` | Lo script che fotografa l'app vera per le immagini di questo README, e le immagini. |
 | `verifica-bot/SKILL.md` | Le istruzioni per usare il motore con un assistente AI (Claude Code): l'assistente raccoglie le prove, il motore calcola l'esito. |
-| `tests/` | 507 test Python e 139 test JavaScript. |
+| `tests/` | 509 test Python e 139 test JavaScript. |
 
 Il motore esiste in due versioni, Python e JavaScript. Una serie di **test di parità** dà gli stessi casi a entrambe e verifica che producano lo stesso risultato: una correzione fatta da una parte sola fa fallire i test.
 
@@ -105,7 +117,7 @@ Servono Python (provato con 3.13), `pytest` e Node.js (provato con Node 22 e 24)
 
 ```
 python -m pytest -q
-python -I costruisci_app.py --numero-test 646
+python -I costruisci_app.py --numero-test 648
 ```
 
 Icone e immagini del README (servono Pillow e Microsoft Edge):

@@ -1,0 +1,35 @@
+# Analisi di sicurezza del codice con GitHub CodeQL: cerca falle note in JavaScript, Python
+# e nei flussi automatici, a ogni modifica e una volta alla settimana.
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analisi:
+    name: CodeQL · ${{ matrix.lingua }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        lingua: [javascript-typescript, python, actions]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.lingua }}
+          queries: security-extended
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.lingua }}"

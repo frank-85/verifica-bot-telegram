@@ -4,7 +4,7 @@
 
 [🇮🇹 Italiano](README.md) · 🇬🇧 English
 
-[![MIT License](https://img.shields.io/badge/license-MIT-0f766e)](LICENSE) ![Tests](https://img.shields.io/badge/tests-507%20Python%20%2B%20139%20JS-15803d) ![Installable app](https://img.shields.io/badge/app-installable%20%C2%B7%20offline-1d4ed8) ![Data collected](https://img.shields.io/badge/data%20collected-none-14213d)
+[![MIT License](https://img.shields.io/badge/license-MIT-0f766e)](LICENSE) [![Test](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml) [![CodeQL](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml) ![Installable app](https://img.shields.io/badge/app-installable%20%C2%B7%20offline-1d4ed8) ![Data collected](https://img.shields.io/badge/data%20collected-none-14213d)
 
 [![Verifica Bot: three sample results, green, yellow and red, on a phone](docs/immagini/vetrina-en.png)](https://frank-85.github.io/verifica-bot-telegram/)
 
@@ -62,6 +62,18 @@ No AI picks the color. A rule engine computes it: the same clues always give the
 
 Every result comes with a **confidence level** that says how solid the evidence was. A self-assessment alone never reaches the highest level, except when a red line is proven directly, by an answer or by the material provided.
 
+## Verifiable security
+
+You don't have to take my word for it: this evidence is public and you can check it yourself.
+
+- **Automated tests** ([![Test](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml)): 509 Python and 139 JavaScript tests run on GitHub's servers, on Linux and Windows, on every code change.
+- **Code security analysis** ([![CodeQL](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml)): GitHub CodeQL looks for known vulnerabilities in the JavaScript, the Python, and the automated workflows, on every change and every week.
+- **Antivirus:** the Release zip is scanned on [VirusTotal](https://www.virustotal.com/gui/file/d1ec1436933c9b7f58b1bfad0474ce8528f5cc6c7ff45b3ab9d8264db3c9b349) by dozens of antivirus engines. SHA-256 of the zip: `d1ec1436933c9b7f58b1bfad0474ce8528f5cc6c7ff45b3ab9d8264db3c9b349`. If the file you download has a different hash, it is not the one published here.
+- **Nothing to install as a program:** the app is a web page. Installing it on your phone does not download an `.apk` file and asks for no permissions (contacts, files, location, notifications).
+- **Open code:** everything the app does can be read in this repository.
+
+These checks are not a certification, and nobody can guarantee the total absence of defects. They do show that the code is checked by external tools, in a repeatable and public way.
+
 ## Privacy
 
 - The app is **a single HTML file**. It runs in the browser, on phones too, and can be downloaded and opened offline.
@@ -93,7 +105,7 @@ Every result comes with a **confidence level** that says how solid the evidence 
 | `costruisci_icone.py` | Builds the icons from a single drawing (matching SVG and PNG). |
 | `strumenti/vetrina/`, `docs/immagini/` | The script that photographs the real app for this README's images, and the images. |
 | `verifica-bot/SKILL.md` | Instructions for using the engine with an AI assistant (Claude Code): the assistant gathers the evidence, the engine computes the result. |
-| `tests/` | 507 Python tests and 139 JavaScript tests. |
+| `tests/` | 509 Python tests and 139 JavaScript tests. |
 
 The engine exists in two versions, Python and JavaScript. A set of **parity tests** feeds the same cases to both and checks that they return the same result, so a fix applied to only one side makes the tests fail.
 
@@ -107,7 +119,7 @@ You need Python (tested with 3.13), `pytest`, and Node.js (tested with Node 22 a
 
 ```
 python -m pytest -q
-python -I costruisci_app.py --numero-test 646
+python -I costruisci_app.py --numero-test 648
 ```
 
 Icons and README images (require Pillow and Microsoft Edge):
