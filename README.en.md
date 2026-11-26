@@ -52,7 +52,7 @@ Prefer not to install anything? [Download the zip](https://github.com/frank-85/v
 
 No AI picks the color. A rule engine computes it: the same clues always give the same result, and anyone can read why.
 
-- **38 signals** in a fixed catalog ([`segnali.json`](segnali.json)), each with a score.
+- **39 signals** in a fixed catalog ([`segnali.json`](segnali.json)), each with a score.
 - **6 areas**: identity, promises, requests, technical, reputation, transparency. Identity, promises, requests, and technical count double.
 - **Score**: each area's risk (0-100) is multiplied by its weight, added up, and divided by 3, capped at 100. Areas with no signals don't pull the result down: a bot that asks for a deposit and a wallet connection comes out red even if everything else looks fine.
 - **Thresholds**: up to 30 is green, 31 to 60 is yellow, above 60 is red.
@@ -66,9 +66,9 @@ Every result comes with a **confidence level** that says how solid the evidence 
 
 You don't have to take my word for it: this evidence is public and you can check it yourself.
 
-- **Automated tests** ([![Test](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml)): 509 Python and 139 JavaScript tests run on GitHub's servers, on Linux and Windows, on every code change.
+- **Automated tests** ([![Test](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml)): 539 Python and 173 JavaScript tests run on GitHub's servers, on Linux and Windows, on every code change.
 - **Code security analysis** ([![CodeQL](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml)): GitHub CodeQL looks for known vulnerabilities in the JavaScript, the Python, and the automated workflows, on every change and every week, using the extended security rules. As of November 18, 2026: no findings.
-- **Antivirus:** the Release zip is scanned on [VirusTotal](https://www.virustotal.com/gui/file/d1ec1436933c9b7f58b1bfad0474ce8528f5cc6c7ff45b3ab9d8264db3c9b349) by dozens of antivirus engines, and so is the [app's website](https://www.virustotal.com/gui/url/f8d103a76bded66c7744f4a3071b9091141a2891def39c6b3e5f201ad397b7cd): in the scan of November 18, 2026, **no engine flagged any issue**, for either the zip or the website. SHA-256 of the zip: `d1ec1436933c9b7f58b1bfad0474ce8528f5cc6c7ff45b3ab9d8264db3c9b349`. If the file you download has a different hash, it is not the one published here.
+- **Antivirus:** the Release zip is scanned on [VirusTotal](https://www.virustotal.com/gui/file/7f3d9d2e84d5a8e294000a276d2622139b0bf45476caa9b2eaffddf012f78ac8) by dozens of antivirus engines, and so is the [app's website](https://www.virustotal.com/gui/url/f8d103a76bded66c7744f4a3071b9091141a2891def39c6b3e5f201ad397b7cd): in the scan of November 26, 2026, **none of the 64 engines flagged any issue** for the zip (version 1.1); the website was clean in the scan of November 18, 2026. SHA-256 of the zip: `7f3d9d2e84d5a8e294000a276d2622139b0bf45476caa9b2eaffddf012f78ac8`. If the file you download has a different hash, it is not the one published here.
 - **Nothing to install as a program:** the app is a web page. Installing it on your phone does not download an `.apk` file and asks for no permissions (contacts, files, location, notifications).
 - **Open code:** everything the app does can be read in this repository.
 
@@ -105,7 +105,7 @@ These checks are not a certification, and nobody can guarantee the total absence
 | `costruisci_icone.py` | Builds the icons from a single drawing (matching SVG and PNG). |
 | `strumenti/vetrina/`, `docs/immagini/` | The script that photographs the real app for this README's images, and the images. |
 | `verifica-bot/SKILL.md` | Instructions for using the engine with an AI assistant (Claude Code): the assistant gathers the evidence, the engine computes the result. |
-| `tests/` | 509 Python tests and 139 JavaScript tests. |
+| `tests/` | 539 Python tests and 173 JavaScript tests. |
 
 The engine exists in two versions, Python and JavaScript. A set of **parity tests** feeds the same cases to both and checks that they return the same result, so a fix applied to only one side makes the tests fail.
 

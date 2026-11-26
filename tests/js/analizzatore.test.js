@@ -13,6 +13,11 @@ const CATALOGO = JSON.parse(fs.readFileSync(path.join(KIT, "segnali.json"), "utf
 const codici = (t) => analizzaTesto(t, REGOLE).map((r) => r.codice).sort();
 
 const VERE = [
+  // 26/11/2026 (tester UX, "tocca e guadagna"): prelievo rimandato a un evento futuro
+  ["Il prelievo sarà disponibile dopo il listing sugli exchange", "prelievo_rimandato"],
+  ["Withdrawals will be available after the listing", "prelievo_rimandato"],
+  ["Prelievi attivi dopo il lancio del token", "prelievo_rimandato"],
+  ["Withdrawal opens after the token launch", "prelievo_rimandato"],
   ["Withdrawals are available only for users with at least one active deposit (boost) or 50 invites", "prelievo_condizionato"],
   ["I prelievi sono disponibili solo per chi ha almeno un deposito attivo", "prelievo_condizionato"],
   ["To withdraw you must first pay a 10 USDT fee", "prelievo_condizionato"],
@@ -135,6 +140,12 @@ for (const [frase, codice] of VERE_REVISIONE) {
 
 // --- M2: marchio nei sottodomini, sito ufficiale escluso, IP numerici ---
 const codiciLink = (u) => analizzaLink(u, MARCHI).segnali.map((s) => s.codice);
+
+test("dominio ufficiale dichiarato in marchi.txt: nessuna imitazione (walletbot.me, tester 26/11)", () => {
+  assert.deepStrictEqual(codiciLink("https://walletbot.me"), []);
+  assert.deepStrictEqual(codiciLink("https://app.walletbot.me/x"), []);
+  assert.ok(codiciLink("https://walletbot.click").includes("dominio_con_marchio"));
+});
 
 test("marchio nel sottodominio → dominio_con_marchio", () => {
   assert.deepStrictEqual(codiciLink("https://binance.sito-falso.xyz/login"), ["dominio_con_marchio", "dominio_tld_rischioso"]);

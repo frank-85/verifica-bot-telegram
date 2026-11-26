@@ -74,6 +74,11 @@ def _casi_calcola():
     for nome, punti in (("riserva_0", 0), ("riserva_10", 30), ("riserva_11", 33), ("riserva_area_80", 80)):
         casi[nome] = v({"trasparenza": [fc("x_tr", punti)]} if punti else None, materiale=False, tecnica=False, fonti=0)
         casi[nome]["contesto"]["risposte_complete"] = True
+    # tester UX 26/11/2026: risposte contraddittorie → certezza bassa, niente verde con riserva
+    casi["contraddizioni_linea_rossa"] = v({"reputazione": [s("etichetta_scam_telegram")]}, fonti=2)
+    casi["contraddizioni_linea_rossa"]["contesto"]["risposte_contraddittorie"] = True
+    casi["contraddizioni_riserva"] = v(None, materiale=False, tecnica=False, fonti=0)
+    casi["contraddizioni_riserva"]["contesto"].update(risposte_complete=True, risposte_contraddittorie=True)
     casi["ufficiale_1_fonte"] = v({"identita": [s("bot_ufficiale_verificato")]},
                                   materiale=False, tecnica=False, fonti=1)
     casi["ufficiale_2_fonti"] = v({"identita": [s("bot_ufficiale_verificato")]},

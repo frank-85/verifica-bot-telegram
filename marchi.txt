@@ -1,10 +1,13 @@
 # Marchi spesso imitati dai bot truffaldini.
-# Formato: marchio|username_ufficiale1,username_ufficiale2|generico  (le parti dopo | sono facoltative)
+# Formato: marchio|username_ufficiale1,username_ufficiale2|generico|dominio_ufficiale1,dominio_ufficiale2
+# (le parti dopo | sono facoltative; per saltarne una lasciarla vuota: "marchio|||dominio.it")
 # "generico" = parola comune (es. wallet): conta solo se il nome è fatto del marchio + parole esca.
+# Domini ufficiali = nomi registrati del servizio vero, quando NON coincidono con il marchio
+# (binance.com è già riconosciuto da solo; walletbot.me no). Valgono anche i loro sottodomini.
 # Gli username ufficiali segnati "da verificare" vanno confermati in collaudo.
 binance
 telegram|telegram,BotFather
-wallet|wallet|generico
+wallet|wallet|generico|walletbot.me
 ton
 tonkeeper
 metamask

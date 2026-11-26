@@ -56,6 +56,17 @@ def carica_marchi(percorso: Path | None = None) -> list[tuple[str, set[str], boo
     return marchi
 
 
+def domini_ufficiali(percorso: Path | None = None) -> set[str]:
+    """Quarto campo di marchi.txt: domini registrati ufficiali che non coincidono col marchio."""
+    percorso = percorso or KIT / "marchi.txt"
+    domini = set()
+    for riga in Path(percorso).read_text(encoding="utf-8").splitlines():
+        campi = riga.split("#")[0].strip().split("|")
+        if len(campi) > 3:
+            domini |= {d.strip().lower() for d in campi[3].split(",") if d.strip()}
+    return domini
+
+
 def _parole(username: str) -> list[str]:
     pezzi = re.split(r"[_\W]+", username)
     parole = []

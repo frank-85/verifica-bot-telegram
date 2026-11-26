@@ -137,16 +137,19 @@ fieldset.domanda { border: 1px solid var(--bordo); background: var(--scheda); bo
   min-width: 0; box-shadow: var(--ombra); }
 fieldset.domanda legend { float: left; width: 100%; padding: 0; margin: 0 0 12px; font-weight: 600; }
 .scelte { clear: both; display: flex; flex-wrap: wrap; gap: 8px; max-width: 440px; }
-.pillola { position: relative; flex: 1 1 auto; display: flex; cursor: pointer; }
+.pillola { position: relative; flex: 1 1 auto; display: flex; cursor: pointer; min-width: 0; }
 .pillola input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.pillola span { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 0 10px;
-  border: 1px solid var(--secondario); border-radius: 99px; background: var(--sfondo); color: var(--testo); font-weight: 600; white-space: nowrap; }
+.pillola span { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 6px 14px;
+  border: 1px solid var(--secondario); border-radius: 24px; background: var(--sfondo); color: var(--testo); font-weight: 600;
+  text-align: center; overflow-wrap: anywhere; } /* tester UX 26/11: le risposte lunghe vanno a capo, mai fuori schermo */
 .pillola span::before { content: ""; flex: 0 0 18px; height: 18px; border-radius: 50%; border: 2px solid var(--secondario);
   font-size: 12px; font-weight: 800; line-height: 14px; text-align: center; }
 .pillola:hover span { border-color: var(--primario); }
 .pillola input:checked + span { background: var(--primario); border-color: var(--primario); color: var(--su-primario); font-weight: 700; }
 .pillola input:checked + span::before { content: "✓"; background: var(--su-primario); border-color: var(--su-primario); color: var(--primario); }
 .pillola input:focus-visible + span { outline: 3px solid var(--primario); outline-offset: 2px; }
+.esito-perche { font-size: 1rem; line-height: 1.45; margin: 4px 0 14px; }
+.nota-domanda { font-size: .875rem; color: var(--secondario); margin: -4px 0 10px; }
 details.aiuto summary { cursor: pointer; color: var(--secondario); font-size: .875rem; padding: 12px 0; }
 details.aiuto p { font-size: .875rem; color: var(--secondario); margin: 0 0 10px; }
 /* screenshot: uno stato per file */
@@ -457,8 +460,9 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
   var MOTIVI_CERTEZZA_BASSA = {
     nessun_materiale: "Non hai fornito testo o screenshot del bot: aggiungili per una valutazione più solida.",
     testo_breve: "Il testo fornito è troppo breve per essere analizzato in modo affidabile: incolla messaggi più completi.",
-    sezioni_non_confermate: "Non hai confermato di aver aperto le sezioni prelievo, pagamenti e inviti: sono quelle dove compaiono più spesso le richieste di denaro.",
-    nonso_richieste: "Hai risposto \"Non so\" ad alcune domande sulle richieste del bot: sono le più importanti per la valutazione."
+    sezioni_non_confermate: "Non hai guardato i pulsanti per prelevare, pagare o invitare amici: è lì che compaiono più spesso le richieste di denaro.",
+    nonso_richieste: "Hai risposto \"Non so\" ad alcune domande sulle richieste del bot: sono le più importanti per la valutazione.",
+    risposte_contraddittorie: "Alcune risposte si contraddicono tra loro o con il testo incollato: ricontrollale nel riquadro \"Discrepanze\"."
   };
 
   function basataSuVetrina(v) {
@@ -479,11 +483,13 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
   function sottotitolo(v) {
     var motivo = motivoRegola(v), vicino = notaProssimita(v);
     if (v.verdetto === "verde") return motivo === "riserva" ? "Verde con riserva · senza materiale sufficiente" : "Verde · non è una garanzia" + (vicino ? " · " + vicino : "");
-    if (v.verdetto === "giallo") return "Giallo · " + (motivo === "prudenza" ? "regola di prudenza" : vicino || "procedi con cautela");
+    // tester UX 26/11 (Renato): niente gergo tecnico nel sottotitolo, si dice cosa manca
+    if (v.verdetto === "giallo") return "Giallo · " + (motivo === "prudenza"
+      ? (v.punteggio_totale <= SOGLIE.verde ? "mancano alcune verifiche" : "per prudenza") : vicino || "procedi con cautela");
     return "Rosso · " + (v.linee_rosse && v.linee_rosse.length ? "linea rossa superata"
       : motivo === "segnalazioni" || v.rosso_da_segnalazioni ? "segnalazioni concordi"
       : motivo === "imitazione" || v.rosso_da_imitazione ? "imitazione di un marchio"
-      : motivo === "prudenza" ? "regola di prudenza" : "fermati e verifica");
+      : motivo === "prudenza" ? "per prudenza" : "fermati e verifica");
   }
 
   /* Barra del rischio: l'indicatore sta sul rischio finale, quindi sempre nella zona del colore. */
@@ -513,17 +519,22 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
       corpo = [el("strong", { testo: "Verde con riserva. " }),
         "L'esito si basa sulle tue risposte, senza screenshot o testo sufficienti da verificare: al rischio si aggiungono 20 punti di prudenza e la certezza resta bassa. "];
     } else {
-      corpo = [el("strong", { testo: "Prevale una regola di prudenza. " }),
-        "L'esito verde è escluso (certezza bassa oppure un'area al rischio massimo): il rischio mostrato resta nella zona del colore assegnato. "];
+      // tester UX 26/11 (Renato): due numeri (punteggio e rischio mostrato) spiegati in parole semplici
+      return el("p", { classe: "nota-regola t-" + v.verdetto }, el("strong", { testo: "Perché due numeri. " }),
+        "Le tue risposte e il testo danno ", el("span", { classe: "mono", testo: v.punteggio_totale + "/100" }),
+        v.punteggio_totale <= SOGLIE.verde
+          ? " (zona verde), ma finché mancano alcune verifiche il verde non si può dare: per questo il rischio mostrato è "
+          : ", ma un'area ha raggiunto il rischio massimo e il verde è escluso: per questo il rischio mostrato è ",
+        el("span", { classe: "mono", testo: rischioFinale(v) + "/100" }), ".");
     }
     return el("p", { classe: "nota-regola t-" + v.verdetto }, corpo,
       "Punteggio delle aree: ", el("span", { classe: "mono", testo: v.punteggio_totale + "/100" }), ".");
   }
 
   /* Un giallo nato solo dalla prudenza, con punteggio da verde, non ha segnali di rischio: il titolo non li inventa. */
-  function etichettaEsito(v) {
+  function etichettaEsito(v, opzioni) {
     if (v.verdetto === "giallo" && motivoRegola(v) === "prudenza" && v.punteggio_totale <= SOGLIE.verde)
-      return "Nessun segnale grave · da confermare";
+      return pocheInformazioni(opzioni.nonso || 0) ? "Pochi elementi per decidere · da confermare" : "Nessun segnale grave · da confermare";
     return ESITI[v.verdetto].etichetta;
   }
 
@@ -551,8 +562,9 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
         el("span", { testo: (v.data ? String(v.data).slice(0, 10) + " · " : "") + (autoval ? "autovalutazione guidata" : "analisi completa") })),
       el("div", { classe: "esito t-" + v.verdetto },
         forma(v.verdetto),
-        el("h2", { classe: "esito-titolo", testo: etichettaEsito(v) }),
+        el("h2", { classe: "esito-titolo", testo: etichettaEsito(v, opzioni) }),
         el("p", { classe: "esito-sotto", testo: sottotitolo(v) })),
+      el("p", { classe: "esito-perche", testo: perche(v, CAT, opzioni.motiviCertezzaBassa || []) }),
       barraRischio(v),
       el("ul", { classe: "chips" },
         chip("Certezza della valutazione", el("strong", { testo: v.fiducia })),
@@ -570,17 +582,25 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
       el("p", { testo: autoval
         ? "Esito rosso per segnalazioni: hai indicato segnalazioni provenienti da almeno due siti distinti (non verificate dallo strumento)."
         : "Esito rosso per segnalazioni: almeno due siti distinti riportano segnalazioni su questo bot." })));
-    if (opzioni.contrasti && opzioni.contrasti.length) {
+    var contrasti = opzioni.contrasti || [], contraddizioni = opzioni.contraddizioni || [];
+    if (contrasti.length || contraddizioni.length) {
       principale.appendChild(el("div", { classe: "riquadro giallo" }, el("h3", { testo: "Discrepanze con le tue risposte" }),
-        el("ul", { classe: "pulito" }, opzioni.contrasti.map(function (c) {
+        el("ul", { classe: "pulito" }, contrasti.map(function (c) {
           return el("li", { testo: "Il controllo automatico ha rilevato " + c.frase + ", in contrasto con la risposta fornita (" + (CAT[c.codice] ? CAT[c.codice].descrizione : c.codice) + ")." });
-        }))));
+        }).concat(contraddizioni.map(function (t) { return el("li", { testo: t }); })))));
     }
     if (opzioni.avvisi && opzioni.avvisi.length) {
       principale.appendChild(el("div", { classe: "riquadro neutro" }, el("h3", { testo: "Avvisi sul link della Mini App" }),
         el("ul", { classe: "pulito" }, opzioni.avvisi.map(function (a) { return el("li", { testo: a }); }))));
     }
     principale.appendChild(el("p", { classe: "piccolo muted basata-su" }, el("strong", { testo: "Basata su: " }), basataSu.join(" · ")));
+    if (opzioni.rapido) principale.appendChild(el("div", { classe: "messaggio info" },
+      el("p", { testo: "Esito rapido: si basa solo sul testo letto in automatico e sul nome, senza le tue risposte. Il segnale grave basta per il rosso; le domande servono a capire il resto." }),
+      opzioni.completaDomande ? el("button", { type: "button", classe: "bottone", testo: "Completa le domande", onclick: opzioni.completaDomande }) : null));
+    // tester UX 26/11: se nome in chat o link mancano, lo si dice (e si offre di aggiungerli)
+    if (opzioni.mancanti && opzioni.mancanti.length) principale.appendChild(el("div", { classe: "messaggio info" },
+      el("p", { testo: "Non hai indicato " + opzioni.mancanti.join(" né ") + ": potrebbe esserci un trucco in più che non ho potuto controllare." }),
+      opzioni.aggiungiMancanti ? el("button", { type: "button", classe: "bottone", testo: "Aggiungi nome e link", onclick: opzioni.aggiungiMancanti }) : null));
     if (autoval && v.verdetto === "verde" && !v.verde_con_riserva) principale.appendChild(el("p", { classe: "piccolo muted", testo: "Un esito verde ottenuto in autovalutazione raggiunge al massimo una certezza media: la certezza alta è riservata alle analisi complete. Nessun controllo può garantire la sicurezza di un servizio." }));
     var motiviBassa = (opzioni.motiviCertezzaBassa || []).filter(function (m) { return MOTIVI_CERTEZZA_BASSA[m]; });
     if (autoval && v.fiducia === "bassa" && motiviBassa.length) principale.appendChild(el("div", { classe: "piccolo muted" },
@@ -607,7 +627,7 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
           var punti = s.fuori_catalogo ? s.punti : voce ? voce.punti : 0;
           return el("div", { classe: "segnale" },
             el("div", null, el("strong", { testo: (voce ? voce.descrizione : s.codice.replace(/_/g, " ")) }),
-              el("span", { classe: "muted piccolo", testo: " (" + (punti > 0 ? "+" : "") + punti + (s.tipo_prova === "segnalazione" ? ", da fonte di terzi" : "") + ")" })),
+              el("span", { classe: "muted piccolo", testo: " (" + (punti > 0 ? "+" : "") + punti + (s.tipo_prova !== "segnalazione" ? "" : /utente/.test(s.fonte || "") ? ", indicato da te: non verificato" : ", da fonte di terzi") + ")" })),
             s.testo && s.testo !== "x" ? el("div", null, testoConLink(s.testo)) : null,
             s.fonte ? el("div", { classe: "fonte" }, "Fonte: ", fonte(s.fonte)) : null);
         })));
@@ -617,8 +637,12 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
       corpoAree));
 
     /* 4. non verificato, fonti, azioni, avvertenze */
+    var nv = v.non_verificato || [];
     nodo.appendChild(el("div", { classe: "card" },
-      elenco("Non verificato", v.non_verificato),
+      // tester UX 26/11: a scomparsa, così non sembra un elenco di accuse
+      nv.length ? el("details", { classe: "aiuto" },
+        el("summary", { testo: "Cosa non è stato controllato (" + nv.length + ")" }),
+        el("ul", { classe: "pulito" }, nv.map(function (t) { return el("li", null, testoConLink(t)); }))) : null,
       v.fonti && v.fonti.length ? el("div", null, el("h3", { testo: "Fonti" }), el("ul", { classe: "pulito" }, v.fonti.map(function (f) {
         return el("li", null, (f.titolo ? f.titolo + " — " : ""), f.url ? collegamento(f.url) : null);
       }))) : null,
@@ -724,14 +748,14 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
         el("li", { testo: "Segnalazioni provenienti da almeno due siti distinti determinano l'esito rosso (salvo bot ufficiale verificato)." }),
         el("li", { testo: "Un nome che richiama un marchio noto e contiene parole esca, o rimanda a un dominio con lo stesso marchio, determina l'esito rosso (salvo bot ufficiale verificato)." }),
         el("li", { testo: "L'esito verde è escluso quando un'area raggiunge " + SOGLIE.areaPiena + " o più: un pericolo grave non viene diluito nel punteggio." }),
-        el("li", { testo: "Con certezza bassa il verde è escluso, con un'eccezione nell'autovalutazione: se hai risposto a tutte le domande senza \"Non so\" e hai aperto le sezioni prelievo e pagamenti, il verde è possibile anche senza screenshot, ma la prova mancante aggiunge 20 punti al rischio (verde con riserva)." }))));
+        el("li", { testo: "Con certezza bassa il verde è escluso, con un'eccezione nell'autovalutazione: se hai risposto a tutte le domande senza \"Non so\" e hai guardato i pulsanti per prelevare e pagare (o il bot non li ha), il verde è possibile anche senza screenshot, ma la prova mancante aggiunge 20 punti al rischio (verde con riserva)." }))));
 
     s.appendChild(el("div", { classe: "card" },
       el("h3", { testo: "Certezza della valutazione" }),
       el("p", { testo: "Ogni esito è accompagnato da un indice di certezza, che ne esprime la solidità." }),
       el("ul", { classe: "pulito" },
         el("li", null, el("strong", { testo: "Alta: " }), "una linea rossa provata, oppure un'analisi completa con più fonti indipendenti, materiale analizzato e controlli tecnici."),
-        el("li", null, el("strong", { testo: "Media: " }), "almeno una fonte. Nell'autovalutazione richiede materiale autentico analizzato dallo strumento (screenshot o testo), la consultazione delle sezioni prelievo/pagamenti e nessun \"Non so\" sulle richieste. È il livello massimo raggiungibile in autovalutazione."),
+        el("li", null, el("strong", { testo: "Media: " }), "almeno una fonte. Nell'autovalutazione richiede materiale autentico analizzato dallo strumento (screenshot o testo), uno sguardo ai pulsanti per prelevare e pagare e nessun \"Non so\" sulle richieste. È il livello massimo raggiungibile in autovalutazione."),
         el("li", null, el("strong", { testo: "Bassa: " }), "solo dichiarazioni, senza materiale analizzato. Il verde è possibile solo \"con riserva\": risposte complete e 20 punti di prudenza in più.")),
       el("p", { classe: "muted", testo: "Nell'autovalutazione lo strumento non si basa soltanto sulle risposte: analizza autonomamente il nome, gli screenshot o il testo e il link. Se un controllo contraddice una risposta, prevale il controllo e il report ne dà evidenza." })));
 
@@ -785,7 +809,7 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
   var stato;
   function nuovoStato() {
     return { passo: 0, username: "", nomeVisualizzato: "", linkMiniApp: "", screenshot: [], incollato: "",
-      risposte: {}, sezioniViste: null, linkSegnalazioni: "", linkPositivi: "", note: "", messaggio: "" };
+      risposte: {}, sezioniViste: null, sezioniAssenti: false, rapido: false, sceltaRapida: false, proposta: null, linkSegnalazioni: "", linkPositivi: "", note: "", messaggio: "" };
   }
   var PASSI_AREE = Q.pagine.length;
   var ULTIMO = 3 + PASSI_AREE; // 0 premessa, 1 bot, 2 materiale, 3..(2+n) aree, 3+n copertura
@@ -798,7 +822,8 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
     if (stato.incollato.trim()) testi.push({ origine: "incollato", testo: stato.incollato });
     return { username: stato.username, nomeVisualizzato: stato.nomeVisualizzato, risposte: stato.risposte,
       sezioniViste: stato.sezioniViste, testi: testi, linkMiniApp: stato.linkMiniApp.trim(),
-      linkSegnalazioni: righe(stato.linkSegnalazioni), linkPositivi: righe(stato.linkPositivi), note: stato.note };
+      linkSegnalazioni: righe(stato.linkSegnalazioni), linkPositivi: righe(stato.linkPositivi), note: stato.note,
+      rapido: !!stato.rapido };
   }
 
   function campo(etichetta, chiave, aiuto, multi) {
@@ -844,8 +869,9 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
 
   function passoBot(corpo) {
     corpo.appendChild(campo("Username del bot (obbligatorio)", "username", "Es. @NomeDelBot o t.me/NomeDelBot: lo trovi nel profilo del bot."));
-    corpo.appendChild(campo("Nome visualizzato (facoltativo)", "nomeVisualizzato", "Il nome in cima alla chat, copiato com'è: serve a scoprire lettere contraffatte."));
-    corpo.appendChild(campo("Link della Mini App (facoltativo)", "linkMiniApp", "Se il bot apre una pagina web, incolla l'indirizzo. La pagina non viene aperta: si controlla solo il dominio."));
+    // tester UX 26/11: "facoltativo" li faceva saltare, e sono i campi che scovano i trucchi più comuni
+    corpo.appendChild(campo("Nome in cima alla chat (consigliato)", "nomeVisualizzato", "Copialo com'è, in 5 secondi: scopre lettere scambiate e nomi che imitano marchi noti."));
+    corpo.appendChild(campo("Link della Mini App (consigliato)", "linkMiniApp", "Mini App = una pagina web che si apre dentro Telegram. Se il bot ne apre una, copia l'indirizzo: scopre siti che imitano marchi noti. La pagina non viene aperta, si controlla solo il nome del sito."));
   }
 
   function elencoScreenshot(lista) {
@@ -869,6 +895,18 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
   }
 
   function passoMateriale(corpo) {
+    // tester UX 26/11 (Giulia): se il testo contiene già una linea rossa, si può vedere subito l'esito
+    if (stato.proposta && stato.proposta.length) {
+      corpo.appendChild(el("div", { classe: "riquadro rosso", role: "alert" },
+        el("h3", { testo: "⛔ Il testo contiene già un segnale grave" }),
+        el("ul", { classe: "pulito" }, stato.proposta.map(function (c) { return el("li", { testo: CAT[c] ? CAT[c].descrizione : c }); })),
+        el("p", { testo: "Puoi vedere subito l'esito oppure rispondere alle domande per un controllo completo." }),
+        el("div", { classe: "azioni" },
+          el("button", { type: "button", classe: "bottone primario", testo: "Mostra subito l'esito", onclick: function () {
+            stato.rapido = true; stato.proposta = null; stato.passo = RIEPILOGO + 1; disegnaProva(); window.scrollTo(0, 0); } }),
+          el("button", { type: "button", classe: "bottone", testo: "Continua il controllo completo", onclick: function () {
+            stato.sceltaRapida = true; stato.proposta = null; avanti(); } }))));
+    }
     corpo.appendChild(el("p", { testo: "Facoltativo, ma utile: lo strumento legge i testi e trova da solo le frasi a rischio. Senza materiale la valutazione si basa solo sulle tue risposte e la certezza resta bassa." }));
     corpo.appendChild(el("div", { classe: "messaggio info" }, el("strong", { testo: "Privacy: " }),
       "le immagini restano sul tuo dispositivo. Prima di caricarle, oscura numero di telefono, nome, saldo e indirizzi di wallet.",
@@ -896,14 +934,39 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
 
   var RISPOSTE_TUTTE = [["si", "Sì"], ["no", "No"], ["nonso", "Non so"]];
 
+  /* tester UX 26/11 (Giulia): quante domande mancano */
+  function testoContatore(c) { return c.da === c.a ? "Domanda " + c.da + " di " + c.totale : "Domande " + c.da + "–" + c.a + " di " + c.totale; }
+
   function passoArea(corpo, area) {
+    var contatore = el("p", { classe: "piccolo muted contatore", "aria-live": "polite" });
+    corpo.appendChild(contatore);
     corpo.appendChild(el("p", { classe: "muted", testo: "Se non sei sicuro, rispondi \"Non so\": non aumenta il rischio, ma finisce tra le cose da verificare." }));
     var campi = [];
+    // tester UX 26/11: le risposte che si contraddicono si segnalano subito, nella pagina in cui accade
+    var avvisoContraddizioni = el("div", { classe: "messaggio info", role: "status", "aria-live": "polite" });
+    var codiciPagina = area.domande.map(function (d) { return d.codice; });
+    var visibiliPrima = null;
     function aggiornaVisibili() {
       campi.forEach(function (c) { c.fs.hidden = !domandaVisibile(c.d, stato.risposte); });
+      // giro finale 26/11 (Renato, Luca): se il totale cresce, si dice perché
+      var visibili = campi.filter(function (c) { return !c.fs.hidden; }).length;
+      var nuove = visibiliPrima !== null && visibili > visibiliPrima ? visibili - visibiliPrima : 0;
+      if (visibiliPrima === null || visibili !== visibiliPrima)
+        contatore.textContent = testoContatore(contatoreDomande(Q, stato.risposte, Q.pagine.indexOf(area))) +
+          (nuove ? " · sono comparse " + nuove + (nuove === 1 ? " domanda" : " domande") + " in più qui sotto" : "");
+      visibiliPrima = visibili;
+      var qui = { contraddizioni: (Q.contraddizioni || []).filter(function (c) {
+        return c.quando.some(function (q) { return codiciPagina.indexOf(q[0]) >= 0; }); }) };
+      var attive = contraddizioniAttive(qui, stato.risposte);
+      // giro finale 26/11 (Luca): ✅ scritta nel nome + "badge blu: Sì" → avviso subito
+      if (codiciPagina.indexOf("bot_ufficiale_verificato") >= 0) attive = attive.concat(contraddizioniNome(stato.nomeVisualizzato, stato.risposte));
+      svuota(avvisoContraddizioni);
+      attive.forEach(function (t) { avvisoContraddizioni.appendChild(el("p", { testo: "⚠️ " + t })); });
+      avvisoContraddizioni.hidden = !attive.length;
     }
     area.domande.forEach(function (d) {
       var fs = el("fieldset", { classe: "domanda" }, el("legend", { id: "l_" + d.id, testo: d.testo }),
+        d.nota ? el("p", { classe: "nota-domanda", testo: d.nota }) : null,
         scelta(d.id, stato.risposte[d.codice], RISPOSTE_TUTTE.filter(function (o) { return (d.risposte || RISPOSTE_AMMESSE).indexOf(o[0]) >= 0; }),
           function (v) { stato.risposte[d.codice] = v; aggiornaVisibili(); }, "l_" + d.id),
         el("details", { classe: "aiuto" }, el("summary", { testo: "Dove verificarlo" }), el("p", { testo: d.aiuto })));
@@ -911,12 +974,24 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
       campi.push({ d: d, fs: fs });
       corpo.appendChild(fs);
     });
+    // l'avviso va subito sotto l'ultima domanda coinvolta in una contraddizione, dove l'occhio sta già guardando
+    var ultima = null;
+    campi.forEach(function (c) {
+      if (c.d.codice === "bot_ufficiale_verificato" ||
+          (Q.contraddizioni || []).some(function (r) { return r.quando.some(function (q) { return q[0] === c.d.codice; }); })) ultima = c.fs;
+    });
+    if (ultima) corpo.insertBefore(avvisoContraddizioni, ultima.nextSibling); else corpo.appendChild(avvisoContraddizioni);
+    aggiornaVisibili();
   }
 
   function passoCopertura(corpo) {
+    var attuale = stato.sezioniViste === null ? null : stato.sezioniAssenti ? "assenti" : stato.sezioniViste ? "si" : "no";
+    corpo.appendChild(el("p", { classe: "piccolo muted contatore", testo: testoContatore(contatoreDomande(Q, stato.risposte, Q.pagine.length)) }));
     corpo.appendChild(el("fieldset", { classe: "domanda" }, el("legend", { id: "l_" + Q.copertura.id, testo: Q.copertura.testo }),
-      scelta(Q.copertura.id, stato.sezioniViste === null ? null : stato.sezioniViste ? "si" : "no", [["si", "Sì"], ["no", "No"]],
-        function (v) { stato.sezioniViste = v === "si"; }, "l_" + Q.copertura.id),
+      el("p", { classe: "nota-domanda", testo: Q.copertura.nota }),
+      // tester UX 26/11: "il bot non ha questi pulsanti" vale come sezioni controllate (niente giallo per un bot che non ne ha)
+      scelta(Q.copertura.id, attuale, Q.copertura.risposte,
+        function (v) { stato.sezioniAssenti = v === "assenti"; stato.sezioniViste = v === "si" || v === "assenti"; }, "l_" + Q.copertura.id),
       el("details", { classe: "aiuto" }, el("summary", { testo: "Perché è importante" }), el("p", { testo: Q.copertura.aiuto }))));
     /* i link sono facoltativi e da utenti esperti: restano a scomparsa, aperti solo se già compilati */
     var extra = el("details", { classe: "aiuto" }, el("summary", { testo: "Hai trovato segnalazioni o fonti online? (facoltativo)" }),
@@ -946,8 +1021,8 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
       el("ul", { classe: "riepilogo" },
         riga("Bot", "@" + (normalizzaUsername(stato.username) || stato.username.trim())),
         riga("Materiale analizzato", materiale || "nessuno"),
-        riga("Domande", conta.risposte + " risposte" + (conta.nonso ? ", di cui " + conta.nonso + " \"Non so\"" : "")),
-        riga("Sezioni prelievo e pagamenti", stato.sezioniViste ? "consultate" : "non consultate"))));
+        riga("Domande", conta.risposte + (stato.sezioniViste !== null ? 1 : 0) + " risposte" + (conta.nonso ? ", di cui " + conta.nonso + " \"Non so\"" : "")),
+        riga("Pulsanti per prelevare, pagare, invitare", stato.sezioniAssenti ? "non presenti nel bot" : stato.sezioniViste ? "controllati" : "non controllati"))));
     if (!sufficiente) {
       corpo.appendChild(el("div", { classe: "messaggio info" },
         el("p", { testo: "Puoi vedere subito l'esito. Senza screenshot o testo sufficienti la valutazione si basa sulle tue risposte e la certezza resta bassa: il verde è possibile solo \"con riserva\" (20 punti di prudenza in più), altrimenti l'esito è giallo." }),
@@ -976,6 +1051,8 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
     if (avviso) card.appendChild(avviso);
     card.appendChild(el("div", { classe: "azioni azioni-fisse" },
       p > 0 ? el("button", { type: "button", classe: "bottone", testo: "← Indietro", onclick: function () { stato.messaggio = ""; stato.passo--; disegnaProva(); window.scrollTo(0, 0); } }) : null,
+      // giro finale 26/11 (Luca): con la scorciatoia aperta si sceglie nel riquadro, senza un "Avanti" in concorrenza
+      stato.passo === 2 && stato.proposta ? null :
       el("button", { type: "button", classe: "bottone primario" + (p === RIEPILOGO ? " grande" : ""), testo: p === 0 ? "Ho letto, avvia la verifica" : p === RIEPILOGO ? "Mostra l'esito →" : "Avanti →", onclick: avanti })));
     sezione.appendChild(card);
     aggiornaBarra();
@@ -989,16 +1066,30 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
       stato.messaggio = eLinkInvito(stato.username)
         ? "Questo è un link d'invito a un gruppo o a un canale, non a un bot. Apri il bot su Telegram e copia il suo @username dal profilo."
         : !stato.username.trim() ? "Inserisci lo username del bot per proseguire (ad esempio @NomeDelBot)."
+        // giro finale 26/11 (Luca): "@@@@" non è un link, il messaggio non deve parlare di link
+        : !/t\.me|telegram|https?:|tg:|\//i.test(stato.username) ? "Lo username non è valido: copialo dal profilo del bot (ad esempio @NomeDelBot)."
         : "Il link inserito non indica un bot. Usa lo username (@NomeDelBot) oppure il link t.me/NomeDelBot.";
       return disegnaProva();
     }
+    // giro finale 26/11 (Luca): un link della Mini App non valido si segnala subito, non solo nell'esito
+    if (stato.passo === 1 && stato.linkMiniApp.trim() && !analizzaLink(stato.linkMiniApp.trim(), RISORSE.marchi).valido) {
+      stato.messaggio = "Il link della Mini App non è un indirizzo web valido (deve iniziare con https://): correggilo oppure lascia il campo vuoto.";
+      return disegnaProva();
+    }
+    // tester UX 26/11: username con spazi, simboli o troppo corto non passano più in silenzio
+    var problema = stato.passo === 1 ? problemaUsername(normalizzaUsername(stato.username)) : "";
+    if (problema) { stato.messaggio = problema; return disegnaProva(); }
     if (stato.passo === 2 && stato.screenshot.some(function (s) { return s.testo === null; })) { stato.messaggio = "Attendi il completamento dell'analisi degli screenshot."; return disegnaProva(); }
+    if (stato.passo === 2 && !stato.sceltaRapida) {
+      var linee = lineeRosseNelTesto(input().testi, RISORSE);
+      if (linee.length) { stato.proposta = linee; disegnaProva(); window.scrollTo(0, 0); return; }
+    }
     if (stato.passo >= 3 && stato.passo < 3 + PASSI_AREE &&
         Q.pagine[stato.passo - 3].domande.filter(function (d) { return domandaVisibile(d, stato.risposte); })
           .some(function (d) { return !stato.risposte[d.codice]; })) {
       stato.messaggio = "Per proseguire rispondi a tutte le domande (è ammessa anche la risposta \"Non so\")."; return disegnaProva();
     }
-    if (stato.passo === ULTIMO && stato.sezioniViste === null) { stato.messaggio = "Indica se hai consultato le sezioni prelievo / pagamenti / inviti."; return disegnaProva(); }
+    if (stato.passo === ULTIMO && stato.sezioniViste === null) { stato.messaggio = "Indica se hai guardato i pulsanti per prelevare, pagare o invitare amici."; return disegnaProva(); }
     stato.passo++;
     disegnaProva();
     window.scrollTo(0, 0);
@@ -1021,9 +1112,14 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
     }
     var area = el("div");
     sezione.appendChild(area);
-    mostraReport(r.verdetto, area, { contrasti: r.contrasti, basataSu: r.basataSu, avvisi: r.avvisi,
-      motiviCertezzaBassa: r.motiviCertezzaBassa,
-      extraAzioni: [el("button", { type: "button", classe: "bottone", testo: "← Modifica le risposte", onclick: function () { stato.passo = ULTIMO; disegnaProva(); window.scrollTo(0, 0); } }),
+    mostraReport(r.verdetto, area, { contrasti: r.contrasti, contraddizioni: r.contraddizioni, basataSu: r.basataSu, avvisi: r.avvisi,
+      motiviCertezzaBassa: r.motiviCertezzaBassa, nonso: contaRisposte(Q, stato.risposte).nonso,
+      mancanti: [stato.nomeVisualizzato.trim() ? "" : "il nome in cima alla chat",
+        stato.linkMiniApp.trim() ? "" : "il link della Mini App (se il bot ne apre una)"].filter(Boolean),
+      aggiungiMancanti: function () { stato.rapido = false; stato.passo = 1; disegnaProva(); window.scrollTo(0, 0); },
+      rapido: stato.rapido,
+      completaDomande: function () { stato.rapido = false; stato.sceltaRapida = true; stato.passo = 3; disegnaProva(); window.scrollTo(0, 0); },
+      extraAzioni: [el("button", { type: "button", classe: "bottone", testo: "← Modifica le risposte", onclick: function () { stato.rapido = false; stato.sceltaRapida = true; stato.passo = stato.sezioniViste === null ? 3 : ULTIMO; disegnaProva(); window.scrollTo(0, 0); } }),
         el("button", { type: "button", classe: "bottone", testo: "Verifica un altro bot", onclick: function () { stato = nuovoStato(); stato.passo = 1; disegnaProva(); window.scrollTo(0, 0); } })] });
   }
 

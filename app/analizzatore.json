@@ -21,6 +21,13 @@
   "pattern": "\\b(inserisci|inserire|inserendo|invia|inviaci|inviare|digita|incolla|importa|enter|send|type|paste|import|provide|submit|input)\\b[^.!?\\n]{0,30}(\\b(codice|code)\\b[^.!?\\n]{0,30}\\b(telegram|accesso|login|sms|2fa)\\b|\\b(telegram|login|sms|2fa)\\b[^.!?\\n]{0,15}\\b(codice|code)\\b)"
  },
  {
+  "codice": "prelievo_rimandato",
+  "area": "promesse",
+  "flags": "u",
+  "descrizione": "Prelievo rimandato a un evento futuro (listing, lancio)",
+  "pattern": "\\b(withdraw\\w*|prelie\\w*|prelev\\w*)\\b[^.!?\\n]{0,50}\\b(after|dopo|al|alla)\\b[^.!?\\n]{0,20}\\b(listing|launch|lancio|tge|mainnet)\\b"
+ },
+ {
   "codice": "prelievo_condizionato",
   "area": "richieste",
   "flags": "u",

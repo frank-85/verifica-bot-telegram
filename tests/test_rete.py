@@ -258,6 +258,15 @@ def test_sito_ufficiale_e_suoi_sottodomini_senza_marchio(monkeypatch):
         assert rete.dominio(url, date(2026, 11, 14))["contiene_marchio"] == [], url
 
 
+def test_dominio_ufficiale_dichiarato_in_marchi_non_conta(monkeypatch):
+    # tester 26/11 (Renato, S2): walletbot.me è il dominio ufficiale del Wallet di Telegram
+    for url, dom in (("https://walletbot.me", "walletbot.me"), ("https://app.walletbot.me/x", "walletbot.me")):
+        _senza_rete(monkeypatch, dom)
+        assert rete.dominio(url, date(2026, 11, 14))["contiene_marchio"] == [], url
+    _senza_rete(monkeypatch, "walletbot.click")
+    assert "wallet" in marchi_dominio(rete.dominio("https://walletbot.click", date(2026, 11, 14)))
+
+
 def test_parola_generica_nel_sottodominio_non_conta(monkeypatch):
     _senza_rete(monkeypatch, "negozio.it")
     assert rete.dominio("https://wallet.negozio.it", date(2026, 11, 14))["contiene_marchio"] == []

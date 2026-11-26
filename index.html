@@ -137,16 +137,19 @@ fieldset.domanda { border: 1px solid var(--bordo); background: var(--scheda); bo
   min-width: 0; box-shadow: var(--ombra); }
 fieldset.domanda legend { float: left; width: 100%; padding: 0; margin: 0 0 12px; font-weight: 600; }
 .scelte { clear: both; display: flex; flex-wrap: wrap; gap: 8px; max-width: 440px; }
-.pillola { position: relative; flex: 1 1 auto; display: flex; cursor: pointer; }
+.pillola { position: relative; flex: 1 1 auto; display: flex; cursor: pointer; min-width: 0; }
 .pillola input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.pillola span { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 0 10px;
-  border: 1px solid var(--secondario); border-radius: 99px; background: var(--sfondo); color: var(--testo); font-weight: 600; white-space: nowrap; }
+.pillola span { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 6px 14px;
+  border: 1px solid var(--secondario); border-radius: 24px; background: var(--sfondo); color: var(--testo); font-weight: 600;
+  text-align: center; overflow-wrap: anywhere; } /* tester UX 26/11: le risposte lunghe vanno a capo, mai fuori schermo */
 .pillola span::before { content: ""; flex: 0 0 18px; height: 18px; border-radius: 50%; border: 2px solid var(--secondario);
   font-size: 12px; font-weight: 800; line-height: 14px; text-align: center; }
 .pillola:hover span { border-color: var(--primario); }
 .pillola input:checked + span { background: var(--primario); border-color: var(--primario); color: var(--su-primario); font-weight: 700; }
 .pillola input:checked + span::before { content: "✓"; background: var(--su-primario); border-color: var(--su-primario); color: var(--primario); }
 .pillola input:focus-visible + span { outline: 3px solid var(--primario); outline-offset: 2px; }
+.esito-perche { font-size: 1rem; line-height: 1.45; margin: 4px 0 14px; }
+.nota-domanda { font-size: .875rem; color: var(--secondario); margin: -4px 0 10px; }
 details.aiuto summary { cursor: pointer; color: var(--secondario); font-size: .875rem; padding: 12px 0; }
 details.aiuto p { font-size: .875rem; color: var(--secondario); margin: 0 0 10px; }
 /* screenshot: uno stato per file */
@@ -376,7 +379,7 @@ details.area-dett summary { cursor: pointer; font-weight: 700; padding: 10px 0; 
 <template id="t-forma-giallo"><svg class="forma t-giallo" data-forma="triangolo" viewBox="0 0 80 80" aria-hidden="true" focusable="false"><path class="forma-pieno" d="M40 6c2.6 0 4.9 1.4 6.2 3.6l29 50.4c2.7 4.8-.7 10.8-6.2 10.8H11c-5.5 0-8.9-6-6.2-10.8l29-50.4C35.1 7.4 37.4 6 40 6z"/><rect class="forma-simbolo" x="36" y="25" width="8" height="24" rx="3"/><circle class="forma-simbolo" cx="40" cy="58" r="4.5"/></svg></template>
 <template id="t-forma-rosso"><svg class="forma t-rosso" data-forma="ottagono" viewBox="0 0 80 80" aria-hidden="true" focusable="false"><path class="forma-pieno" d="M26 4h28l22 22v28L54 76H26L4 54V26z"/><path class="forma-simbolo" d="M28 23l12 12 12-12 5 5-12 12 12 12-5 5-12-12-12 12-5-5 12-12-12-12z"/></svg></template>
 
-<script type="application/json" id="dati">{"catalogo": [{"codice": "nome_imita_marchio", "area": "identita", "punti": 60, "linea_rossa": false, "descrizione": "Il nome imita un marchio noto (lettere aggiunte, scambiate o simili)"}, {"codice": "nome_parole_esca", "area": "identita", "punti": 20, "linea_rossa": false, "descrizione": "Il nome contiene parole esca (official, support, airdrop, claim, bonus...)"}, {"codice": "nome_incoerente_servizio", "area": "identita", "punti": 15, "linea_rossa": false, "descrizione": "Il nome non c'entra con il servizio offerto"}, {"codice": "imitazione_brand_finanza", "area": "identita", "punti": 100, "linea_rossa": true, "descrizione": "Imita un marchio noto e chiede soldi o wallet, oppure offre servizi finanziari o di investimento"}, {"codice": "bot_ufficiale_verificato", "area": "identita", "punti": -50, "linea_rossa": false, "descrizione": "Bot ufficiale confermato (spunta di Telegram o elenco ufficiale del marchio)"}, {"codice": "rendimento_garantito", "area": "promesse", "punti": 80, "linea_rossa": true, "descrizione": "Promette rendimenti garantiti o fissi su investimenti"}, {"codice": "promessa_guadagno", "area": "promesse", "punti": 40, "linea_rossa": false, "descrizione": "Promette guadagni o profitti"}, {"codice": "urgenza_pressione", "area": "promesse", "punti": 20, "linea_rossa": false, "descrizione": "Mette fretta (offerta a tempo, posti limitati, agisci ora)"}, {"codice": "referral_piramidale", "area": "promesse", "punti": 40, "linea_rossa": false, "descrizione": "Guadagni legati al portare altre persone"}, {"codice": "bonus_regalo_esca", "area": "promesse", "punti": 30, "linea_rossa": false, "descrizione": "Regali, airdrop o bonus come esca"}, {"codice": "richiesta_seed_o_codici", "area": "richieste", "punti": 100, "linea_rossa": true, "descrizione": "Chiede seed phrase, chiave privata, codice di accesso Telegram o password"}, {"codice": "richiesta_comando_pc", "area": "richieste", "punti": 100, "linea_rossa": true, "descrizione": "Chiede di incollare o eseguire un comando sul computer"}, {"codice": "richiesta_wallet_connect", "area": "richieste", "punti": 40, "linea_rossa": false, "descrizione": "Chiede di collegare un portafoglio cripto"}, {"codice": "richiesta_deposito", "area": "richieste", "punti": 50, "linea_rossa": false, "descrizione": "Chiede un deposito o un pagamento"}, {"codice": "richiesta_dati_personali", "area": "richieste", "punti": 25, "linea_rossa": false, "descrizione": "Chiede dati personali o documenti"}, {"codice": "richiesta_numero_contatti", "area": "richieste", "punti": 20, "linea_rossa": false, "descrizione": "Chiede numero di telefono o contatti senza motivo"}, {"codice": "prelievo_condizionato", "area": "richieste", "punti": 100, "linea_rossa": true, "descrizione": "Per prelevare chiede prima un deposito, un acquisto, una commissione o di portare altre persone"}, {"codice": "dominio_giovane", "area": "tecnica", "punti": 30, "linea_rossa": false, "descrizione": "Dominio collegato registrato da meno di 90 giorni"}, {"codice": "dominio_con_marchio", "area": "tecnica", "punti": 40, "linea_rossa": false, "descrizione": "Dominio collegato che contiene un marchio noto senza esserne il sito ufficiale"}, {"codice": "dominio_tld_rischioso", "area": "tecnica", "punti": 5, "linea_rossa": false, "descrizione": "Dominio collegato con un'estensione spesso usata per siti usa e getta (.xyz, .top, .click…)"}, {"codice": "pagina_seed_phrase", "area": "tecnica", "punti": 100, "linea_rossa": true, "descrizione": "La pagina o Mini App raccoglie seed phrase, chiavi o codici di accesso"}, {"codice": "pagina_clickfix", "area": "tecnica", "punti": 100, "linea_rossa": true, "descrizione": "La pagina copia negli appunti un comando da incollare sul computer"}, {"codice": "pagina_offuscata", "area": "tecnica", "punti": 30, "linea_rossa": false, "descrizione": "Codice volutamente nascosto o offuscato"}, {"codice": "pagina_script_esterni", "area": "tecnica", "punti": 10, "linea_rossa": false, "descrizione": "Carica script da domini diversi"}, {"codice": "pagina_invio_dati_esterno", "area": "tecnica", "punti": 20, "linea_rossa": false, "descrizione": "Invia dati verso domini diversi da quello della pagina"}, {"codice": "wallet_lib_presente", "area": "tecnica", "punti": 0, "linea_rossa": false, "descrizione": "Usa una libreria di collegamento wallet (neutro da solo)"}, {"codice": "file_pericoloso_estensione", "area": "tecnica", "punti": 40, "linea_rossa": false, "descrizione": "File eseguibile, doppia estensione o archivio con eseguibili"}, {"codice": "file_malevolo_defender", "area": "tecnica", "punti": 100, "linea_rossa": true, "descrizione": "Microsoft Defender segnala il file come minaccia"}, {"codice": "etichetta_scam_telegram", "area": "reputazione", "punti": 100, "linea_rossa": true, "descrizione": "Telegram mostra l'etichetta SCAM o FAKE"}, {"codice": "consob_oscurato", "area": "reputazione", "punti": 100, "linea_rossa": true, "descrizione": "Dominio negli elenchi CONSOB dei siti oscurati o negli avvisi CONSOB/Banca d'Italia"}, {"codice": "segnalazione_truffa", "area": "reputazione", "punti": 35, "linea_rossa": false, "descrizione": "Segnalazione di truffa da una fonte terza"}, {"codice": "recensioni_sospette", "area": "reputazione", "punti": 15, "linea_rossa": false, "descrizione": "Recensioni positive troppo uniformi o tutte recenti"}, {"codice": "nessuna_storia_online", "area": "reputazione", "punti": 20, "linea_rossa": false, "descrizione": "Nessuna traccia online del bot o del servizio"}, {"codice": "recensioni_positive_indipendenti", "area": "reputazione", "punti": -20, "linea_rossa": false, "descrizione": "Recensioni positive da fonti indipendenti e credibili"}, {"codice": "nessun_sito", "area": "trasparenza", "punti": 20, "linea_rossa": false, "descrizione": "Nessun sito del servizio"}, {"codice": "nessun_termini_privacy", "area": "trasparenza", "punti": 20, "linea_rossa": false, "descrizione": "Nessun termine di servizio o informativa privacy"}, {"codice": "gestore_non_dichiarato", "area": "trasparenza", "punti": 20, "linea_rossa": false, "descrizione": "Non dichiara chi gestisce il servizio"}, {"codice": "gestore_dichiarato_verificabile", "area": "trasparenza", "punti": -20, "linea_rossa": false, "descrizione": "Dichiara un gestore (società) verificabile"}], "marchi": "# Marchi spesso imitati dai bot truffaldini.\n# Formato: marchio|username_ufficiale1,username_ufficiale2|generico  (le parti dopo | sono facoltative)\n# \"generico\" = parola comune (es. wallet): conta solo se il nome è fatto del marchio + parole esca.\n# Gli username ufficiali segnati \"da verificare\" vanno confermati in collaudo.\nbinance\ntelegram|telegram,BotFather\nwallet|wallet|generico\nton\ntonkeeper\nmetamask\ntrustwallet\ncoinbase\nbybit\nokx\nkraken\nrevolut\npaypal\namazon\nposte\npostepay\nintesa\nunicredit\nsatispay\nnexi\n", "questionario": {"pagine": [{"id": "p_chi", "titolo": "Chi è il bot", "domande": [{"id": "q_spunta", "codice": "bot_ufficiale_verificato", "testo": "Accanto al nome c'è il badge blu di verifica di Telegram?", "aiuto": "È il simbolo blu in cima alla chat. Un'emoji ✅ scritta nel nome non conta: è un trucco frequente."}, {"id": "q_etichetta", "codice": "etichetta_scam_telegram", "testo": "Accanto al nome compare l'etichetta SCAM o FAKE?", "aiuto": "È una scritta rossa accanto al nome, messa da Telegram stesso."}, {"id": "q_brand_finanza", "codice": "imitazione_brand_finanza", "testo": "Il bot usa il nome o il logo di un marchio noto (banca, exchange, wallet) e ti chiede soldi, l'accesso al wallet o di investire?", "aiuto": "Guarda la foto profilo e la descrizione in cima alla chat: i marchi autentici raramente scrivono per primi."}, {"id": "q_storia", "codice": "nessuna_storia_online", "segnale_se": "no", "testo": "Cercando il nome del bot online trovi risultati concreti (sito, articoli, discussioni)?", "aiuto": "Un servizio affidabile di norma lascia tracce pubbliche."}]}, {"id": "p_promesse", "titolo": "Cosa promette", "domande": [{"id": "q_guadagno", "codice": "promessa_guadagno", "testo": "Promette guadagni in denaro?", "aiuto": "Valgono anche formule come \"guadagna soldi veri\" o \"profitti ogni giorno\"."}, {"id": "q_garantito", "codice": "rendimento_garantito", "mostra_se": {"codice": "promessa_guadagno", "risposte": ["si", "nonso"]}, "testo": "I guadagni sono garantiti o fissi (\"3% al giorno\", \"guadagno sicuro\")?", "aiuto": "Gli investimenti veri hanno sempre un rischio: un rendimento fisso garantito è un segnale d'allarme."}, {"id": "q_inviti", "codice": "referral_piramidale", "mostra_se": {"codice": "promessa_guadagno", "risposte": ["si", "nonso"]}, "testo": "Per guadagnare devi invitare altre persone?", "aiuto": "Esempio: \"invita 10 amici per sbloccare il premio\"."}, {"id": "q_consob", "codice": "consob_oscurato", "mostra_se": {"codice": "promessa_guadagno", "risposte": ["si", "nonso"]}, "testo": "Il servizio compare negli avvisi o tra i siti oscurati da CONSOB o Banca d'Italia?", "aiuto": "Puoi verificarlo nella sezione \"Avvisi ai risparmiatori\" del sito consob.it."}, {"id": "q_esche", "codice": "bonus_regalo_esca", "assorbe": ["urgenza_pressione"], "testo": "Usa esche come regali, airdrop, bonus gratuiti o offerte a tempo?", "aiuto": "Regali e conti alla rovescia servono a farti agire prima di riflettere."}]}, {"id": "p_richieste", "titolo": "Cosa ti chiede", "domande": [{"id": "q_seed", "codice": "richiesta_seed_o_codici", "assorbe": ["pagina_seed_phrase"], "risposte": ["si", "no"], "testo": "Ti chiede la seed phrase (12/24 parole), una chiave privata, una password o un codice di accesso?", "aiuto": "Vale sia in chat sia nella Mini App, compreso un campo \"importa il tuo wallet\" o \"sincronizza\". Chi ottiene questi dati controlla il tuo account o i tuoi fondi."}, {"id": "q_comando", "codice": "richiesta_comando_pc", "assorbe": ["pagina_clickfix"], "risposte": ["si", "no"], "testo": "Ti chiede di incollare o eseguire un comando sul computer (Win+R, PowerShell, Terminale)?", "aiuto": "Spesso la pagina copia il comando negli appunti da sola e lo presenta come \"verifica che sei umano\". Chiudi la pagina e lascia stare gli appunti."}, {"id": "q_prelievo", "codice": "prelievo_condizionato", "testo": "Per prelevare ti chiede prima un deposito, un acquisto, una commissione o di invitare altre persone?", "aiuto": "Apri la sezione prelievi (\"withdraw\") e leggi le condizioni."}, {"id": "q_deposito", "codice": "richiesta_deposito", "testo": "Ti chiede un deposito o un pagamento?", "aiuto": "Anche di piccolo importo, anche \"per attivare l'account\"."}, {"id": "q_wallet", "codice": "richiesta_wallet_connect", "testo": "Ti chiede di collegare un wallet di criptovalute?", "aiuto": "Il pulsante \"Connect wallet\" da solo è innocuo: conta ciò che approvi dopo."}, {"id": "q_dati", "codice": "richiesta_dati_personali", "assorbe": ["richiesta_numero_contatti"], "testo": "Ti chiede dati personali (documenti, selfie, numero di telefono, contatti)?", "aiuto": "Chiediti se il servizio ne ha davvero bisogno. Alla richiesta \"Condividi il tuo numero\" puoi rifiutare."}, {"id": "q_file", "codice": "file_pericoloso_estensione", "risposte": ["si", "no"], "testo": "Ti ha inviato un file da aprire (.exe, .apk, .scr, .bat o un archivio .zip/.rar)?", "aiuto": "Lascialo chiuso. Controlla l'estensione completa: \"foto.jpg.exe\" è un programma."}]}, {"id": "p_gestore", "titolo": "Chi lo gestisce", "domande": [{"id": "q_sito", "codice": "nessun_sito", "segnale_se": "no", "testo": "Il bot indica il sito del servizio?", "aiuto": "Guarda la descrizione del bot e il menu."}, {"id": "q_termini", "codice": "nessun_termini_privacy", "segnale_se": "no", "testo": "Trovi i termini di servizio e l'informativa sulla privacy?", "aiuto": "Di norma sono nel menu o nel sito collegato. Rispondi Sì solo se ci sono entrambi."}, {"id": "q_gestore", "codice": "gestore_non_dichiarato", "segnale_se": "no", "testo": "Il bot dichiara chi lo gestisce (nome della società, partita IVA o indirizzo)?", "aiuto": "Guarda la descrizione del bot, il menu o il sito collegato."}]}], "copertura": {"id": "sezioni_viste", "testo": "Hai aperto anche le sezioni prelievo / pagamenti / inviti?", "aiuto": "Le condizioni più importanti si trovano spesso lì, più che nella schermata di benvenuto."}, "non_coperti": ["nome_incoerente_servizio", "recensioni_sospette", "gestore_dichiarato_verificabile", "dominio_giovane", "pagina_offuscata", "pagina_script_esterni", "pagina_invio_dati_esterno", "wallet_lib_presente", "file_malevolo_defender"]}, "regole": [{"codice": "richiesta_seed_o_codici", "area": "richieste", "flags": "u", "descrizione": "Chiede seed phrase o parole di recupero", "pattern": "\\b(inserisci|inserire|inserendo|invia|inviaci|inviare|digita|incolla|importa|enter|send|type|paste|import|provide|submit|input)\\b[^.!?\\n]{0,40}(\\b(seed|recovery|secret|mnemonic)[ -]?(phrase|words?)\\b|\\b(frase|parole) di recupero\\b|\\b(12|24)[ -]?(word|parole)\\b)"}, {"codice": "richiesta_seed_o_codici", "area": "richieste", "flags": "u", "descrizione": "Chiede la chiave privata o la password", "pattern": "\\b(inserisci|inserire|inserendo|invia|inviaci|inviare|digita|incolla|importa|enter|send|type|paste|import|provide|submit|input)\\b[^.!?\\n]{0,30}\\b(private key|chiave privata|password)\\b"}, {"codice": "richiesta_seed_o_codici", "area": "richieste", "flags": "u", "descrizione": "Chiede un codice di accesso", "pattern": "\\b(inserisci|inserire|inserendo|invia|inviaci|inviare|digita|incolla|importa|enter|send|type|paste|import|provide|submit|input)\\b[^.!?\\n]{0,30}(\\b(codice|code)\\b[^.!?\\n]{0,30}\\b(telegram|accesso|login|sms|2fa)\\b|\\b(telegram|login|sms|2fa)\\b[^.!?\\n]{0,15}\\b(codice|code)\\b)"}, {"codice": "prelievo_condizionato", "area": "richieste", "flags": "u", "descrizione": "Prelievo solo dopo deposito, pagamento o inviti", "pattern": "\\bwithdraw\\w*[^.\\n]{0,60}\\bonly\\b[^.\\n]{0,60}(deposit|boost|invit|fee|pay)|\\bprelie\\w*[^.\\n]{0,60}\\bsolo\\b[^.\\n]{0,60}(deposit|boost|invit|commission|pagament|acquist)"}, {"codice": "prelievo_condizionato", "area": "richieste", "flags": "u", "descrizione": "Per prelevare devi prima pagare", "pattern": "\\b(to|per) (withdraw|prelevare)\\b[^.\\n]{0,40}\\b(must|need|devi|occorre|bisogna)\\b[^.\\n]{0,40}(pay|deposit|fee|paga|commission|invit)"}, {"codice": "prelievo_condizionato", "area": "richieste", "flags": "u", "descrizione": "Deposita o paga per sbloccare il prelievo", "pattern": "\\b(deposit\\w*|pay|paga\\w*)\\b[^.\\n]{0,30}\\b(to|per) (withdraw|unlock|sbloccare|prelevare)\\b"}, {"codice": "rendimento_garantito", "area": "promesse", "flags": "u", "descrizione": "Rendimento garantito o fisso", "pattern": "\\b(rendiment\\w*|profit\\w*|returns?|guadagn\\w*|income|yield)\\b[^.!?\\n]{0,20}\\b(guarantee\\w*|garantit\\w*)\\b|\\b(guarantee\\w*|garantit\\w*)\\b[^.!?\\n]{0,30}\\b(profit\\w*|returns?|rendiment\\w*|income|guadagn\\w*|yield)\\b|\\b(profit\\w*|returns?|rendiment\\w*|interess\\w*|yield|apy|roi)\\b[^.!?\\n]{0,25}\\d+([.,]\\d+)? ?%|\\d+([.,]\\d+)? ?% ?(daily|al giorno|per day|giornalier\\w*|a settimana|weekly|al mese|monthly)\\b[^.!?\\n]{0,25}\\b(profit\\w*|returns?|rendiment\\w*|guadagn\\w*|yield|interess\\w*)"}, {"codice": "promessa_guadagno", "area": "promesse", "flags": "u", "descrizione": "Promette guadagni", "pattern": "\\b(earn\\w*|guadagn\\w*)\\b[^.\\n]{0,30}\\b(money|soldi|cash|profit\\w*|usdt|ton|crypto|euro|dollar\\w*|real)\\b"}, {"codice": "richiesta_wallet_connect", "area": "richieste", "flags": "u", "descrizione": "Chiede di collegare un wallet", "pattern": "\\b(connect|link|collega)\\w*\\b[^.\\n]{0,20}\\b(wallet|portafoglio|tonkeeper|metamask)\\b"}, {"codice": "bonus_regalo_esca", "area": "promesse", "flags": "u", "descrizione": "Regali, airdrop o bonus", "pattern": "\\b(airdrop|claim|bonus|regalo|omaggio|free (ton|usdt|crypto|gift|tokens?))\\b"}, {"codice": "richiesta_comando_pc", "area": "richieste", "flags": "u", "descrizione": "Chiede di eseguire un comando sul computer", "pattern": "\\bwin ?\\+ ?r\\b|\\bmshta\\b|\\bcurl\\b[^|\\n]{0,80}\\| ?(ba)?sh\\b|\\bpowershell\\b[^.!?\\n]{0,20}(-enc\\w*|-e |\\biex\\b|invoke-expression|downloadstring)|\\b(paste|incolla|copy|copia)\\b[^.!?\\n]{0,40}\\b(powershell|cmd|terminal|terminale|prompt dei comandi|esegui|run)\\b"}, {"codice": "urgenza_pressione", "area": "promesse", "flags": "u", "descrizione": "Mette fretta", "pattern": "\\b(offer|offerta)\\b[^.\\n]{0,30}\\b(ends|expires|scade|termina)\\b|\\b(ultimi|last|only \\d+|solo \\d+) (posti|spots|places|seats)\\b|\\b(affrettati|hurry|act now|agisci ora)\\b|\\b(ends|expires|scade) (in|tra) \\d+ ?(min\\w*|ore|hours?)\\b"}, {"codice": "referral_piramidale", "area": "promesse", "flags": "u", "descrizione": "Guadagni legati a portare altre persone", "pattern": "\\b(invite|invita|bring|porta)\\b[^.\\n]{0,20}\\b(friends|amici|people|persone|users|utenti)\\b|\\breferral (bonus|reward|link|program\\w*)\\b"}, {"codice": "richiesta_deposito", "area": "richieste", "flags": "u", "descrizione": "Chiede un deposito o un pagamento", "pattern": "\\b(make|effettua|fai) (a|un) (deposit|deposito)\\b|\\b(deposit|deposita|top[ -]?up|ricarica)\\b ?\\d+|\\b(send|invia)\\b[^.\\n]{0,20}\\d+[^.\\n]{0,5}(ton|usdt|btc|eth|euro|€|\\$)"}], "generato": "2026-11-18T19:31:38", "numero_test": 648}</script>
+<script type="application/json" id="dati">{"catalogo": [{"codice": "nome_imita_marchio", "area": "identita", "punti": 60, "linea_rossa": false, "descrizione": "Il nome imita un marchio noto (lettere aggiunte, scambiate o simili)"}, {"codice": "nome_parole_esca", "area": "identita", "punti": 20, "linea_rossa": false, "descrizione": "Il nome contiene parole esca (official, support, airdrop, claim, bonus...)"}, {"codice": "nome_incoerente_servizio", "area": "identita", "punti": 15, "linea_rossa": false, "descrizione": "Il nome non c'entra con il servizio offerto"}, {"codice": "imitazione_brand_finanza", "area": "identita", "punti": 100, "linea_rossa": true, "descrizione": "Imita un marchio noto e chiede soldi o wallet, oppure offre servizi finanziari o di investimento"}, {"codice": "bot_ufficiale_verificato", "area": "identita", "punti": -50, "linea_rossa": false, "descrizione": "Bot ufficiale confermato (spunta di Telegram o elenco ufficiale del marchio)"}, {"codice": "rendimento_garantito", "area": "promesse", "punti": 80, "linea_rossa": true, "descrizione": "Promette rendimenti garantiti o fissi su investimenti"}, {"codice": "promessa_guadagno", "area": "promesse", "punti": 40, "linea_rossa": false, "descrizione": "Promette guadagni o profitti"}, {"codice": "urgenza_pressione", "area": "promesse", "punti": 20, "linea_rossa": false, "descrizione": "Mette fretta (offerta a tempo, posti limitati, agisci ora)"}, {"codice": "referral_piramidale", "area": "promesse", "punti": 40, "linea_rossa": false, "descrizione": "Guadagni legati al portare altre persone"}, {"codice": "bonus_regalo_esca", "area": "promesse", "punti": 30, "linea_rossa": false, "descrizione": "Regali, airdrop o bonus come esca"}, {"codice": "richiesta_seed_o_codici", "area": "richieste", "punti": 100, "linea_rossa": true, "descrizione": "Chiede seed phrase, chiave privata, codice di accesso Telegram o password"}, {"codice": "richiesta_comando_pc", "area": "richieste", "punti": 100, "linea_rossa": true, "descrizione": "Chiede di incollare o eseguire un comando sul computer"}, {"codice": "richiesta_wallet_connect", "area": "richieste", "punti": 40, "linea_rossa": false, "descrizione": "Chiede di collegare un portafoglio cripto"}, {"codice": "richiesta_deposito", "area": "richieste", "punti": 50, "linea_rossa": false, "descrizione": "Chiede un deposito o un pagamento"}, {"codice": "richiesta_dati_personali", "area": "richieste", "punti": 25, "linea_rossa": false, "descrizione": "Chiede dati personali o documenti"}, {"codice": "richiesta_numero_contatti", "area": "richieste", "punti": 20, "linea_rossa": false, "descrizione": "Chiede numero di telefono o contatti senza motivo"}, {"codice": "prelievo_condizionato", "area": "richieste", "punti": 100, "linea_rossa": true, "descrizione": "Per prelevare chiede prima un deposito, un acquisto, una commissione o di portare altre persone"}, {"codice": "prelievo_rimandato", "area": "promesse", "punti": 20, "linea_rossa": false, "descrizione": "Il prelievo dei guadagni è rimandato a un evento futuro (\"dopo il listing\", \"al lancio\")"}, {"codice": "dominio_giovane", "area": "tecnica", "punti": 30, "linea_rossa": false, "descrizione": "Dominio collegato registrato da meno di 90 giorni"}, {"codice": "dominio_con_marchio", "area": "tecnica", "punti": 40, "linea_rossa": false, "descrizione": "Dominio collegato che contiene un marchio noto senza esserne il sito ufficiale"}, {"codice": "dominio_tld_rischioso", "area": "tecnica", "punti": 5, "linea_rossa": false, "descrizione": "Dominio collegato con un'estensione spesso usata per siti usa e getta (.xyz, .top, .click…)"}, {"codice": "pagina_seed_phrase", "area": "tecnica", "punti": 100, "linea_rossa": true, "descrizione": "La pagina o Mini App raccoglie seed phrase, chiavi o codici di accesso"}, {"codice": "pagina_clickfix", "area": "tecnica", "punti": 100, "linea_rossa": true, "descrizione": "La pagina copia negli appunti un comando da incollare sul computer"}, {"codice": "pagina_offuscata", "area": "tecnica", "punti": 30, "linea_rossa": false, "descrizione": "Codice volutamente nascosto o offuscato"}, {"codice": "pagina_script_esterni", "area": "tecnica", "punti": 10, "linea_rossa": false, "descrizione": "Carica script da domini diversi"}, {"codice": "pagina_invio_dati_esterno", "area": "tecnica", "punti": 20, "linea_rossa": false, "descrizione": "Invia dati verso domini diversi da quello della pagina"}, {"codice": "wallet_lib_presente", "area": "tecnica", "punti": 0, "linea_rossa": false, "descrizione": "Usa una libreria di collegamento wallet (neutro da solo)"}, {"codice": "file_pericoloso_estensione", "area": "tecnica", "punti": 40, "linea_rossa": false, "descrizione": "File eseguibile, doppia estensione o archivio con eseguibili"}, {"codice": "file_malevolo_defender", "area": "tecnica", "punti": 100, "linea_rossa": true, "descrizione": "Microsoft Defender segnala il file come minaccia"}, {"codice": "etichetta_scam_telegram", "area": "reputazione", "punti": 100, "linea_rossa": true, "descrizione": "Telegram mostra l'etichetta SCAM o FAKE"}, {"codice": "consob_oscurato", "area": "reputazione", "punti": 100, "linea_rossa": true, "descrizione": "Dominio negli elenchi CONSOB dei siti oscurati o negli avvisi CONSOB/Banca d'Italia"}, {"codice": "segnalazione_truffa", "area": "reputazione", "punti": 35, "linea_rossa": false, "descrizione": "Segnalazione di truffa da una fonte terza"}, {"codice": "recensioni_sospette", "area": "reputazione", "punti": 15, "linea_rossa": false, "descrizione": "Recensioni positive troppo uniformi o tutte recenti"}, {"codice": "nessuna_storia_online", "area": "reputazione", "punti": 20, "linea_rossa": false, "descrizione": "Nessuna traccia online del bot o del servizio"}, {"codice": "recensioni_positive_indipendenti", "area": "reputazione", "punti": -20, "linea_rossa": false, "descrizione": "Recensioni positive da fonti indipendenti e credibili"}, {"codice": "nessun_sito", "area": "trasparenza", "punti": 20, "linea_rossa": false, "descrizione": "Nessun sito del servizio"}, {"codice": "nessun_termini_privacy", "area": "trasparenza", "punti": 20, "linea_rossa": false, "descrizione": "Nessun termine di servizio o informativa privacy"}, {"codice": "gestore_non_dichiarato", "area": "trasparenza", "punti": 20, "linea_rossa": false, "descrizione": "Non dichiara chi gestisce il servizio"}, {"codice": "gestore_dichiarato_verificabile", "area": "trasparenza", "punti": -20, "linea_rossa": false, "descrizione": "Dichiara un gestore (società) verificabile"}], "marchi": "# Marchi spesso imitati dai bot truffaldini.\n# Formato: marchio|username_ufficiale1,username_ufficiale2|generico|dominio_ufficiale1,dominio_ufficiale2\n# (le parti dopo | sono facoltative; per saltarne una lasciarla vuota: \"marchio|||dominio.it\")\n# \"generico\" = parola comune (es. wallet): conta solo se il nome è fatto del marchio + parole esca.\n# Domini ufficiali = nomi registrati del servizio vero, quando NON coincidono con il marchio\n# (binance.com è già riconosciuto da solo; walletbot.me no). Valgono anche i loro sottodomini.\n# Gli username ufficiali segnati \"da verificare\" vanno confermati in collaudo.\nbinance\ntelegram|telegram,BotFather\nwallet|wallet|generico|walletbot.me\nton\ntonkeeper\nmetamask\ntrustwallet\ncoinbase\nbybit\nokx\nkraken\nrevolut\npaypal\namazon\nposte\npostepay\nintesa\nunicredit\nsatispay\nnexi\n", "questionario": {"pagine": [{"id": "p_chi", "titolo": "Chi è il bot", "domande": [{"id": "q_spunta", "codice": "bot_ufficiale_verificato", "testo": "Accanto al nome c'è il badge blu di verifica di Telegram?", "nota": "Attenzione: una ✅ scritta dentro il nome non è il badge, è un trucco frequente.", "aiuto": "È il simbolo blu in cima alla chat. Un'emoji ✅ scritta nel nome non conta: è un trucco frequente."}, {"id": "q_etichetta", "codice": "etichetta_scam_telegram", "testo": "Accanto al nome compare l'etichetta SCAM o FAKE?", "aiuto": "È una scritta rossa accanto al nome, messa da Telegram stesso."}, {"id": "q_brand_finanza", "codice": "imitazione_brand_finanza", "testo": "Il bot usa il nome o il logo di un marchio noto (banca, exchange, wallet) e ti chiede soldi, l'accesso al wallet o di investire?", "nota": "Exchange = sito per comprare e vendere criptovalute. Conta se il bot imita il marchio: il servizio vero, con il badge blu, no.", "aiuto": "Guarda la foto profilo e la descrizione in cima alla chat: i marchi autentici raramente scrivono per primi."}, {"id": "q_storia", "codice": "nessuna_storia_online", "segnale_se": "no", "testo": "Cercando il nome del bot online trovi risultati concreti (sito, articoli, discussioni)?", "aiuto": "Un servizio affidabile di norma lascia tracce pubbliche."}]}, {"id": "p_promesse", "titolo": "Cosa promette", "domande": [{"id": "q_guadagno", "codice": "promessa_guadagno", "testo": "Promette guadagni in denaro?", "aiuto": "Valgono anche formule come \"guadagna soldi veri\" o \"profitti ogni giorno\"."}, {"id": "q_garantito", "codice": "rendimento_garantito", "mostra_se": {"codice": "promessa_guadagno", "risposte": ["si", "nonso"]}, "testo": "I guadagni sono garantiti o fissi (\"3% al giorno\", \"guadagno sicuro\")?", "aiuto": "Gli investimenti veri hanno sempre un rischio: un rendimento fisso garantito è un segnale d'allarme."}, {"id": "q_inviti", "codice": "referral_piramidale", "mostra_se": {"codice": "promessa_guadagno", "risposte": ["si", "nonso"]}, "testo": "Per guadagnare devi invitare altre persone?", "aiuto": "Esempio: \"invita 10 amici per sbloccare il premio\"."}, {"id": "q_rimandato", "codice": "prelievo_rimandato", "mostra_se": {"codice": "promessa_guadagno", "risposte": ["si", "nonso"]}, "testo": "Il prelievo dei guadagni è rimandato a un evento futuro, con data vaga o assente?", "nota": "Per esempio \"dopo il listing\" (quando la moneta arriverà sugli exchange) o \"al lancio del token\".", "aiuto": "È il trucco tipico dei giochi \"tocca e guadagna\": accumuli punti che forse non varranno mai nulla."}, {"id": "q_consob", "codice": "consob_oscurato", "mostra_se": {"codice": "promessa_guadagno", "risposte": ["si", "nonso"]}, "testo": "Il servizio compare negli avvisi o tra i siti oscurati da CONSOB o Banca d'Italia?", "nota": "CONSOB = l'autorità italiana che controlla chi offre investimenti. Se non l'hai verificato, rispondi \"Non so\".", "aiuto": "Puoi verificarlo nella sezione \"Avvisi ai risparmiatori\" del sito consob.it."}, {"id": "q_esche", "codice": "bonus_regalo_esca", "assorbe": ["urgenza_pressione"], "testo": "Usa esche come regali, airdrop, bonus gratuiti o offerte a tempo?", "nota": "Airdrop = criptovalute \"regalate\": spesso servono solo ad attirarti.", "aiuto": "Regali e conti alla rovescia servono a farti agire prima di riflettere."}]}, {"id": "p_richieste", "titolo": "Cosa ti chiede", "domande": [{"id": "q_seed", "codice": "richiesta_seed_o_codici", "assorbe": ["pagina_seed_phrase"], "risposte": ["si", "no"], "testo": "Ti chiede la seed phrase (12/24 parole), una chiave privata, una password o un codice di accesso?", "nota": "Seed phrase = le 12 o 24 parole segrete che aprono il tuo wallet. Nessun servizio serio te le chiede.", "aiuto": "Vale sia in chat sia nella Mini App, compreso un campo \"importa il tuo wallet\" o \"sincronizza\". Chi ottiene questi dati controlla il tuo account o i tuoi fondi."}, {"id": "q_comando", "codice": "richiesta_comando_pc", "assorbe": ["pagina_clickfix"], "risposte": ["si", "no"], "testo": "Ti chiede di incollare o eseguire un comando sul computer (Win+R, PowerShell, Terminale)?", "aiuto": "Spesso la pagina copia il comando negli appunti da sola e lo presenta come \"verifica che sei umano\". Chiudi la pagina e lascia stare gli appunti."}, {"id": "q_prelievo", "codice": "prelievo_condizionato", "testo": "Per prelevare ti chiede prima un deposito, un acquisto, una commissione o di invitare altre persone?", "aiuto": "Apri la sezione prelievi (\"withdraw\") e leggi le condizioni."}, {"id": "q_deposito", "codice": "richiesta_deposito", "testo": "Ti chiede un deposito o un pagamento?", "aiuto": "Anche di piccolo importo, anche \"per attivare l'account\"."}, {"id": "q_wallet", "codice": "richiesta_wallet_connect", "testo": "Ti chiede di collegare un wallet di criptovalute?", "nota": "Wallet = il portafoglio digitale dove tieni le criptovalute (per esempio Tonkeeper o MetaMask).", "aiuto": "Il pulsante \"Connect wallet\" da solo è innocuo: conta ciò che approvi dopo."}, {"id": "q_dati", "codice": "richiesta_dati_personali", "assorbe": ["richiesta_numero_contatti"], "testo": "Ti chiede dati personali (documenti, selfie, numero di telefono, contatti)?", "aiuto": "Chiediti se il servizio ne ha davvero bisogno. Alla richiesta \"Condividi il tuo numero\" puoi rifiutare."}, {"id": "q_file", "codice": "file_pericoloso_estensione", "risposte": ["si", "no"], "testo": "Ti ha inviato un file da aprire (.exe, .apk, .scr, .bat o un archivio .zip/.rar)?", "aiuto": "Lascialo chiuso. Controlla l'estensione completa: \"foto.jpg.exe\" è un programma."}]}, {"id": "p_gestore", "titolo": "Chi lo gestisce", "domande": [{"id": "q_sito", "codice": "nessun_sito", "segnale_se": "no", "testo": "Il bot indica il sito del servizio?", "aiuto": "Guarda la descrizione del bot e il menu."}, {"id": "q_termini", "codice": "nessun_termini_privacy", "segnale_se": "no", "testo": "Trovi i termini di servizio e l'informativa sulla privacy?", "aiuto": "Di norma sono nel menu o nel sito collegato. Rispondi Sì solo se ci sono entrambi."}, {"id": "q_gestore", "codice": "gestore_non_dichiarato", "segnale_se": "no", "testo": "Il bot dichiara chi lo gestisce (nome della società, partita IVA o indirizzo)?", "aiuto": "Guarda la descrizione del bot, il menu o il sito collegato."}]}], "copertura": {"id": "sezioni_viste", "testo": "Dentro il bot hai toccato i pulsanti per prelevare, pagare o invitare amici, e hai letto cosa ti chiedono?", "nota": "Per esempio «Preleva», «Acquista», «Invita amici». Non serve completare l'operazione: basta guardare cosa chiede.", "risposte": [["si", "Sì, ho guardato"], ["assenti", "Il bot non ha questi pulsanti"], ["no", "No, non ho guardato"]], "aiuto": "Le richieste di denaro compaiono più spesso lì che nel messaggio di benvenuto. Se non hai guardato, l'esito non può essere verde."}, "contraddizioni": [{"quando": [["bot_ufficiale_verificato", "si"], ["etichetta_scam_telegram", "si"]], "testo": "Hai indicato sia il badge blu ufficiale sia l'etichetta SCAM o FAKE: di solito non compaiono insieme. Ricontrolla: un'emoji ✅ nel nome non è il badge."}], "non_coperti": ["nome_incoerente_servizio", "recensioni_sospette", "gestore_dichiarato_verificabile", "dominio_giovane", "pagina_offuscata", "pagina_script_esterni", "pagina_invio_dati_esterno", "wallet_lib_presente", "file_malevolo_defender"]}, "regole": [{"codice": "richiesta_seed_o_codici", "area": "richieste", "flags": "u", "descrizione": "Chiede seed phrase o parole di recupero", "pattern": "\\b(inserisci|inserire|inserendo|invia|inviaci|inviare|digita|incolla|importa|enter|send|type|paste|import|provide|submit|input)\\b[^.!?\\n]{0,40}(\\b(seed|recovery|secret|mnemonic)[ -]?(phrase|words?)\\b|\\b(frase|parole) di recupero\\b|\\b(12|24)[ -]?(word|parole)\\b)"}, {"codice": "richiesta_seed_o_codici", "area": "richieste", "flags": "u", "descrizione": "Chiede la chiave privata o la password", "pattern": "\\b(inserisci|inserire|inserendo|invia|inviaci|inviare|digita|incolla|importa|enter|send|type|paste|import|provide|submit|input)\\b[^.!?\\n]{0,30}\\b(private key|chiave privata|password)\\b"}, {"codice": "richiesta_seed_o_codici", "area": "richieste", "flags": "u", "descrizione": "Chiede un codice di accesso", "pattern": "\\b(inserisci|inserire|inserendo|invia|inviaci|inviare|digita|incolla|importa|enter|send|type|paste|import|provide|submit|input)\\b[^.!?\\n]{0,30}(\\b(codice|code)\\b[^.!?\\n]{0,30}\\b(telegram|accesso|login|sms|2fa)\\b|\\b(telegram|login|sms|2fa)\\b[^.!?\\n]{0,15}\\b(codice|code)\\b)"}, {"codice": "prelievo_rimandato", "area": "promesse", "flags": "u", "descrizione": "Prelievo rimandato a un evento futuro (listing, lancio)", "pattern": "\\b(withdraw\\w*|prelie\\w*|prelev\\w*)\\b[^.!?\\n]{0,50}\\b(after|dopo|al|alla)\\b[^.!?\\n]{0,20}\\b(listing|launch|lancio|tge|mainnet)\\b"}, {"codice": "prelievo_condizionato", "area": "richieste", "flags": "u", "descrizione": "Prelievo solo dopo deposito, pagamento o inviti", "pattern": "\\bwithdraw\\w*[^.\\n]{0,60}\\bonly\\b[^.\\n]{0,60}(deposit|boost|invit|fee|pay)|\\bprelie\\w*[^.\\n]{0,60}\\bsolo\\b[^.\\n]{0,60}(deposit|boost|invit|commission|pagament|acquist)"}, {"codice": "prelievo_condizionato", "area": "richieste", "flags": "u", "descrizione": "Per prelevare devi prima pagare", "pattern": "\\b(to|per) (withdraw|prelevare)\\b[^.\\n]{0,40}\\b(must|need|devi|occorre|bisogna)\\b[^.\\n]{0,40}(pay|deposit|fee|paga|commission|invit)"}, {"codice": "prelievo_condizionato", "area": "richieste", "flags": "u", "descrizione": "Deposita o paga per sbloccare il prelievo", "pattern": "\\b(deposit\\w*|pay|paga\\w*)\\b[^.\\n]{0,30}\\b(to|per) (withdraw|unlock|sbloccare|prelevare)\\b"}, {"codice": "rendimento_garantito", "area": "promesse", "flags": "u", "descrizione": "Rendimento garantito o fisso", "pattern": "\\b(rendiment\\w*|profit\\w*|returns?|guadagn\\w*|income|yield)\\b[^.!?\\n]{0,20}\\b(guarantee\\w*|garantit\\w*)\\b|\\b(guarantee\\w*|garantit\\w*)\\b[^.!?\\n]{0,30}\\b(profit\\w*|returns?|rendiment\\w*|income|guadagn\\w*|yield)\\b|\\b(profit\\w*|returns?|rendiment\\w*|interess\\w*|yield|apy|roi)\\b[^.!?\\n]{0,25}\\d+([.,]\\d+)? ?%|\\d+([.,]\\d+)? ?% ?(daily|al giorno|per day|giornalier\\w*|a settimana|weekly|al mese|monthly)\\b[^.!?\\n]{0,25}\\b(profit\\w*|returns?|rendiment\\w*|guadagn\\w*|yield|interess\\w*)"}, {"codice": "promessa_guadagno", "area": "promesse", "flags": "u", "descrizione": "Promette guadagni", "pattern": "\\b(earn\\w*|guadagn\\w*)\\b[^.\\n]{0,30}\\b(money|soldi|cash|profit\\w*|usdt|ton|crypto|euro|dollar\\w*|real)\\b"}, {"codice": "richiesta_wallet_connect", "area": "richieste", "flags": "u", "descrizione": "Chiede di collegare un wallet", "pattern": "\\b(connect|link|collega)\\w*\\b[^.\\n]{0,20}\\b(wallet|portafoglio|tonkeeper|metamask)\\b"}, {"codice": "bonus_regalo_esca", "area": "promesse", "flags": "u", "descrizione": "Regali, airdrop o bonus", "pattern": "\\b(airdrop|claim|bonus|regalo|omaggio|free (ton|usdt|crypto|gift|tokens?))\\b"}, {"codice": "richiesta_comando_pc", "area": "richieste", "flags": "u", "descrizione": "Chiede di eseguire un comando sul computer", "pattern": "\\bwin ?\\+ ?r\\b|\\bmshta\\b|\\bcurl\\b[^|\\n]{0,80}\\| ?(ba)?sh\\b|\\bpowershell\\b[^.!?\\n]{0,20}(-enc\\w*|-e |\\biex\\b|invoke-expression|downloadstring)|\\b(paste|incolla|copy|copia)\\b[^.!?\\n]{0,40}\\b(powershell|cmd|terminal|terminale|prompt dei comandi|esegui|run)\\b"}, {"codice": "urgenza_pressione", "area": "promesse", "flags": "u", "descrizione": "Mette fretta", "pattern": "\\b(offer|offerta)\\b[^.\\n]{0,30}\\b(ends|expires|scade|termina)\\b|\\b(ultimi|last|only \\d+|solo \\d+) (posti|spots|places|seats)\\b|\\b(affrettati|hurry|act now|agisci ora)\\b|\\b(ends|expires|scade) (in|tra) \\d+ ?(min\\w*|ore|hours?)\\b"}, {"codice": "referral_piramidale", "area": "promesse", "flags": "u", "descrizione": "Guadagni legati a portare altre persone", "pattern": "\\b(invite|invita|bring|porta)\\b[^.\\n]{0,20}\\b(friends|amici|people|persone|users|utenti)\\b|\\breferral (bonus|reward|link|program\\w*)\\b"}, {"codice": "richiesta_deposito", "area": "richieste", "flags": "u", "descrizione": "Chiede un deposito o un pagamento", "pattern": "\\b(make|effettua|fai) (a|un) (deposit|deposito)\\b|\\b(deposit|deposita|top[ -]?up|ricarica)\\b ?\\d+|\\b(send|invia)\\b[^.\\n]{0,20}\\d+[^.\\n]{0,5}(ton|usdt|btc|eth|euro|€|\\$)"}], "generato": "2026-11-26T12:53:54", "numero_test": 712}</script>
 <script>
 /* Disinnesco dei link: cliccabili solo le fonti affidabili in https, tutto il resto diventa testo. */
 "use strict";
@@ -516,7 +519,7 @@ function valida(verdetto) {
   });
   var ctx = verdetto.contesto === undefined ? {} : verdetto.contesto;
   if (!_isObj(ctx)) throw new ErroreVerdetto("'contesto' deve essere un oggetto");
-  ["materiale_utente", "tecnica_completa", "risposte_complete"].forEach(function (k) {
+  ["materiale_utente", "tecnica_completa", "risposte_complete", "risposte_contraddittorie"].forEach(function (k) {
     var val = ctx[k] === undefined ? false : ctx[k];
     if (typeof val !== "boolean") throw new ErroreVerdetto("contesto." + k + " deve essere true o false");
   });
@@ -570,6 +573,9 @@ function calcola(verdetto, catalogo) {
   else if (ufficiale && fonti >= SOGLIE.minFontiUfficiale) fiducia = "media";
   else if (fonti === 0 || (!materiale && !tecnica)) fiducia = "bassa";
   else fiducia = "media";
+  // tester UX 26/11/2026 (porting di punteggio.py): risposte contraddittorie → certezza bassa, il colore non cambia
+  var contraddittorie = ctx.risposte_contraddittorie === true;
+  if (contraddittorie) fiducia = "bassa";
 
   var daSegnalazioni = Object.keys(fontiSegnalazioni).length >= 2 && !ufficiale;
   // taratura 17/11/2026 (punto A): marchio imitato + parola esca o dominio col marchio → rosso (non linea rossa)
@@ -584,7 +590,7 @@ function calcola(verdetto, catalogo) {
   var areaPiena = ORDINE_AREE.some(function (a) { return aree[a].rischio >= SOGLIE.areaPiena; });
   var riserva = false;
   if (esito === "verde" && fiducia === "bassa") {
-    riserva = ctx.risposte_complete === true && !areaPiena &&
+    riserva = ctx.risposte_complete === true && !contraddittorie && !areaPiena &&
       Math.min(100, totale + SOGLIE.malusSenzaProve) <= SOGLIE.verde;
     if (!riserva) esito = "giallo";
   }
@@ -664,6 +670,66 @@ function notaProssimita(v) {
   return null;
 }
 
+/* Tester UX 26/11/2026: il perché del colore in una frase semplice, sotto il titolo.
+   cat = { codice: { descrizione, punti } }; motivi = motivi della certezza bassa (assembla.js). */
+var MOTIVI_SEMPLICI = {
+  sezioni_non_confermate: "non hai guardato i pulsanti per prelevare, pagare o invitare amici",
+  nonso_richieste: "hai risposto «Non so» su cosa ti chiede il bot",
+  nessun_materiale: "manca il testo o uno screenshot del bot",
+  testo_breve: "il testo incollato è troppo breve",
+  risposte_contraddittorie: "alcune risposte si contraddicono"
+};
+var SOGLIA_POCHE_INFO = 5;
+
+function _minuscola(t) { return t.charAt(0).toLowerCase() + t.slice(1); }
+
+function _segnaliPrincipali(v, cat, quanti) {
+  var tutti = [];
+  Object.keys(v.aree || {}).forEach(function (a) {
+    ((v.aree[a] || {}).segnali || []).forEach(function (s) {
+      var voce = cat[s.codice];
+      var punti = s.fuori_catalogo ? s.punti : voce ? voce.punti : 0;
+      if (voce && punti > 0 && tutti.every(function (x) { return x.codice !== s.codice; }))
+        tutti.push({ codice: s.codice, punti: punti, testo: _minuscola(voce.descrizione) });
+    });
+  });
+  tutti.sort(function (a, b) { return b.punti - a.punti; });
+  return tutti.slice(0, quanti).map(function (x) { return x.testo; });
+}
+
+function perche(v, cat, motivi) {
+  var segnali = _segnaliPrincipali(v, cat, 2);
+  var elenco = segnali.length ? segnali.join("; ") : "alcuni segnali di rischio (dettaglio nel riquadro «Rischio per area»)";
+  if (v.verdetto === "rosso") {
+    if (v.linee_rosse && v.linee_rosse.length) {
+      var rosse = v.linee_rosse.slice(0, 2).map(function (l) { return cat[l.codice] ? _minuscola(cat[l.codice].descrizione) : l.codice; });
+      return "Rosso perché: " + rosse.join("; ") + ".";
+    }
+    if (v.rosso_da_segnalazioni) return "Rosso perché almeno due siti diversi riportano segnalazioni su questo bot.";
+    if (v.rosso_da_imitazione) return "Rosso perché il nome imita un marchio noto" + (segnali.length ? ": " + elenco : "") + ".";
+    return "Rosso perché: " + elenco + ".";
+  }
+  if (v.verdetto === "giallo") {
+    // segnali di rischio presenti, anche se fuori catalogo (i soli segnali a punti ≤ 0 non contano)
+    var presenti = Object.keys(v.aree || {}).some(function (a) {
+      return ((v.aree[a] || {}).segnali || []).some(function (s) { return !cat[s.codice] || cat[s.codice].punti > 0; });
+    });
+    var m = (motivi || []).filter(function (x) { return MOTIVI_SEMPLICI[x]; }).map(function (x) { return MOTIVI_SEMPLICI[x]; });
+    var mancano = (m.length ? m.join("; ") : "un'area ha raggiunto il rischio massimo o la certezza è bassa") + ".";
+    if (!presenti) return "Nessun segnale di truffa trovato. È giallo solo perché mancano alcune verifiche: " + mancano;
+    // punteggio da verde: il giallo nasce dalla prudenza, i segnali presenti sono minori
+    if (typeof v.punteggio_totale === "number" && v.punteggio_totale <= _soglieAspetto().verde)
+      return "Nessun segnale grave. È giallo perché mancano alcune verifiche: " + mancano + " Da tenere d'occhio: " + elenco + ".";
+    return "Giallo per: " + elenco + ".";
+  }
+  return v.verde_con_riserva
+    ? "Nessun segnale di rischio nelle tue risposte; manca però materiale da verificare (testo o screenshot del bot)."
+    : "Nessun segnale di rischio rilevante nelle tue risposte e nel materiale.";
+}
+
+/* Con molti "Non so" il giallo non dice "nessun segnale grave": dice che gli elementi sono pochi. */
+function pocheInformazioni(nonso) { return nonso >= SOGLIA_POCHE_INFO; }
+
 /* Tema mostrato: scelta manuale (chiaro/scuro) oppure automatico, che segue il sistema. */
 function temaEffettivo(scelta, scuroDiSistema) {
   if (scelta === "chiaro" || scelta === "scuro") return scelta;
@@ -673,7 +739,7 @@ function temaEffettivo(scelta, scuroDiSistema) {
 if (typeof module !== "undefined") {
   module.exports = { MARGINE_PROSSIMITA: MARGINE_PROSSIMITA, rischioFinale: rischioFinale, zonaRischio: zonaRischio,
     posizioneIndicatore: posizioneIndicatore, motivoRegola: motivoRegola, notaProssimita: notaProssimita,
-    temaEffettivo: temaEffettivo };
+    temaEffettivo: temaEffettivo, perche: perche, pocheInformazioni: pocheInformazioni };
 }
 
 </script>
@@ -721,6 +787,26 @@ function normalizzaUsername(testo) {
   return t.replace(/^@+/, "").trim();
 }
 
+/* Tester UX 26/11/2026 (solo JS, per l'app): cosa non va in uno username già normalizzato, "" se va bene.
+   Gli username Telegram hanno solo lettere latine, cifre e "_": spazi o simboli = copiato male. */
+var MIN_USERNAME = 4;
+var MAX_USERNAME = 32;
+function problemaUsername(u) {
+  var t = String(u || "").trim();
+  if (/\s/.test(t)) {
+    var senza = t.replace(/\s+/g, "");
+    return "Gli username Telegram non hanno spazi" + (/^[A-Za-z0-9_]+$/.test(senza) ? ": intendevi @" + senza + "?" : ".") +
+      " Copialo dal profilo del bot.";
+  }
+  // giro finale 26/11 (Luca): le lettere non latine (es. cirilliche) si nominano, perché sono un trucco d'imitazione
+  if (/[^\x00-\x7F]/.test(t) && /\p{L}/u.test(t.replace(/[A-Za-z]/g, "")))
+    return "Lo username contiene lettere non latine (per esempio cirilliche o greche, che sembrano uguali alle nostre): gli username Telegram usano solo lettere latine. Copialo dal profilo del bot: se il nome che vedi le contiene, è un segnale d'imitazione.";
+  if (!/^[A-Za-z0-9_]+$/.test(t)) return "Lo username può contenere solo lettere, numeri e trattino basso (_). Copialo dal profilo del bot.";
+  if (t.length < MIN_USERNAME) return "Lo username sembra troppo corto: controlla di averlo copiato per intero dal profilo del bot.";
+  if (t.length > MAX_USERNAME) return "Lo username è troppo lungo (al massimo " + MAX_USERNAME + " caratteri): copia solo il nome dopo la @.";
+  return "";
+}
+
 function caricaMarchi(testo) {
   var marchi = [];
   String(testo).split(/\r?\n/).forEach(function (riga) {
@@ -730,7 +816,10 @@ function caricaMarchi(testo) {
     var ufficiali = new Set();
     (campi.length > 1 ? campi[1] : "").split(",").forEach(function (u) { if (u.trim()) ufficiali.add(u.trim().toLowerCase()); });
     var generico = campi.length > 2 && campi[2].trim().toLowerCase() === "generico";
-    marchi.push([campi[0].trim().toLowerCase(), ufficiali, generico]);
+    // quarto campo: domini ufficiali che non coincidono col marchio (porting di nome.domini_ufficiali)
+    var domini = (campi.length > 3 ? campi[3] : "").split(",")
+      .map(function (d) { return d.trim().toLowerCase(); }).filter(Boolean);
+    marchi.push([campi[0].trim().toLowerCase(), ufficiali, generico, domini]);
   });
   return marchi;
 }
@@ -874,7 +963,7 @@ function analizzaNomeVisualizzato(nome, marchi) {
 
 if (typeof module !== "undefined") {
   module.exports = { normalizzaUsername: normalizzaUsername, eLinkInvito: eLinkInvito, caricaMarchi: caricaMarchi,
-    analizzaNome: analizzaNome, analizzaNomeVisualizzato: analizzaNomeVisualizzato };
+    analizzaNome: analizzaNome, analizzaNomeVisualizzato: analizzaNomeVisualizzato, problemaUsername: problemaUsername };
 }
 
 </script>
@@ -944,7 +1033,7 @@ function analizzaTesto(testo, regole) {
 function _marchiNelHost(host, reg, marchi) {
   var etichetta = reg.split(".")[0];
   var piatta = etichetta.replace(/-/g, "");
-  if (marchi.some(function (m) { return m[0] === piatta; })) return [];
+  if (marchi.some(function (m) { return m[0] === piatta || (m[3] || []).indexOf(reg) >= 0; })) return [];
   var generici = marchi.filter(function (m) { return m[2] === true; }).map(function (m) { return m[0]; });
   var sotto = host === reg ? [] : host.slice(0, -reg.length).replace(/\.+$/, "").split(".")
     .filter(function (x) { return x && x !== "www"; });
@@ -1020,15 +1109,27 @@ var NON_FARE_SEMPRE = [
   "Non aprire file ricevuti dal bot e non incollare comandi sul computer"
 ];
 var FARE = {
-  rosso: ["Interrompi l'uso del bot e non seguire ulteriori istruzioni",
-    "Segnala il bot a Telegram (⋮ → Segnala) e chiudi la chat",
-    "Se hai già condiviso codici o inviato fondi: cambia le password, trasferisci i fondi residui su un nuovo wallet e valuta una denuncia alla Polizia Postale"],
+  // giro finale 26/11 (Renato, Giulia): azioni pratiche, "non ho pagato" distinto da "ho già pagato", dove segnalare
+  rosso: ["Non seguire altre istruzioni del bot e non rispondere a chi te l'ha mandato; blocca il bot (e la persona, se è stata lei a scriverti)",
+    "Segnala il bot a Telegram: apri il suo profilo, tocca i tre puntini in alto a destra e scegli Segnala",
+    "Se non hai ancora pagato né condiviso nulla: sei in tempo, chiudi qui",
+    "Se hai già condiviso codici o inviato fondi: cambia subito le password, sposta i fondi rimasti su un wallet nuovo e segnala il caso alla Polizia Postale (commissariatodips.it)"],
   giallo: ["Procedi con la massima cautela e senza inviare denaro",
     "Raccogli informazioni da fonti indipendenti prima di fidarti",
-    "Ripeti la valutazione includendo gli screenshot delle sezioni prelievo, pagamenti e inviti"],
+    "Ripeti la valutazione dopo aver guardato i pulsanti per prelevare, pagare o invitare amici (meglio con uno screenshot)"],
   verde: ["Utilizzalo con le normali cautele: nessun controllo può garantire la sicurezza di un servizio",
     "Se in seguito ti chiede denaro, codici o il collegamento del wallet, ripeti la valutazione"]
 };
+/* Tester UX 26/11/2026 (Renato): giallo nato solo da verifiche mancanti → azioni concrete per completarle,
+   non "massima cautela" (spaventava per un servizio ufficiale). Una per ogni motivo della certezza bassa. */
+var FARE_VERIFICHE = {
+  sezioni_non_confermate: "Nel bot apri i pulsanti per prelevare, pagare o invitare amici, leggi cosa chiedono ed esci senza confermare: non spendi nulla. Poi ripeti la verifica",
+  nonso_richieste: "Rispondi alle domande dove hai messo \"Non so\" (pulsante \"← Modifica le risposte\")",
+  nessun_materiale: "Incolla il messaggio di benvenuto del bot o aggiungi uno screenshot: la valutazione diventa più sicura",
+  testo_breve: "Incolla un testo più completo del bot (il messaggio di benvenuto intero) o aggiungi uno screenshot",
+  risposte_contraddittorie: "Ricontrolla le risposte segnalate nel riquadro \"Discrepanze\""
+};
+var FARE_FINO_AD_ALLORA = "Fino ad allora non inviare denaro e non collegare il wallet";
 
 function codiciAutomatici() {
   return ["nome_imita_marchio", "nome_parole_esca", "dominio_con_marchio", "dominio_tld_rischioso", "segnalazione_truffa",
@@ -1081,7 +1182,9 @@ function costruisciVerdetto(input, risorse) {
   var nonVerificato = [];
   var risposte = input.risposte || {};
   // solo le domande visibili contano: quelle condizionali nascoste non si chiedono e non pesano
-  var domande = domandeVisibili(risorse.questionario, risposte);
+  // esito rapido (tester UX 26/11): nessuna domanda conta, si usano solo il testo letto e il nome
+  var domande = input.rapido ? [] : domandeVisibili(risorse.questionario, risposte);
+  if (input.rapido) nonVerificato.push("Esito rapido: le domande non sono state compilate, l'esito si basa solo sul testo letto in automatico e sul nome del bot");
   var visibile = {};
   domande.forEach(function (d) { visibile[d.codice] = true; });
   // domanda che copre ogni codice: la sua o quella che lo assorbe (revisione 18/11, punto 6)
@@ -1118,7 +1221,7 @@ function costruisciVerdetto(input, risorse) {
     } else if (r === rispostaSegnale) {
       // la domanda in positivo non descrive il rischio: nel report si mostra la descrizione del segnale
       metti(codice, rispostaSegnale === "no" ? cat[codice].descrizione : d.testo, FONTE_RISPOSTA, false);
-    } else if (r === "nonso") nonVerificato.push("Senza risposta: " + d.testo);
+    } else if (r === "nonso") nonVerificato.push("Hai risposto «Non so»: " + d.testo);
   });
 
   // 2. controllo del nome (username + nome visualizzato)
@@ -1129,6 +1232,16 @@ function costruisciVerdetto(input, risorse) {
   if (marchiImitati.length) {
     metti("nome_imita_marchio", "Il nome richiama il marchio " + marchiImitati.join(", ") +
       (nv && nv.decorato ? " (nome scritto con lettere decorative: \"" + nv.normalizzato + "\")" : ""), FONTE_NOME, true);
+  }
+  // giro finale 26/11 (Luca): il badge DICHIARATO (-50) annullava l'imitazione TROVATA (+60) → falso verde.
+  // Prevale il controllo: un bot ufficiale non imita marchi. Il badge non toglie punti e diventa una discrepanza.
+  var badgeDaTogliere = segnali.bot_ufficiale_verificato &&
+    (marchiImitati.length || contraddizioniNome(input.nomeVisualizzato, risposte).length);
+  if (badgeDaTogliere) {
+    delete segnali.bot_ufficiale_verificato;
+    ordine.splice(ordine.indexOf("bot_ufficiale_verificato"), 1);
+    if (marchiImitati.length) contrasti.push({ codice: "bot_ufficiale_verificato",
+      frase: "un nome che imita il marchio " + marchiImitati.join(", ") });
   }
   var esca = n.parole_esca.slice();
   if (nv) nv.parole_esca.forEach(function (p) { if (esca.indexOf(p) < 0) esca.push(p); });
@@ -1163,11 +1276,11 @@ function costruisciVerdetto(input, risorse) {
   }
 
   // copertura
-  if (input.sezioniViste === false) nonVerificato.push("Sezioni prelievo / pagamenti / inviti non aperte");
-  var nonCoperti = (risorse.questionario.non_coperti || []).filter(function (c) { return cat[c]; })
-    .map(function (c) { return cat[c].descrizione.charAt(0).toLowerCase() + cat[c].descrizione.slice(1); });
-  if (nonCoperti.length) nonVerificato.push("Non verificabile da questo strumento (serve l'analisi completa): " + nonCoperti.join("; "));
-  nonVerificato.push("Codice lato server e funzionamento interno della Mini App");
+  if (input.sezioniViste === false) nonVerificato.push("I pulsanti per prelevare, pagare o invitare amici: non li hai guardati");
+  // tester UX 26/11/2026: l'elenco tecnico dei controlli non coperti sembrava un'accusa al bot → una frase semplice
+  if ((risorse.questionario.non_coperti || []).some(function (c) { return cat[c]; }))
+    nonVerificato.push("Controlli tecnici che richiedono l'analisi completa (età del sito, codice nascosto della Mini App, file ricevuti): non fatti qui, e non indicano nulla di negativo su questo bot");
+  nonVerificato.push("Come funziona la Mini App dietro le quinte: nessuno strumento esterno può vederlo");
 
   var aree = {};
   _usa("ORDINE_AREE").forEach(function (a) { aree[a] = { rischio: 0, segnali: [] }; });
@@ -1185,8 +1298,13 @@ function costruisciVerdetto(input, risorse) {
   var materiale = testiSostanziosi.length > 0 && input.sezioniViste === true && !nonsoRichieste;
   var limiti = [];
   if (testi.length && !testiSostanziosi.length) limiti.push("testo rilevato troppo breve per essere considerato materiale");
-  if (testiSostanziosi.length && input.sezioniViste !== true) limiti.push("sezioni prelievo/pagamenti non confermate");
+  if (testiSostanziosi.length && input.sezioniViste !== true) limiti.push("pulsanti prelievo/pagamenti non controllati");
   if (testiSostanziosi.length && nonsoRichieste) limiti.push("\"Non so\" su domande delle richieste");
+
+  // contraddizioni tra risposte e discrepanze con il controllo automatico: dati incerti → certezza bassa
+  var contraddizioni = contraddizioniAttive(risorse.questionario, risposte)
+    .concat(contraddizioniNome(input.nomeVisualizzato, risposte));
+  var contraddittorie = contraddizioni.length > 0 || contrasti.length > 0;
 
   var grezzo = {
     versione_schema: 1,
@@ -1197,7 +1315,8 @@ function costruisciVerdetto(input, risorse) {
     // → il motore ammette il verde con riserva anche senza materiale: +20 punti, certezza bassa
     contesto: { materiale_utente: materiale, tecnica_completa: false,
       fonti_indipendenti: (materiale ? 1 : 0) + nFontiLink,
-      risposte_complete: input.sezioniViste === true && !domande.some(function (d) { return risposte[d.codice] === "nonso"; }) },
+      risposte_complete: input.sezioniViste === true && !domande.some(function (d) { return risposte[d.codice] === "nonso"; }),
+      risposte_contraddittorie: contraddittorie },
     cosa_fare: [], cosa_non_fare: NON_FARE_SEMPRE.slice(), non_verificato: nonVerificato,
     fonti: segnalazioni.concat(positivi).map(function (l) { return { titolo: l.base, url: l.url }; }),
     origine: "autovalutazione guidata"
@@ -1217,7 +1336,9 @@ function costruisciVerdetto(input, risorse) {
   basataSu.push("controllo del nome");
   if (link && link.valido) basataSu.push("controllo del link della Mini App");
   basataSu.push(nFontiLink === 1 ? "1 fonte esterna" : nFontiLink + " fonti esterne");
-  if (input.sezioniViste === false) basataSu.push("sezioni prelievo/pagamenti non viste");
+  // senza testo i limiti sono vuoti: qui si dice una volta sola che i pulsanti non sono stati guardati
+  if (input.sezioniViste === false && limiti.indexOf("pulsanti prelievo/pagamenti non controllati") < 0)
+    basataSu.push("pulsanti prelievo/pagamenti non controllati");
 
   // perché la certezza è bassa: un codice per ogni requisito del materiale che manca
   var motiviCertezzaBassa = [];
@@ -1226,10 +1347,59 @@ function costruisciVerdetto(input, risorse) {
     else if (!testiSostanziosi.length) motiviCertezzaBassa.push("testo_breve");
     if (input.sezioniViste !== true) motiviCertezzaBassa.push("sezioni_non_confermate");
     if (nonsoRichieste) motiviCertezzaBassa.push("nonso_richieste");
+    if (contraddittorie) motiviCertezzaBassa.push("risposte_contraddittorie");
+  }
+  // giallo di sola prudenza (punteggio da verde): il "cosa fare" diventa la lista delle verifiche da completare
+  if (v.verdetto === "giallo" && v.punteggio_totale <= _usa("SOGLIE").verde && motiviCertezzaBassa.length) {
+    v.cosa_fare = motiviCertezzaBassa.filter(function (m) { return FARE_VERIFICHE[m]; })
+      .map(function (m) { return FARE_VERIFICHE[m]; }).concat([FARE_FINO_AD_ALLORA]);
   }
 
-  return { verdetto: v, contrasti: contrasti, basataSu: basataSu, avvisi: avvisi,
+  return { verdetto: v, contrasti: contrasti, contraddizioni: contraddizioni, basataSu: basataSu, avvisi: avvisi,
     motiviCertezzaBassa: motiviCertezzaBassa };
+}
+
+/* Tester UX 26/11/2026 (Giulia): "Domande da X a Y di Z" per la pagina indicata (0 = prima pagina;
+   pagine.length = domanda finale sui pulsanti). Conta solo le domande visibili, più quella finale. */
+function contatoreDomande(questionario, risposte, pagina) {
+  risposte = risposte || {};
+  var prima = 0, qui = 0, tutte = 0;
+  questionario.pagine.forEach(function (p, i) {
+    var n = p.domande.filter(function (d) { return domandaVisibile(d, risposte); }).length;
+    tutte += n;
+    if (i < pagina) prima += n; else if (i === pagina) qui = n;
+  });
+  if (pagina >= questionario.pagine.length) qui = 1; // la domanda sui pulsanti
+  return { da: prima + 1, a: prima + qui, totale: tutte + 1 };
+}
+
+/* Tester UX 26/11/2026 (Giulia): linee rosse trovate in automatico nei testi, per proporre l'esito rapido. */
+function lineeRosseNelTesto(testi, risorse) {
+  var trovate = [];
+  (testi || []).forEach(function (t) {
+    if (!t || !String(t.testo || "").trim()) return;
+    _usa("analizzaTesto")(t.testo, risorse.regole).forEach(function (r) {
+      var voce = risorse.catalogo[r.codice];
+      if (voce && voce.linea_rossa && trovate.indexOf(r.codice) < 0) trovate.push(r.codice);
+    });
+  });
+  return trovate;
+}
+
+/* Giro finale 26/11/2026 (Luca): una spunta scritta come emoji nel nome + "badge blu: Sì" = contraddizione. */
+var SPUNTE_EMOJI = /[✅☑✔]/u; // ✅ ☑ ✔ (anche con il selettore di variante ️)
+var TESTO_SPUNTA_EMOJI = "Nel nome in cima alla chat c'è una spunta scritta come emoji (✅): non è il badge blu di Telegram, che compare accanto al nome e non dentro.";
+function contraddizioniNome(nomeVisualizzato, risposte) {
+  return (risposte || {}).bot_ufficiale_verificato === "si" && SPUNTE_EMOJI.test(String(nomeVisualizzato || ""))
+    ? [TESTO_SPUNTA_EMOJI] : [];
+}
+
+/* Tester UX 26/11/2026: coppie di risposte che di solito non vanno insieme (regole in questionario.json). */
+function contraddizioniAttive(questionario, risposte) {
+  risposte = risposte || {};
+  return (questionario.contraddizioni || []).filter(function (c) {
+    return c.quando.every(function (q) { return risposte[q[0]] === q[1]; });
+  }).map(function (c) { return c.testo; });
 }
 
 /* Riepilogo per la schermata di conferma: quante domande visibili hanno una risposta, e quanti "Non so". */
@@ -1246,7 +1416,8 @@ function contaRisposte(questionario, risposte) {
 if (typeof module !== "undefined") {
   module.exports = { costruisciVerdetto: costruisciVerdetto, risorseDaPayload: risorseDaPayload,
     codiciAutomatici: codiciAutomatici, domandaVisibile: domandaVisibile, domandeVisibili: domandeVisibili,
-    contaRisposte: contaRisposte };
+    contaRisposte: contaRisposte, contraddizioniAttive: contraddizioniAttive, lineeRosseNelTesto: lineeRosseNelTesto,
+    contatoreDomande: contatoreDomande, contraddizioniNome: contraddizioniNome };
 }
 
 </script>
@@ -1329,8 +1500,9 @@ if (typeof module !== "undefined") {
   var MOTIVI_CERTEZZA_BASSA = {
     nessun_materiale: "Non hai fornito testo o screenshot del bot: aggiungili per una valutazione più solida.",
     testo_breve: "Il testo fornito è troppo breve per essere analizzato in modo affidabile: incolla messaggi più completi.",
-    sezioni_non_confermate: "Non hai confermato di aver aperto le sezioni prelievo, pagamenti e inviti: sono quelle dove compaiono più spesso le richieste di denaro.",
-    nonso_richieste: "Hai risposto \"Non so\" ad alcune domande sulle richieste del bot: sono le più importanti per la valutazione."
+    sezioni_non_confermate: "Non hai guardato i pulsanti per prelevare, pagare o invitare amici: è lì che compaiono più spesso le richieste di denaro.",
+    nonso_richieste: "Hai risposto \"Non so\" ad alcune domande sulle richieste del bot: sono le più importanti per la valutazione.",
+    risposte_contraddittorie: "Alcune risposte si contraddicono tra loro o con il testo incollato: ricontrollale nel riquadro \"Discrepanze\"."
   };
 
   function basataSuVetrina(v) {
@@ -1351,11 +1523,13 @@ if (typeof module !== "undefined") {
   function sottotitolo(v) {
     var motivo = motivoRegola(v), vicino = notaProssimita(v);
     if (v.verdetto === "verde") return motivo === "riserva" ? "Verde con riserva · senza materiale sufficiente" : "Verde · non è una garanzia" + (vicino ? " · " + vicino : "");
-    if (v.verdetto === "giallo") return "Giallo · " + (motivo === "prudenza" ? "regola di prudenza" : vicino || "procedi con cautela");
+    // tester UX 26/11 (Renato): niente gergo tecnico nel sottotitolo, si dice cosa manca
+    if (v.verdetto === "giallo") return "Giallo · " + (motivo === "prudenza"
+      ? (v.punteggio_totale <= SOGLIE.verde ? "mancano alcune verifiche" : "per prudenza") : vicino || "procedi con cautela");
     return "Rosso · " + (v.linee_rosse && v.linee_rosse.length ? "linea rossa superata"
       : motivo === "segnalazioni" || v.rosso_da_segnalazioni ? "segnalazioni concordi"
       : motivo === "imitazione" || v.rosso_da_imitazione ? "imitazione di un marchio"
-      : motivo === "prudenza" ? "regola di prudenza" : "fermati e verifica");
+      : motivo === "prudenza" ? "per prudenza" : "fermati e verifica");
   }
 
   /* Barra del rischio: l'indicatore sta sul rischio finale, quindi sempre nella zona del colore. */
@@ -1385,17 +1559,22 @@ if (typeof module !== "undefined") {
       corpo = [el("strong", { testo: "Verde con riserva. " }),
         "L'esito si basa sulle tue risposte, senza screenshot o testo sufficienti da verificare: al rischio si aggiungono 20 punti di prudenza e la certezza resta bassa. "];
     } else {
-      corpo = [el("strong", { testo: "Prevale una regola di prudenza. " }),
-        "L'esito verde è escluso (certezza bassa oppure un'area al rischio massimo): il rischio mostrato resta nella zona del colore assegnato. "];
+      // tester UX 26/11 (Renato): due numeri (punteggio e rischio mostrato) spiegati in parole semplici
+      return el("p", { classe: "nota-regola t-" + v.verdetto }, el("strong", { testo: "Perché due numeri. " }),
+        "Le tue risposte e il testo danno ", el("span", { classe: "mono", testo: v.punteggio_totale + "/100" }),
+        v.punteggio_totale <= SOGLIE.verde
+          ? " (zona verde), ma finché mancano alcune verifiche il verde non si può dare: per questo il rischio mostrato è "
+          : ", ma un'area ha raggiunto il rischio massimo e il verde è escluso: per questo il rischio mostrato è ",
+        el("span", { classe: "mono", testo: rischioFinale(v) + "/100" }), ".");
     }
     return el("p", { classe: "nota-regola t-" + v.verdetto }, corpo,
       "Punteggio delle aree: ", el("span", { classe: "mono", testo: v.punteggio_totale + "/100" }), ".");
   }
 
   /* Un giallo nato solo dalla prudenza, con punteggio da verde, non ha segnali di rischio: il titolo non li inventa. */
-  function etichettaEsito(v) {
+  function etichettaEsito(v, opzioni) {
     if (v.verdetto === "giallo" && motivoRegola(v) === "prudenza" && v.punteggio_totale <= SOGLIE.verde)
-      return "Nessun segnale grave · da confermare";
+      return pocheInformazioni(opzioni.nonso || 0) ? "Pochi elementi per decidere · da confermare" : "Nessun segnale grave · da confermare";
     return ESITI[v.verdetto].etichetta;
   }
 
@@ -1423,8 +1602,9 @@ if (typeof module !== "undefined") {
         el("span", { testo: (v.data ? String(v.data).slice(0, 10) + " · " : "") + (autoval ? "autovalutazione guidata" : "analisi completa") })),
       el("div", { classe: "esito t-" + v.verdetto },
         forma(v.verdetto),
-        el("h2", { classe: "esito-titolo", testo: etichettaEsito(v) }),
+        el("h2", { classe: "esito-titolo", testo: etichettaEsito(v, opzioni) }),
         el("p", { classe: "esito-sotto", testo: sottotitolo(v) })),
+      el("p", { classe: "esito-perche", testo: perche(v, CAT, opzioni.motiviCertezzaBassa || []) }),
       barraRischio(v),
       el("ul", { classe: "chips" },
         chip("Certezza della valutazione", el("strong", { testo: v.fiducia })),
@@ -1442,17 +1622,25 @@ if (typeof module !== "undefined") {
       el("p", { testo: autoval
         ? "Esito rosso per segnalazioni: hai indicato segnalazioni provenienti da almeno due siti distinti (non verificate dallo strumento)."
         : "Esito rosso per segnalazioni: almeno due siti distinti riportano segnalazioni su questo bot." })));
-    if (opzioni.contrasti && opzioni.contrasti.length) {
+    var contrasti = opzioni.contrasti || [], contraddizioni = opzioni.contraddizioni || [];
+    if (contrasti.length || contraddizioni.length) {
       principale.appendChild(el("div", { classe: "riquadro giallo" }, el("h3", { testo: "Discrepanze con le tue risposte" }),
-        el("ul", { classe: "pulito" }, opzioni.contrasti.map(function (c) {
+        el("ul", { classe: "pulito" }, contrasti.map(function (c) {
           return el("li", { testo: "Il controllo automatico ha rilevato " + c.frase + ", in contrasto con la risposta fornita (" + (CAT[c.codice] ? CAT[c.codice].descrizione : c.codice) + ")." });
-        }))));
+        }).concat(contraddizioni.map(function (t) { return el("li", { testo: t }); })))));
     }
     if (opzioni.avvisi && opzioni.avvisi.length) {
       principale.appendChild(el("div", { classe: "riquadro neutro" }, el("h3", { testo: "Avvisi sul link della Mini App" }),
         el("ul", { classe: "pulito" }, opzioni.avvisi.map(function (a) { return el("li", { testo: a }); }))));
     }
     principale.appendChild(el("p", { classe: "piccolo muted basata-su" }, el("strong", { testo: "Basata su: " }), basataSu.join(" · ")));
+    if (opzioni.rapido) principale.appendChild(el("div", { classe: "messaggio info" },
+      el("p", { testo: "Esito rapido: si basa solo sul testo letto in automatico e sul nome, senza le tue risposte. Il segnale grave basta per il rosso; le domande servono a capire il resto." }),
+      opzioni.completaDomande ? el("button", { type: "button", classe: "bottone", testo: "Completa le domande", onclick: opzioni.completaDomande }) : null));
+    // tester UX 26/11: se nome in chat o link mancano, lo si dice (e si offre di aggiungerli)
+    if (opzioni.mancanti && opzioni.mancanti.length) principale.appendChild(el("div", { classe: "messaggio info" },
+      el("p", { testo: "Non hai indicato " + opzioni.mancanti.join(" né ") + ": potrebbe esserci un trucco in più che non ho potuto controllare." }),
+      opzioni.aggiungiMancanti ? el("button", { type: "button", classe: "bottone", testo: "Aggiungi nome e link", onclick: opzioni.aggiungiMancanti }) : null));
     if (autoval && v.verdetto === "verde" && !v.verde_con_riserva) principale.appendChild(el("p", { classe: "piccolo muted", testo: "Un esito verde ottenuto in autovalutazione raggiunge al massimo una certezza media: la certezza alta è riservata alle analisi complete. Nessun controllo può garantire la sicurezza di un servizio." }));
     var motiviBassa = (opzioni.motiviCertezzaBassa || []).filter(function (m) { return MOTIVI_CERTEZZA_BASSA[m]; });
     if (autoval && v.fiducia === "bassa" && motiviBassa.length) principale.appendChild(el("div", { classe: "piccolo muted" },
@@ -1479,7 +1667,7 @@ if (typeof module !== "undefined") {
           var punti = s.fuori_catalogo ? s.punti : voce ? voce.punti : 0;
           return el("div", { classe: "segnale" },
             el("div", null, el("strong", { testo: (voce ? voce.descrizione : s.codice.replace(/_/g, " ")) }),
-              el("span", { classe: "muted piccolo", testo: " (" + (punti > 0 ? "+" : "") + punti + (s.tipo_prova === "segnalazione" ? ", da fonte di terzi" : "") + ")" })),
+              el("span", { classe: "muted piccolo", testo: " (" + (punti > 0 ? "+" : "") + punti + (s.tipo_prova !== "segnalazione" ? "" : /utente/.test(s.fonte || "") ? ", indicato da te: non verificato" : ", da fonte di terzi") + ")" })),
             s.testo && s.testo !== "x" ? el("div", null, testoConLink(s.testo)) : null,
             s.fonte ? el("div", { classe: "fonte" }, "Fonte: ", fonte(s.fonte)) : null);
         })));
@@ -1489,8 +1677,12 @@ if (typeof module !== "undefined") {
       corpoAree));
 
     /* 4. non verificato, fonti, azioni, avvertenze */
+    var nv = v.non_verificato || [];
     nodo.appendChild(el("div", { classe: "card" },
-      elenco("Non verificato", v.non_verificato),
+      // tester UX 26/11: a scomparsa, così non sembra un elenco di accuse
+      nv.length ? el("details", { classe: "aiuto" },
+        el("summary", { testo: "Cosa non è stato controllato (" + nv.length + ")" }),
+        el("ul", { classe: "pulito" }, nv.map(function (t) { return el("li", null, testoConLink(t)); }))) : null,
       v.fonti && v.fonti.length ? el("div", null, el("h3", { testo: "Fonti" }), el("ul", { classe: "pulito" }, v.fonti.map(function (f) {
         return el("li", null, (f.titolo ? f.titolo + " — " : ""), f.url ? collegamento(f.url) : null);
       }))) : null,
@@ -1596,14 +1788,14 @@ if (typeof module !== "undefined") {
         el("li", { testo: "Segnalazioni provenienti da almeno due siti distinti determinano l'esito rosso (salvo bot ufficiale verificato)." }),
         el("li", { testo: "Un nome che richiama un marchio noto e contiene parole esca, o rimanda a un dominio con lo stesso marchio, determina l'esito rosso (salvo bot ufficiale verificato)." }),
         el("li", { testo: "L'esito verde è escluso quando un'area raggiunge " + SOGLIE.areaPiena + " o più: un pericolo grave non viene diluito nel punteggio." }),
-        el("li", { testo: "Con certezza bassa il verde è escluso, con un'eccezione nell'autovalutazione: se hai risposto a tutte le domande senza \"Non so\" e hai aperto le sezioni prelievo e pagamenti, il verde è possibile anche senza screenshot, ma la prova mancante aggiunge 20 punti al rischio (verde con riserva)." }))));
+        el("li", { testo: "Con certezza bassa il verde è escluso, con un'eccezione nell'autovalutazione: se hai risposto a tutte le domande senza \"Non so\" e hai guardato i pulsanti per prelevare e pagare (o il bot non li ha), il verde è possibile anche senza screenshot, ma la prova mancante aggiunge 20 punti al rischio (verde con riserva)." }))));
 
     s.appendChild(el("div", { classe: "card" },
       el("h3", { testo: "Certezza della valutazione" }),
       el("p", { testo: "Ogni esito è accompagnato da un indice di certezza, che ne esprime la solidità." }),
       el("ul", { classe: "pulito" },
         el("li", null, el("strong", { testo: "Alta: " }), "una linea rossa provata, oppure un'analisi completa con più fonti indipendenti, materiale analizzato e controlli tecnici."),
-        el("li", null, el("strong", { testo: "Media: " }), "almeno una fonte. Nell'autovalutazione richiede materiale autentico analizzato dallo strumento (screenshot o testo), la consultazione delle sezioni prelievo/pagamenti e nessun \"Non so\" sulle richieste. È il livello massimo raggiungibile in autovalutazione."),
+        el("li", null, el("strong", { testo: "Media: " }), "almeno una fonte. Nell'autovalutazione richiede materiale autentico analizzato dallo strumento (screenshot o testo), uno sguardo ai pulsanti per prelevare e pagare e nessun \"Non so\" sulle richieste. È il livello massimo raggiungibile in autovalutazione."),
         el("li", null, el("strong", { testo: "Bassa: " }), "solo dichiarazioni, senza materiale analizzato. Il verde è possibile solo \"con riserva\": risposte complete e 20 punti di prudenza in più.")),
       el("p", { classe: "muted", testo: "Nell'autovalutazione lo strumento non si basa soltanto sulle risposte: analizza autonomamente il nome, gli screenshot o il testo e il link. Se un controllo contraddice una risposta, prevale il controllo e il report ne dà evidenza." })));
 
@@ -1657,7 +1849,7 @@ if (typeof module !== "undefined") {
   var stato;
   function nuovoStato() {
     return { passo: 0, username: "", nomeVisualizzato: "", linkMiniApp: "", screenshot: [], incollato: "",
-      risposte: {}, sezioniViste: null, linkSegnalazioni: "", linkPositivi: "", note: "", messaggio: "" };
+      risposte: {}, sezioniViste: null, sezioniAssenti: false, rapido: false, sceltaRapida: false, proposta: null, linkSegnalazioni: "", linkPositivi: "", note: "", messaggio: "" };
   }
   var PASSI_AREE = Q.pagine.length;
   var ULTIMO = 3 + PASSI_AREE; // 0 premessa, 1 bot, 2 materiale, 3..(2+n) aree, 3+n copertura
@@ -1670,7 +1862,8 @@ if (typeof module !== "undefined") {
     if (stato.incollato.trim()) testi.push({ origine: "incollato", testo: stato.incollato });
     return { username: stato.username, nomeVisualizzato: stato.nomeVisualizzato, risposte: stato.risposte,
       sezioniViste: stato.sezioniViste, testi: testi, linkMiniApp: stato.linkMiniApp.trim(),
-      linkSegnalazioni: righe(stato.linkSegnalazioni), linkPositivi: righe(stato.linkPositivi), note: stato.note };
+      linkSegnalazioni: righe(stato.linkSegnalazioni), linkPositivi: righe(stato.linkPositivi), note: stato.note,
+      rapido: !!stato.rapido };
   }
 
   function campo(etichetta, chiave, aiuto, multi) {
@@ -1716,8 +1909,9 @@ if (typeof module !== "undefined") {
 
   function passoBot(corpo) {
     corpo.appendChild(campo("Username del bot (obbligatorio)", "username", "Es. @NomeDelBot o t.me/NomeDelBot: lo trovi nel profilo del bot."));
-    corpo.appendChild(campo("Nome visualizzato (facoltativo)", "nomeVisualizzato", "Il nome in cima alla chat, copiato com'è: serve a scoprire lettere contraffatte."));
-    corpo.appendChild(campo("Link della Mini App (facoltativo)", "linkMiniApp", "Se il bot apre una pagina web, incolla l'indirizzo. La pagina non viene aperta: si controlla solo il dominio."));
+    // tester UX 26/11: "facoltativo" li faceva saltare, e sono i campi che scovano i trucchi più comuni
+    corpo.appendChild(campo("Nome in cima alla chat (consigliato)", "nomeVisualizzato", "Copialo com'è, in 5 secondi: scopre lettere scambiate e nomi che imitano marchi noti."));
+    corpo.appendChild(campo("Link della Mini App (consigliato)", "linkMiniApp", "Mini App = una pagina web che si apre dentro Telegram. Se il bot ne apre una, copia l'indirizzo: scopre siti che imitano marchi noti. La pagina non viene aperta, si controlla solo il nome del sito."));
   }
 
   function elencoScreenshot(lista) {
@@ -1741,6 +1935,18 @@ if (typeof module !== "undefined") {
   }
 
   function passoMateriale(corpo) {
+    // tester UX 26/11 (Giulia): se il testo contiene già una linea rossa, si può vedere subito l'esito
+    if (stato.proposta && stato.proposta.length) {
+      corpo.appendChild(el("div", { classe: "riquadro rosso", role: "alert" },
+        el("h3", { testo: "⛔ Il testo contiene già un segnale grave" }),
+        el("ul", { classe: "pulito" }, stato.proposta.map(function (c) { return el("li", { testo: CAT[c] ? CAT[c].descrizione : c }); })),
+        el("p", { testo: "Puoi vedere subito l'esito oppure rispondere alle domande per un controllo completo." }),
+        el("div", { classe: "azioni" },
+          el("button", { type: "button", classe: "bottone primario", testo: "Mostra subito l'esito", onclick: function () {
+            stato.rapido = true; stato.proposta = null; stato.passo = RIEPILOGO + 1; disegnaProva(); window.scrollTo(0, 0); } }),
+          el("button", { type: "button", classe: "bottone", testo: "Continua il controllo completo", onclick: function () {
+            stato.sceltaRapida = true; stato.proposta = null; avanti(); } }))));
+    }
     corpo.appendChild(el("p", { testo: "Facoltativo, ma utile: lo strumento legge i testi e trova da solo le frasi a rischio. Senza materiale la valutazione si basa solo sulle tue risposte e la certezza resta bassa." }));
     corpo.appendChild(el("div", { classe: "messaggio info" }, el("strong", { testo: "Privacy: " }),
       "le immagini restano sul tuo dispositivo. Prima di caricarle, oscura numero di telefono, nome, saldo e indirizzi di wallet.",
@@ -1768,14 +1974,39 @@ if (typeof module !== "undefined") {
 
   var RISPOSTE_TUTTE = [["si", "Sì"], ["no", "No"], ["nonso", "Non so"]];
 
+  /* tester UX 26/11 (Giulia): quante domande mancano */
+  function testoContatore(c) { return c.da === c.a ? "Domanda " + c.da + " di " + c.totale : "Domande " + c.da + "–" + c.a + " di " + c.totale; }
+
   function passoArea(corpo, area) {
+    var contatore = el("p", { classe: "piccolo muted contatore", "aria-live": "polite" });
+    corpo.appendChild(contatore);
     corpo.appendChild(el("p", { classe: "muted", testo: "Se non sei sicuro, rispondi \"Non so\": non aumenta il rischio, ma finisce tra le cose da verificare." }));
     var campi = [];
+    // tester UX 26/11: le risposte che si contraddicono si segnalano subito, nella pagina in cui accade
+    var avvisoContraddizioni = el("div", { classe: "messaggio info", role: "status", "aria-live": "polite" });
+    var codiciPagina = area.domande.map(function (d) { return d.codice; });
+    var visibiliPrima = null;
     function aggiornaVisibili() {
       campi.forEach(function (c) { c.fs.hidden = !domandaVisibile(c.d, stato.risposte); });
+      // giro finale 26/11 (Renato, Luca): se il totale cresce, si dice perché
+      var visibili = campi.filter(function (c) { return !c.fs.hidden; }).length;
+      var nuove = visibiliPrima !== null && visibili > visibiliPrima ? visibili - visibiliPrima : 0;
+      if (visibiliPrima === null || visibili !== visibiliPrima)
+        contatore.textContent = testoContatore(contatoreDomande(Q, stato.risposte, Q.pagine.indexOf(area))) +
+          (nuove ? " · sono comparse " + nuove + (nuove === 1 ? " domanda" : " domande") + " in più qui sotto" : "");
+      visibiliPrima = visibili;
+      var qui = { contraddizioni: (Q.contraddizioni || []).filter(function (c) {
+        return c.quando.some(function (q) { return codiciPagina.indexOf(q[0]) >= 0; }); }) };
+      var attive = contraddizioniAttive(qui, stato.risposte);
+      // giro finale 26/11 (Luca): ✅ scritta nel nome + "badge blu: Sì" → avviso subito
+      if (codiciPagina.indexOf("bot_ufficiale_verificato") >= 0) attive = attive.concat(contraddizioniNome(stato.nomeVisualizzato, stato.risposte));
+      svuota(avvisoContraddizioni);
+      attive.forEach(function (t) { avvisoContraddizioni.appendChild(el("p", { testo: "⚠️ " + t })); });
+      avvisoContraddizioni.hidden = !attive.length;
     }
     area.domande.forEach(function (d) {
       var fs = el("fieldset", { classe: "domanda" }, el("legend", { id: "l_" + d.id, testo: d.testo }),
+        d.nota ? el("p", { classe: "nota-domanda", testo: d.nota }) : null,
         scelta(d.id, stato.risposte[d.codice], RISPOSTE_TUTTE.filter(function (o) { return (d.risposte || RISPOSTE_AMMESSE).indexOf(o[0]) >= 0; }),
           function (v) { stato.risposte[d.codice] = v; aggiornaVisibili(); }, "l_" + d.id),
         el("details", { classe: "aiuto" }, el("summary", { testo: "Dove verificarlo" }), el("p", { testo: d.aiuto })));
@@ -1783,12 +2014,24 @@ if (typeof module !== "undefined") {
       campi.push({ d: d, fs: fs });
       corpo.appendChild(fs);
     });
+    // l'avviso va subito sotto l'ultima domanda coinvolta in una contraddizione, dove l'occhio sta già guardando
+    var ultima = null;
+    campi.forEach(function (c) {
+      if (c.d.codice === "bot_ufficiale_verificato" ||
+          (Q.contraddizioni || []).some(function (r) { return r.quando.some(function (q) { return q[0] === c.d.codice; }); })) ultima = c.fs;
+    });
+    if (ultima) corpo.insertBefore(avvisoContraddizioni, ultima.nextSibling); else corpo.appendChild(avvisoContraddizioni);
+    aggiornaVisibili();
   }
 
   function passoCopertura(corpo) {
+    var attuale = stato.sezioniViste === null ? null : stato.sezioniAssenti ? "assenti" : stato.sezioniViste ? "si" : "no";
+    corpo.appendChild(el("p", { classe: "piccolo muted contatore", testo: testoContatore(contatoreDomande(Q, stato.risposte, Q.pagine.length)) }));
     corpo.appendChild(el("fieldset", { classe: "domanda" }, el("legend", { id: "l_" + Q.copertura.id, testo: Q.copertura.testo }),
-      scelta(Q.copertura.id, stato.sezioniViste === null ? null : stato.sezioniViste ? "si" : "no", [["si", "Sì"], ["no", "No"]],
-        function (v) { stato.sezioniViste = v === "si"; }, "l_" + Q.copertura.id),
+      el("p", { classe: "nota-domanda", testo: Q.copertura.nota }),
+      // tester UX 26/11: "il bot non ha questi pulsanti" vale come sezioni controllate (niente giallo per un bot che non ne ha)
+      scelta(Q.copertura.id, attuale, Q.copertura.risposte,
+        function (v) { stato.sezioniAssenti = v === "assenti"; stato.sezioniViste = v === "si" || v === "assenti"; }, "l_" + Q.copertura.id),
       el("details", { classe: "aiuto" }, el("summary", { testo: "Perché è importante" }), el("p", { testo: Q.copertura.aiuto }))));
     /* i link sono facoltativi e da utenti esperti: restano a scomparsa, aperti solo se già compilati */
     var extra = el("details", { classe: "aiuto" }, el("summary", { testo: "Hai trovato segnalazioni o fonti online? (facoltativo)" }),
@@ -1818,8 +2061,8 @@ if (typeof module !== "undefined") {
       el("ul", { classe: "riepilogo" },
         riga("Bot", "@" + (normalizzaUsername(stato.username) || stato.username.trim())),
         riga("Materiale analizzato", materiale || "nessuno"),
-        riga("Domande", conta.risposte + " risposte" + (conta.nonso ? ", di cui " + conta.nonso + " \"Non so\"" : "")),
-        riga("Sezioni prelievo e pagamenti", stato.sezioniViste ? "consultate" : "non consultate"))));
+        riga("Domande", conta.risposte + (stato.sezioniViste !== null ? 1 : 0) + " risposte" + (conta.nonso ? ", di cui " + conta.nonso + " \"Non so\"" : "")),
+        riga("Pulsanti per prelevare, pagare, invitare", stato.sezioniAssenti ? "non presenti nel bot" : stato.sezioniViste ? "controllati" : "non controllati"))));
     if (!sufficiente) {
       corpo.appendChild(el("div", { classe: "messaggio info" },
         el("p", { testo: "Puoi vedere subito l'esito. Senza screenshot o testo sufficienti la valutazione si basa sulle tue risposte e la certezza resta bassa: il verde è possibile solo \"con riserva\" (20 punti di prudenza in più), altrimenti l'esito è giallo." }),
@@ -1848,6 +2091,8 @@ if (typeof module !== "undefined") {
     if (avviso) card.appendChild(avviso);
     card.appendChild(el("div", { classe: "azioni azioni-fisse" },
       p > 0 ? el("button", { type: "button", classe: "bottone", testo: "← Indietro", onclick: function () { stato.messaggio = ""; stato.passo--; disegnaProva(); window.scrollTo(0, 0); } }) : null,
+      // giro finale 26/11 (Luca): con la scorciatoia aperta si sceglie nel riquadro, senza un "Avanti" in concorrenza
+      stato.passo === 2 && stato.proposta ? null :
       el("button", { type: "button", classe: "bottone primario" + (p === RIEPILOGO ? " grande" : ""), testo: p === 0 ? "Ho letto, avvia la verifica" : p === RIEPILOGO ? "Mostra l'esito →" : "Avanti →", onclick: avanti })));
     sezione.appendChild(card);
     aggiornaBarra();
@@ -1861,16 +2106,30 @@ if (typeof module !== "undefined") {
       stato.messaggio = eLinkInvito(stato.username)
         ? "Questo è un link d'invito a un gruppo o a un canale, non a un bot. Apri il bot su Telegram e copia il suo @username dal profilo."
         : !stato.username.trim() ? "Inserisci lo username del bot per proseguire (ad esempio @NomeDelBot)."
+        // giro finale 26/11 (Luca): "@@@@" non è un link, il messaggio non deve parlare di link
+        : !/t\.me|telegram|https?:|tg:|\//i.test(stato.username) ? "Lo username non è valido: copialo dal profilo del bot (ad esempio @NomeDelBot)."
         : "Il link inserito non indica un bot. Usa lo username (@NomeDelBot) oppure il link t.me/NomeDelBot.";
       return disegnaProva();
     }
+    // giro finale 26/11 (Luca): un link della Mini App non valido si segnala subito, non solo nell'esito
+    if (stato.passo === 1 && stato.linkMiniApp.trim() && !analizzaLink(stato.linkMiniApp.trim(), RISORSE.marchi).valido) {
+      stato.messaggio = "Il link della Mini App non è un indirizzo web valido (deve iniziare con https://): correggilo oppure lascia il campo vuoto.";
+      return disegnaProva();
+    }
+    // tester UX 26/11: username con spazi, simboli o troppo corto non passano più in silenzio
+    var problema = stato.passo === 1 ? problemaUsername(normalizzaUsername(stato.username)) : "";
+    if (problema) { stato.messaggio = problema; return disegnaProva(); }
     if (stato.passo === 2 && stato.screenshot.some(function (s) { return s.testo === null; })) { stato.messaggio = "Attendi il completamento dell'analisi degli screenshot."; return disegnaProva(); }
+    if (stato.passo === 2 && !stato.sceltaRapida) {
+      var linee = lineeRosseNelTesto(input().testi, RISORSE);
+      if (linee.length) { stato.proposta = linee; disegnaProva(); window.scrollTo(0, 0); return; }
+    }
     if (stato.passo >= 3 && stato.passo < 3 + PASSI_AREE &&
         Q.pagine[stato.passo - 3].domande.filter(function (d) { return domandaVisibile(d, stato.risposte); })
           .some(function (d) { return !stato.risposte[d.codice]; })) {
       stato.messaggio = "Per proseguire rispondi a tutte le domande (è ammessa anche la risposta \"Non so\")."; return disegnaProva();
     }
-    if (stato.passo === ULTIMO && stato.sezioniViste === null) { stato.messaggio = "Indica se hai consultato le sezioni prelievo / pagamenti / inviti."; return disegnaProva(); }
+    if (stato.passo === ULTIMO && stato.sezioniViste === null) { stato.messaggio = "Indica se hai guardato i pulsanti per prelevare, pagare o invitare amici."; return disegnaProva(); }
     stato.passo++;
     disegnaProva();
     window.scrollTo(0, 0);
@@ -1893,9 +2152,14 @@ if (typeof module !== "undefined") {
     }
     var area = el("div");
     sezione.appendChild(area);
-    mostraReport(r.verdetto, area, { contrasti: r.contrasti, basataSu: r.basataSu, avvisi: r.avvisi,
-      motiviCertezzaBassa: r.motiviCertezzaBassa,
-      extraAzioni: [el("button", { type: "button", classe: "bottone", testo: "← Modifica le risposte", onclick: function () { stato.passo = ULTIMO; disegnaProva(); window.scrollTo(0, 0); } }),
+    mostraReport(r.verdetto, area, { contrasti: r.contrasti, contraddizioni: r.contraddizioni, basataSu: r.basataSu, avvisi: r.avvisi,
+      motiviCertezzaBassa: r.motiviCertezzaBassa, nonso: contaRisposte(Q, stato.risposte).nonso,
+      mancanti: [stato.nomeVisualizzato.trim() ? "" : "il nome in cima alla chat",
+        stato.linkMiniApp.trim() ? "" : "il link della Mini App (se il bot ne apre una)"].filter(Boolean),
+      aggiungiMancanti: function () { stato.rapido = false; stato.passo = 1; disegnaProva(); window.scrollTo(0, 0); },
+      rapido: stato.rapido,
+      completaDomande: function () { stato.rapido = false; stato.sceltaRapida = true; stato.passo = 3; disegnaProva(); window.scrollTo(0, 0); },
+      extraAzioni: [el("button", { type: "button", classe: "bottone", testo: "← Modifica le risposte", onclick: function () { stato.rapido = false; stato.sceltaRapida = true; stato.passo = stato.sezioniViste === null ? 3 : ULTIMO; disegnaProva(); window.scrollTo(0, 0); } }),
         el("button", { type: "button", classe: "bottone", testo: "Verifica un altro bot", onclick: function () { stato = nuovoStato(); stato.passo = 1; disegnaProva(); window.scrollTo(0, 0); } })] });
   }
 

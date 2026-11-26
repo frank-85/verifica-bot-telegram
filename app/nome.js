@@ -41,6 +41,26 @@ function normalizzaUsername(testo) {
   return t.replace(/^@+/, "").trim();
 }
 
+/* Tester UX 26/11/2026 (solo JS, per l'app): cosa non va in uno username già normalizzato, "" se va bene.
+   Gli username Telegram hanno solo lettere latine, cifre e "_": spazi o simboli = copiato male. */
+var MIN_USERNAME = 4;
+var MAX_USERNAME = 32;
+function problemaUsername(u) {
+  var t = String(u || "").trim();
+  if (/\s/.test(t)) {
+    var senza = t.replace(/\s+/g, "");
+    return "Gli username Telegram non hanno spazi" + (/^[A-Za-z0-9_]+$/.test(senza) ? ": intendevi @" + senza + "?" : ".") +
+      " Copialo dal profilo del bot.";
+  }
+  // giro finale 26/11 (Luca): le lettere non latine (es. cirilliche) si nominano, perché sono un trucco d'imitazione
+  if (/[^\x00-\x7F]/.test(t) && /\p{L}/u.test(t.replace(/[A-Za-z]/g, "")))
+    return "Lo username contiene lettere non latine (per esempio cirilliche o greche, che sembrano uguali alle nostre): gli username Telegram usano solo lettere latine. Copialo dal profilo del bot: se il nome che vedi le contiene, è un segnale d'imitazione.";
+  if (!/^[A-Za-z0-9_]+$/.test(t)) return "Lo username può contenere solo lettere, numeri e trattino basso (_). Copialo dal profilo del bot.";
+  if (t.length < MIN_USERNAME) return "Lo username sembra troppo corto: controlla di averlo copiato per intero dal profilo del bot.";
+  if (t.length > MAX_USERNAME) return "Lo username è troppo lungo (al massimo " + MAX_USERNAME + " caratteri): copia solo il nome dopo la @.";
+  return "";
+}
+
 function caricaMarchi(testo) {
   var marchi = [];
   String(testo).split(/\r?\n/).forEach(function (riga) {
@@ -50,7 +70,10 @@ function caricaMarchi(testo) {
     var ufficiali = new Set();
     (campi.length > 1 ? campi[1] : "").split(",").forEach(function (u) { if (u.trim()) ufficiali.add(u.trim().toLowerCase()); });
     var generico = campi.length > 2 && campi[2].trim().toLowerCase() === "generico";
-    marchi.push([campi[0].trim().toLowerCase(), ufficiali, generico]);
+    // quarto campo: domini ufficiali che non coincidono col marchio (porting di nome.domini_ufficiali)
+    var domini = (campi.length > 3 ? campi[3] : "").split(",")
+      .map(function (d) { return d.trim().toLowerCase(); }).filter(Boolean);
+    marchi.push([campi[0].trim().toLowerCase(), ufficiali, generico, domini]);
   });
   return marchi;
 }
@@ -194,5 +217,5 @@ function analizzaNomeVisualizzato(nome, marchi) {
 
 if (typeof module !== "undefined") {
   module.exports = { normalizzaUsername: normalizzaUsername, eLinkInvito: eLinkInvito, caricaMarchi: caricaMarchi,
-    analizzaNome: analizzaNome, analizzaNomeVisualizzato: analizzaNomeVisualizzato };
+    analizzaNome: analizzaNome, analizzaNomeVisualizzato: analizzaNomeVisualizzato, problemaUsername: problemaUsername };
 }

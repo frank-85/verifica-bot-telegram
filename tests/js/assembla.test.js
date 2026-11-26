@@ -102,10 +102,11 @@ test("nome che imita un marchio → segnale dal controllo del nome", () => {
 test("Non so e sezioni non viste → in non verificato", () => {
   const r = risposteSicure(); r.richiesta_deposito = "nonso";
   const { verdetto } = costruisciVerdetto(input({ risposte: r, sezioniViste: false }), RISORSE);
-  assert.ok(verdetto.non_verificato.some((t) => /prelievo/.test(t)));
-  const fuori = verdetto.non_verificato.filter((t) => t.startsWith("Non verificabile da questo strumento"));
+  assert.ok(verdetto.non_verificato.some((t) => /prelevare/.test(t)));
+  const fuori = verdetto.non_verificato.filter((t) => t.startsWith("Controlli tecnici che richiedono l'analisi completa"));
   assert.strictEqual(fuori.length, 1, "i controlli non coperti vanno in una sola riga");
-  assert.ok(/offuscato/.test(fuori[0]) && /Defender/.test(fuori[0]));
+  // tester UX 26/11: niente elenco tecnico che sembra un'accusa ("Defender segnala il file come minaccia")
+  assert.ok(!/Defender|offuscato/.test(fuori[0]) && /non indicano nulla di negativo/.test(fuori[0]));
 });
 
 test("copertura del catalogo: ogni codice ha una provenienza, nessun codice inventato", () => {
@@ -123,9 +124,10 @@ test("copertura del catalogo: ogni codice ha una provenienza, nessun codice inve
 const risp = (extra) => Object.assign(risposteSicure(), extra);
 const conta = (v, codice) => Object.values(v.aree).reduce((n, a) => n + a.segnali.filter((s) => s.codice === codice).length, 0);
 
-test("questionario ridotto: 19 domande su 4 pagine, ogni id unico", () => {
+// 26/11/2026: 19 → 20 domande con q_rimandato (condizionale: compare solo se il bot promette guadagni)
+test("questionario ridotto: 20 domande su 4 pagine, ogni id unico", () => {
   assert.strictEqual(QUESTIONARIO.pagine.length, 4);
-  assert.strictEqual(tutteDomande().length, 19);
+  assert.strictEqual(tutteDomande().length, 20);
   const ids = tutteDomande().map((d) => d.id);
   assert.strictEqual(new Set(ids).size, ids.length);
 });
@@ -140,7 +142,7 @@ test("domande condizionali: mostra_se punta a una domanda precedente della stess
     });
   }
   const condizionali = tutteDomande().filter((d) => d.mostra_se).map((d) => d.id).sort();
-  assert.deepStrictEqual(condizionali, ["q_consob", "q_garantito", "q_inviti"]);
+  assert.deepStrictEqual(condizionali, ["q_consob", "q_garantito", "q_inviti", "q_rimandato"]);
 });
 
 test("senza promesse di guadagno le 3 domande condizionali non servono e non contano", () => {
@@ -218,7 +220,8 @@ test("le domande tolte finiscono tra i controlli non coperti dall'autovalutazion
 test("il verdetto ha lo schema v1 e materiale analizzato imposta il contesto", () => {
   const { verdetto } = costruisciVerdetto(input({ testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE);
   assert.strictEqual(verdetto.versione_schema, 1);
-  assert.deepStrictEqual(verdetto.contesto, { materiale_utente: true, tecnica_completa: false, fonti_indipendenti: 1, risposte_complete: true });
+  assert.deepStrictEqual(verdetto.contesto, { materiale_utente: true, tecnica_completa: false, fonti_indipendenti: 1,
+    risposte_complete: true, risposte_contraddittorie: false });
   for (const k of ["cosa_fare", "cosa_non_fare", "non_verificato", "fonti"]) assert.ok(Array.isArray(verdetto[k]), k);
 });
 
@@ -295,7 +298,8 @@ test("domande in positivo: Non so resta senza segnale, finisce tra i non verific
   const r = risposteSicure(); r.nessun_sito = "nonso";
   const v = costruisciVerdetto(input({ risposte: r }), RISORSE).verdetto;
   assert.ok(!v.aree.trasparenza.segnali.some((s) => s.codice === "nessun_sito"));
-  assert.ok(v.non_verificato.some((t) => /^Senza risposta: Il bot indica il sito/.test(t)));
+  // giro finale 26/11 (Renato): "Senza risposta" → "Hai risposto «Non so»"
+  assert.ok(v.non_verificato.some((t) => /^Hai risposto «Non so»: Il bot indica il sito/.test(t)));
 });
 
 test("i codici delle domande in positivo non sono rilevati in automatico (i contrasti restano validi)", () => {
@@ -483,4 +487,161 @@ test("nessuna discrepanza se la risposta conferma il segnale o è \"Non so\"", (
       testi: [{ origine: "incollato", testo: "Offerta a tempo limitato: agisci ora, restano poche ore per partecipare." }] }), RISORSE);
     assert.ok(!contrasti.some((c) => c.codice === "urgenza_pressione"), v);
   }
+});
+
+
+/* --- Tester UX 26/11/2026 (Luca): risposte contraddittorie --- */
+const { contraddizioniAttive } = require(path.join(KIT, "app", "assembla.js"));
+
+test("contraddizioni: badge blu e etichetta SCAM insieme → avviso, certezza bassa, motivo spiegato", () => {
+  const r = risposteSicure(); r.bot_ufficiale_verificato = "si"; r.etichetta_scam_telegram = "si";
+  assert.strictEqual(contraddizioniAttive(QUESTIONARIO, r).length, 1);
+  const out = costruisciVerdetto(input({ risposte: r, testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE);
+  assert.strictEqual(out.verdetto.contesto.risposte_contraddittorie, true);
+  assert.strictEqual(out.verdetto.verdetto, "rosso");
+  assert.strictEqual(out.verdetto.fiducia, "bassa");
+  assert.ok(out.motiviCertezzaBassa.includes("risposte_contraddittorie"));
+  assert.ok(out.contraddizioni.length === 1 && /SCAM/.test(out.contraddizioni[0]));
+});
+
+test("contraddizioni: risposte coerenti → nessuna", () => {
+  assert.deepStrictEqual(contraddizioniAttive(QUESTIONARIO, risposteSicure()), []);
+  const out = costruisciVerdetto(input(), RISORSE);
+  assert.strictEqual(out.verdetto.contesto.risposte_contraddittorie, false);
+});
+
+test("contraddizioni: anche le discrepanze tra risposte e testo incollato contano", () => {
+  const r = risposteSicure(); // seed phrase: No
+  const out = costruisciVerdetto(input({ risposte: r,
+    testi: [{ origine: "incollato", testo: "Benvenuto! Enter your 12-word seed phrase to verify your wallet and claim the reward." }] }), RISORSE);
+  assert.ok(out.contrasti.length >= 1);
+  assert.strictEqual(out.verdetto.contesto.risposte_contraddittorie, true);
+  assert.strictEqual(out.verdetto.fiducia, "bassa");
+});
+
+test("contraddizioni: ogni regola del questionario usa codici e risposte esistenti", () => {
+  const codici = new Set(tutteDomande().map((d) => d.codice));
+  for (const c of QUESTIONARIO.contraddizioni) {
+    assert.ok(c.testo && c.quando.length >= 2);
+    for (const [codice, risposta] of c.quando) assert.ok(codici.has(codice) && ["si", "no"].includes(risposta), codice);
+  }
+});
+
+
+/* --- Tester UX 26/11/2026 (Giulia): scorciatoia quando il testo contiene già una linea rossa --- */
+const { lineeRosseNelTesto } = require(path.join(KIT, "app", "assembla.js"));
+const SEED = "Benvenuto! Per ricevere i fondi inserisci la tua frase di recupero di 24 parole per la verifica.";
+
+test("lineeRosseNelTesto: trova la richiesta della seed phrase nel testo incollato", () => {
+  assert.deepStrictEqual(lineeRosseNelTesto([{ origine: "incollato", testo: SEED }], RISORSE), ["richiesta_seed_o_codici"]);
+});
+
+test("lineeRosseNelTesto: niente se la frase è una negazione o se mancano testi", () => {
+  assert.deepStrictEqual(lineeRosseNelTesto([{ origine: "incollato", testo: "Non condividere mai la tua seed phrase con nessuno." }], RISORSE), []);
+  assert.deepStrictEqual(lineeRosseNelTesto([], RISORSE), []);
+  assert.deepStrictEqual(lineeRosseNelTesto([{ origine: "incollato", testo: "Promette guadagni a chi invita amici" }], RISORSE), []);
+});
+
+test("esito rapido: senza risposte, solo il testo → rosso per la linea rossa, nessuna risposta inventata", () => {
+  const out = costruisciVerdetto({ username: "TonkeeperWalIetEsempioBot", nomeVisualizzato: "", risposte: {}, sezioniViste: null,
+    testi: [{ origine: "incollato", testo: SEED }], linkMiniApp: "", linkSegnalazioni: [], linkPositivi: [], rapido: true }, RISORSE);
+  assert.strictEqual(out.verdetto.verdetto, "rosso");
+  assert.ok(out.verdetto.linee_rosse.some((l) => l.codice === "richiesta_seed_o_codici"));
+  assert.ok(out.verdetto.non_verificato.some((t) => /esito rapido/i.test(t)));
+  assert.strictEqual(out.verdetto.contesto.risposte_complete, false);
+  // nessun segnale nasce da una risposta: tutti dal testo o dal nome
+  for (const a of Object.values(out.verdetto.aree)) for (const s of a.segnali) assert.ok(!/risposta/i.test(s.fonte || ""), s.codice);
+});
+
+
+/* --- Tester UX 26/11/2026 (Giulia): "quante domande mancano?" --- */
+const { contatoreDomande } = require(path.join(KIT, "app", "assembla.js"));
+
+test("contatoreDomande: pagine in sequenza, totale con la domanda finale sui pulsanti", () => {
+  const r = risposteSicure(); // non promette guadagni: le condizionali restano nascoste
+  const visibili = domandeVisibili(QUESTIONARIO, r).length;
+  const p0 = contatoreDomande(QUESTIONARIO, r, 0);
+  assert.deepStrictEqual([p0.da, p0.a, p0.totale], [1, QUESTIONARIO.pagine[0].domande.length, visibili + 1]);
+  const p1 = contatoreDomande(QUESTIONARIO, r, 1);
+  assert.strictEqual(p1.da, p0.a + 1);
+  const finale = contatoreDomande(QUESTIONARIO, r, QUESTIONARIO.pagine.length);
+  assert.deepStrictEqual([finale.da, finale.a], [visibili + 1, visibili + 1]);
+});
+
+test("contatoreDomande: le condizionali che compaiono allungano il totale", () => {
+  const r = risposteSicure();
+  const prima = contatoreDomande(QUESTIONARIO, r, 1).totale;
+  r.promessa_guadagno = "si";
+  assert.ok(contatoreDomande(QUESTIONARIO, r, 1).totale > prima);
+});
+
+
+/* --- Tester UX 26/11/2026 (Renato, 2° giro): "Cosa fare" concreto nel giallo dovuto solo a verifiche mancanti --- */
+test("giallo di sola prudenza: azioni concrete al posto di 'massima cautela'", () => {
+  const out = costruisciVerdetto(input({ sezioniViste: false, testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE);
+  assert.strictEqual(out.verdetto.verdetto, "giallo");
+  const fare = out.verdetto.cosa_fare.join(" | ");
+  assert.match(fare, /esci senza confermare/);
+  assert.doesNotMatch(fare, /massima cautela/);
+});
+
+test("giallo di sola prudenza con Non so sulle richieste: invita a completarle", () => {
+  const r = risposteSicure(); r.richiesta_deposito = "nonso";
+  const out = costruisciVerdetto(input({ risposte: r, testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE);
+  assert.strictEqual(out.verdetto.verdetto, "giallo");
+  assert.match(out.verdetto.cosa_fare.join(" | "), /Non so/);
+});
+
+test("giallo con segnali veri: restano le cautele normali", () => {
+  const r = risposteSicure(); r.richiesta_deposito = "si"; r.richiesta_dati_personali = "si";
+  const out = costruisciVerdetto(input({ risposte: r, testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE);
+  assert.strictEqual(out.verdetto.verdetto, "giallo");
+  assert.match(out.verdetto.cosa_fare.join(" | "), /massima cautela/);
+});
+
+
+/* --- Giro finale 26/11/2026 (Luca): imitazione + badge dichiarato dava un falso verde --- */
+const { contraddizioniNome } = require(path.join(KIT, "app", "assembla.js"));
+const imitazioneConBadge = (extra) => {
+  const r = risposteSicure(); r.bot_ufficiale_verificato = "si";
+  return costruisciVerdetto(input(Object.assign({ username: "TonkeeperWalIetEsempioBot", risposte: r }, extra)), RISORSE);
+};
+
+test("imitazione trovata dal controllo + badge dichiarato → prevale il controllo: niente verde", () => {
+  const out = imitazioneConBadge({ nomeVisualizzato: "Tonkeeper Wallet" });
+  const codici = Object.values(out.verdetto.aree).flatMap((a) => a.segnali.map((s) => s.codice));
+  assert.ok(codici.includes("nome_imita_marchio"));
+  assert.ok(!codici.includes("bot_ufficiale_verificato"), "il badge dichiarato non toglie punti");
+  assert.notStrictEqual(out.verdetto.verdetto, "verde");
+  assert.ok(out.contrasti.some((c) => c.codice === "bot_ufficiale_verificato"));
+  assert.strictEqual(out.verdetto.fiducia, "bassa");
+});
+
+test("spunta emoji nel nome + badge Sì → contraddizione spiegata", () => {
+  assert.strictEqual(contraddizioniNome("Tonkeeper Wallet ✅", { bot_ufficiale_verificato: "si" }).length, 1);
+  assert.strictEqual(contraddizioniNome("Tonkeeper Wallet ☑️", { bot_ufficiale_verificato: "si" }).length, 1);
+  assert.strictEqual(contraddizioniNome("Tonkeeper Wallet ✔", { bot_ufficiale_verificato: "si" }).length, 1);
+  assert.deepStrictEqual(contraddizioniNome("Tonkeeper Wallet ✅", { bot_ufficiale_verificato: "no" }), []);
+  assert.deepStrictEqual(contraddizioniNome("Wallet", { bot_ufficiale_verificato: "si" }), []);
+  const out = imitazioneConBadge({ nomeVisualizzato: "Tonkeeper Wallet ✅" });
+  assert.ok(out.contraddizioni.some((t) => /emoji/.test(t)));
+});
+
+test("il bot ufficiale vero con badge resta pulito (nessuna imitazione, nessuna contraddizione)", () => {
+  const r = risposteSicure(); r.bot_ufficiale_verificato = "si";
+  const out = costruisciVerdetto(input({ username: "wallet", nomeVisualizzato: "Wallet", risposte: r,
+    testi: [{ origine: "incollato", testo: TESTO_LUNGO }] }), RISORSE);
+  assert.strictEqual(out.verdetto.verdetto, "verde");
+  assert.deepStrictEqual(out.contraddizioni, []);
+  assert.deepStrictEqual(out.contrasti, []);
+});
+
+
+test("rosso: cosa fare distingue 'non ho pagato' da 'ho già pagato' e indica dove segnalare", () => {
+  const r = risposteSicure(); r.richiesta_seed_o_codici = "si";
+  const fare = costruisciVerdetto(input({ risposte: r }), RISORSE).verdetto.cosa_fare.join(" | ");
+  assert.match(fare, /blocca/i);
+  assert.match(fare, /Se non hai ancora pagato/);
+  assert.match(fare, /commissariatodips\.it/);
+  assert.match(fare, /tre puntini/);
 });

@@ -88,7 +88,7 @@ function valida(verdetto) {
   });
   var ctx = verdetto.contesto === undefined ? {} : verdetto.contesto;
   if (!_isObj(ctx)) throw new ErroreVerdetto("'contesto' deve essere un oggetto");
-  ["materiale_utente", "tecnica_completa", "risposte_complete"].forEach(function (k) {
+  ["materiale_utente", "tecnica_completa", "risposte_complete", "risposte_contraddittorie"].forEach(function (k) {
     var val = ctx[k] === undefined ? false : ctx[k];
     if (typeof val !== "boolean") throw new ErroreVerdetto("contesto." + k + " deve essere true o false");
   });
@@ -142,6 +142,9 @@ function calcola(verdetto, catalogo) {
   else if (ufficiale && fonti >= SOGLIE.minFontiUfficiale) fiducia = "media";
   else if (fonti === 0 || (!materiale && !tecnica)) fiducia = "bassa";
   else fiducia = "media";
+  // tester UX 26/11/2026 (porting di punteggio.py): risposte contraddittorie → certezza bassa, il colore non cambia
+  var contraddittorie = ctx.risposte_contraddittorie === true;
+  if (contraddittorie) fiducia = "bassa";
 
   var daSegnalazioni = Object.keys(fontiSegnalazioni).length >= 2 && !ufficiale;
   // taratura 17/11/2026 (punto A): marchio imitato + parola esca o dominio col marchio → rosso (non linea rossa)
@@ -156,7 +159,7 @@ function calcola(verdetto, catalogo) {
   var areaPiena = ORDINE_AREE.some(function (a) { return aree[a].rischio >= SOGLIE.areaPiena; });
   var riserva = false;
   if (esito === "verde" && fiducia === "bassa") {
-    riserva = ctx.risposte_complete === true && !areaPiena &&
+    riserva = ctx.risposte_complete === true && !contraddittorie && !areaPiena &&
       Math.min(100, totale + SOGLIE.malusSenzaProve) <= SOGLIE.verde;
     if (!riserva) esito = "giallo";
   }

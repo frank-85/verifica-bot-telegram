@@ -82,7 +82,7 @@ def test_dati_completi(dati):
     for k in ("catalogo", "marchi", "questionario", "regole", "generato", "numero_test"):
         assert k in dati, k
     assert dati["numero_test"] == 123
-    assert len(dati["catalogo"]) == 38
+    assert len(dati["catalogo"]) == 39
 
 
 def test_codice_inventato_nel_questionario_blocca(tmp_path):
@@ -153,10 +153,104 @@ def test_tesseract_solo_dentro_leggi_screenshot(generato):
     assert inizio >= 0 and "\nfunction " not in generato[inizio + 10:pos]
 
 
-@pytest.mark.parametrize("testo", ["Ho letto", "Hai aperto anche le sezioni prelievo / pagamenti / inviti?",
-                                   "il browser scarica una volta la libreria"])
+@pytest.mark.parametrize("testo", ["Ho letto", "il browser scarica una volta la libreria"])
 def test_testi_prova_tu(generato, testo):
     assert testo in re.sub(r"</?(strong|em)>", "", generato)
+
+
+# --- Tester UX 26/11/2026: domanda sulle sezioni incompresa da 3 tester su 3 ---
+def test_copertura_domanda_concreta_con_terza_opzione():
+    q = json.loads((KIT / "app" / "questionario.json").read_text(encoding="utf-8"))["copertura"]
+    assert "sezioni prelievo / pagamenti / inviti" not in q["testo"]  # gergo che nessuno ha capito
+    assert "pulsanti" in q["testo"] and q["nota"]  # la spiegazione è visibile, non a scomparsa
+    assert [r[0] for r in q["risposte"]] == ["si", "assenti", "no"]
+
+
+def test_copertura_nota_e_opzioni_nella_pagina(generato):
+    assert "Q.copertura.nota" in generato and "Q.copertura.risposte" in generato
+    assert 'v === "assenti"' in generato  # "il bot non ha questi pulsanti" vale come sezioni controllate
+
+
+def test_riepilogo_conta_anche_la_domanda_sui_pulsanti(generato):
+    # tester 26/11 (Giulia): "19 risposte" dopo averne date 20 → mancava l'ultima domanda
+    assert "conta.risposte + (stato.sezioniViste !== null ? 1 : 0)" in generato
+
+
+def test_esito_con_frase_perche_e_titolo_pochi_elementi(generato):
+    # tester UX 26/11 (Renato, Luca): il perché del colore in una frase; con molti "Non so" niente "Nessun segnale grave"
+    assert 'classe: "esito-perche", testo: perche(v, CAT, opzioni.motiviCertezzaBassa || [])' in generato
+    assert "pocheInformazioni(opzioni.nonso || 0)" in generato and "Pochi elementi per decidere · da confermare" in generato
+    assert "nonso: contaRisposte(Q, stato.risposte).nonso" in generato
+
+
+def test_non_verificato_a_scomparsa(generato):
+    assert 'el("summary", { testo: "Cosa non è stato controllato (" + nv.length + ")" })' in generato
+
+
+def test_contraddizioni_avviso_mentre_rispondi_e_nel_report(generato):
+    # tester UX 26/11 (Luca): badge blu + SCAM accettati in silenzio con certezza alta
+    assert "contraddizioniAttive(qui, stato.risposte)" in generato  # avviso dal vivo nella pagina delle domande
+    assert "opzioni.contraddizioni" in generato  # e nel riquadro delle discrepanze dell'esito
+    assert 'risposte_contraddittorie: "Alcune risposte si contraddicono' in generato
+
+
+def test_nome_e_link_consigliati_e_avviso_se_mancano(generato):
+    # tester UX 26/11 (Giulia): saltati perché "facoltativi", proprio i campi che scovano i trucchi
+    assert "Nome in cima alla chat (consigliato)" in generato and "Link della Mini App (consigliato)" in generato
+    assert "(facoltativo)\", \"nomeVisualizzato\"" not in generato
+    assert "opzioni.mancanti" in generato and "Aggiungi nome e link" in generato
+
+
+def test_username_controllato_prima_di_proseguire(generato):
+    assert "problemaUsername(normalizzaUsername(stato.username))" in generato
+
+
+@pytest.mark.parametrize("domanda,parola", [("q_brand_finanza", "exchange"), ("q_consob", "CONSOB"),
+                                            ("q_seed", "seed phrase"), ("q_wallet", "wallet"), ("q_esche", "airdrop")])
+def test_parole_difficili_spiegate_sotto_la_domanda(domanda, parola):
+    # tester UX 26/11 (tutti e tre): parole tecniche senza spiegazione
+    q = json.loads((KIT / "app" / "questionario.json").read_text(encoding="utf-8"))
+    d = next(d for p in q["pagine"] for d in p["domande"] if d["id"] == domanda)
+    assert parola.lower() in d["nota"].lower() and len(d["nota"]) <= 160, d.get("nota")
+
+
+def test_scorciatoia_esito_rapido(generato):
+    # tester UX 26/11 (Giulia): 20 domande per una seed phrase già evidente nel testo
+    assert "lineeRosseNelTesto(input().testi, RISORSE)" in generato
+    assert "Mostra subito l'esito" in generato and "Continua il controllo completo" in generato
+    assert "rapido: !!stato.rapido" in generato
+    assert "opzioni.rapido" in generato and "Completa le domande" in generato
+
+
+def test_domanda_prelievo_rimandato_solo_se_promette_guadagni():
+    q = json.loads((KIT / "app" / "questionario.json").read_text(encoding="utf-8"))
+    d = next(d for p in q["pagine"] for d in p["domande"] if d["codice"] == "prelievo_rimandato")
+    assert d["mostra_se"] == {"codice": "promessa_guadagno", "risposte": ["si", "nonso"]}
+    assert "listing" in d["testo"] or "listing" in d.get("nota", "")
+
+
+def test_contatore_domande_nelle_pagine(generato):
+    assert "contatoreDomande(Q, stato.risposte, Q.pagine.indexOf(area))" in generato
+    assert "contatoreDomande(Q, stato.risposte, Q.pagine.length)" in generato
+
+
+def test_esito_senza_gergo(generato):
+    # tester UX 26/11 (Renato, 2° giro): "regola di prudenza", due numeri non spiegati, "-50 da fonte di terzi"
+    corpo = generato[generato.index("function sottotitolo("):generato.index("function barraRischio(")]
+    assert "regola di prudenza" not in corpo and "mancano alcune verifiche" in corpo
+    assert "Perché due numeri. " in generato
+    assert '", indicato da te: non verificato"' in generato
+
+
+def test_spunta_emoji_avviso_dal_vivo(generato):
+    assert "contraddizioniNome(stato.nomeVisualizzato, stato.risposte)" in generato
+
+
+def test_nota_visibile_sotto_le_domande(generato):
+    q = json.loads((KIT / "app" / "questionario.json").read_text(encoding="utf-8"))
+    spunta = next(d for p in q["pagine"] for d in p["domande"] if d["id"] == "q_spunta")
+    assert "✅" in spunta["nota"]  # tester 26/11: la ✅ nel nome scambiata per il badge
+    assert 'd.nota ? el("p", { classe: "nota-domanda"' in generato
 
 
 def test_grafico_aree_in_html_non_svg(generato):
@@ -180,8 +274,8 @@ MESSAGGI_CERTEZZA_BASSA = {
     "nessun_materiale": "Non hai fornito testo o screenshot del bot: aggiungili per una valutazione più solida.",
     "testo_breve": "Il testo fornito è troppo breve per essere analizzato in modo affidabile: "
                    "incolla messaggi più completi.",
-    "sezioni_non_confermate": "Non hai confermato di aver aperto le sezioni prelievo, pagamenti e inviti: "
-                              "sono quelle dove compaiono più spesso le richieste di denaro.",
+    "sezioni_non_confermate": "Non hai guardato i pulsanti per prelevare, pagare o invitare amici: "
+                              "è lì che compaiono più spesso le richieste di denaro.",
     "nonso_richieste": "Hai risposto \\\"Non so\\\" ad alcune domande sulle richieste del bot: "
                        "sono le più importanti per la valutazione.",
 }
@@ -282,7 +376,7 @@ def test_b2_esito_note_e_ordine(generato):
         assert generato.count("function %s(" % funzione) == 1, funzione
     corpo = generato[generato.index("function mostraReport("):generato.index("window.mostraReport")]
     ordine = ['classe: "esito t-"', "barraRischio(v)", 'classe: "chips"', "notaRegola(v)", '"Cosa fare"',
-              '"Rischio per area"', '"Non verificato"', '"Fonti"', '"Stampa / salva PDF"', 'modello("t-premessa")']
+              '"Rischio per area"', '"Cosa non è stato controllato ("', '"Fonti"', '"Stampa / salva PDF"', 'modello("t-premessa")']
     posizioni = [corpo.index(x) for x in ordine]
     assert posizioni == sorted(posizioni), list(zip(ordine, posizioni))
     assert 'el("details", { classe: "card dettaglio-aree"' in corpo
@@ -477,3 +571,21 @@ def test_riepilogo_promette_i_20_punti_solo_come_possibilita(generato):
 def test_libreria_non_promette_zero_cache(generato):
     assert "Nulla viene salvato sul dispositivo e il servizio" not in generato
     assert "il browser può tenerla in cache come per qualsiasi sito" in generato
+
+
+# --- Giro finale 26/11/2026: miglioramenti medi ---
+def test_giro_finale_domande_comparse_e_scorciatoia_senza_avanti(generato):
+    assert "sono comparse" in generato  # il contatore dice perché il totale cresce
+    assert "stato.passo === 2 && stato.proposta" in generato  # con la scorciatoia aperta, niente Avanti nella barra fissa
+
+
+def test_giro_finale_link_mini_app_controllato_al_passo_1(generato):
+    assert "analizzaLink(stato.linkMiniApp.trim(), RISORSE.marchi).valido" in generato
+
+
+def test_giro_finale_username_non_link(generato):
+    assert "Lo username non è valido" in generato
+
+
+def test_giro_finale_mini_app_spiegata(generato):
+    assert "Mini App = una pagina web che si apre dentro Telegram" in generato

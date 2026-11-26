@@ -63,7 +63,7 @@ function analizzaTesto(testo, regole) {
 function _marchiNelHost(host, reg, marchi) {
   var etichetta = reg.split(".")[0];
   var piatta = etichetta.replace(/-/g, "");
-  if (marchi.some(function (m) { return m[0] === piatta; })) return [];
+  if (marchi.some(function (m) { return m[0] === piatta || (m[3] || []).indexOf(reg) >= 0; })) return [];
   var generici = marchi.filter(function (m) { return m[2] === true; }).map(function (m) { return m[0]; });
   var sotto = host === reg ? [] : host.slice(0, -reg.length).replace(/\.+$/, "").split(".")
     .filter(function (x) { return x && x !== "www"; });

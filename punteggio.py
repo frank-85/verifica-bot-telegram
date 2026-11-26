@@ -83,7 +83,7 @@ def valida(verdetto) -> None:
     ctx = verdetto.get("contesto", {})
     if not isinstance(ctx, dict):
         raise ErroreVerdetto("'contesto' deve essere un oggetto")
-    for chiave in ("materiale_utente", "tecnica_completa", "risposte_complete"):
+    for chiave in ("materiale_utente", "tecnica_completa", "risposte_complete", "risposte_contraddittorie"):
         if not isinstance(ctx.get(chiave, False), bool):
             raise ErroreVerdetto(f"contesto.{chiave} deve essere true o false (senza virgolette)")
     fonti = ctx.get("fonti_indipendenti", 0)
@@ -138,6 +138,11 @@ def calcola(verdetto: dict, catalogo: dict) -> dict:
         fiducia = "bassa"
     else:
         fiducia = "media"
+    # tester UX 26/11/2026: risposte contraddittorie (es. badge blu ed etichetta SCAM insieme) → la
+    # valutazione poggia su dati incerti: certezza bassa anche con una linea rossa; il colore non cambia
+    contraddittorie = ctx.get("risposte_contraddittorie", False)
+    if contraddittorie:
+        fiducia = "bassa"
 
     da_segnalazioni = len(fonti_segnalazioni) >= 2 and not ufficiale
     # taratura 17/11/2026 (revisione esterna, punto A): marchio imitato + parola esca o dominio col
@@ -155,7 +160,7 @@ def calcola(verdetto: dict, catalogo: dict) -> dict:
     area_piena = any(aree[a]["rischio"] >= SOGLIA_AREA_PIENA for a in PESI)
     riserva = False
     if esito == "verde" and fiducia == "bassa":
-        riserva = (ctx.get("risposte_complete") is True and not area_piena
+        riserva = (ctx.get("risposte_complete") is True and not contraddittorie and not area_piena
                    and min(100, totale + MALUS_SENZA_PROVE) <= SOGLIA_VERDE)
         if not riserva:
             esito = "giallo"

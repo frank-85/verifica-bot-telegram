@@ -19,6 +19,7 @@
   {"codice": "richiesta_numero_contatti", "area": "richieste", "punti": 20, "linea_rossa": false, "descrizione": "Chiede numero di telefono o contatti senza motivo"},
   {"codice": "prelievo_condizionato", "area": "richieste", "punti": 100, "linea_rossa": true, "descrizione": "Per prelevare chiede prima un deposito, un acquisto, una commissione o di portare altre persone"},
 
+  {"codice": "prelievo_rimandato", "area": "promesse", "punti": 20, "linea_rossa": false, "descrizione": "Il prelievo dei guadagni è rimandato a un evento futuro (\"dopo il listing\", \"al lancio\")"},
   {"codice": "dominio_giovane", "area": "tecnica", "punti": 30, "linea_rossa": false, "descrizione": "Dominio collegato registrato da meno di 90 giorni"},
   {"codice": "dominio_con_marchio", "area": "tecnica", "punti": 40, "linea_rossa": false, "descrizione": "Dominio collegato che contiene un marchio noto senza esserne il sito ufficiale"},
   {"codice": "dominio_tld_rischioso", "area": "tecnica", "punti": 5, "linea_rossa": false, "descrizione": "Dominio collegato con un'estensione spesso usata per siti usa e getta (.xyz, .top, .click…)"},

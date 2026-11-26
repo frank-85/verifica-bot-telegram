@@ -17,7 +17,7 @@ from datetime import date, datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
-from nome import analizza_nome, carica_marchi, normalizza_username
+from nome import analizza_nome, carica_marchi, domini_ufficiali, normalizza_username
 from pagina import analizza_testo, script_esterni
 
 USER_AGENT = "Mozilla/5.0 (compatible; verifica-bot/1.0)"
@@ -204,7 +204,7 @@ def marchi_nel_host(host: str) -> list[dict]:
     etichetta = reg.split(".")[0]
     piatta = etichetta.replace("-", "")
     marchi = carica_marchi()
-    if piatta in {m for m, _, _ in marchi}:
+    if piatta in {m for m, _, _ in marchi} or reg in domini_ufficiali():
         return []
     generici = {m for m, _, g in marchi if g}
     sotto = [x for x in host[:-len(reg)].strip(".").split(".") if x and x != "www"] if host != reg else []

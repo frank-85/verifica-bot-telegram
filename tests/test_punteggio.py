@@ -12,7 +12,7 @@ CODICI = {
     "identita": ["nome_imita_marchio", "nome_parole_esca", "nome_incoerente_servizio",
                  "imitazione_brand_finanza", "bot_ufficiale_verificato"],
     "promesse": ["rendimento_garantito", "promessa_guadagno", "urgenza_pressione",
-                 "referral_piramidale", "bonus_regalo_esca"],
+                 "referral_piramidale", "bonus_regalo_esca", "prelievo_rimandato"],
     "richieste": ["richiesta_seed_o_codici", "richiesta_comando_pc", "richiesta_wallet_connect",
                   "richiesta_deposito", "richiesta_dati_personali", "richiesta_numero_contatti",
                   "prelievo_condizionato"],
@@ -49,7 +49,7 @@ def v(segnali=None, materiale=True, tecnica=True, fonti=1):
 
 def test_catalogo_ha_tutti_i_codici():
     attesi = {c: a for a, lista in CODICI.items() for c in lista}
-    assert len(attesi) == 38
+    assert len(attesi) == 39  # 26/11/2026: + prelievo_rimandato (tester UX, scenario "tocca e guadagna")
     assert set(CAT) == set(attesi)
     for codice, area in attesi.items():
         assert CAT[codice]["area"] == area
@@ -406,3 +406,27 @@ def test_riserva_non_salva_dalle_linee_rosse():
 def test_riserva_flag_deve_essere_booleano():
     with pytest.raises(ErroreVerdetto, match="risposte_complete"):
         calcola(_riserva(complete="si"), CAT)
+
+
+# --- tester UX 26/11/2026 (Luca): risposte contraddittorie → certezza bassa, anche con una linea rossa ---
+
+def test_contraddizioni_abbassano_la_certezza_anche_con_linea_rossa():
+    d = v({"reputazione": [s("etichetta_scam_telegram")]}, materiale=True, tecnica=True, fonti=2)
+    assert calcola(d, CAT)["fiducia"] == "alta"
+    d["contesto"]["risposte_contraddittorie"] = True
+    r = calcola(d, CAT)
+    assert (r["verdetto"], r["fiducia"], r["rischio_finale"]) == ("rosso", "bassa", 100)  # il colore non cambia
+
+
+def test_contraddizioni_niente_verde_con_riserva():
+    d = _riserva()
+    d["contesto"]["risposte_contraddittorie"] = True
+    r = calcola(d, CAT)
+    assert r["verdetto"] == "giallo" and not r["verde_con_riserva"]
+
+
+def test_contraddizioni_flag_deve_essere_booleano():
+    d = v()
+    d["contesto"]["risposte_contraddittorie"] = "si"
+    with pytest.raises(ErroreVerdetto, match="risposte_contraddittorie"):
+        calcola(d, CAT)

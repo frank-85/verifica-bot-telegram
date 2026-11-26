@@ -52,7 +52,7 @@ Preferisci non installare nulla? [Scarica lo zip](https://github.com/frank-85/ve
 
 Il colore non lo sceglie un'intelligenza artificiale. Lo calcola un motore a regole: a parità di indizi, l'esito è sempre lo stesso, e chiunque può leggere perché.
 
-- **38 segnali** in un catalogo fisso ([`segnali.json`](segnali.json)), ciascuno con un punteggio.
+- **39 segnali** in un catalogo fisso ([`segnali.json`](segnali.json)), ciascuno con un punteggio.
 - **6 aree**: identità, promesse, richieste, tecnica, reputazione, trasparenza. Identità, promesse, richieste e tecnica pesano il doppio.
 - **Punteggio**: il rischio di ogni area (0-100) si moltiplica per il suo peso, si somma e si divide per 3, fino a un massimo di 100. Le aree senza segnali non abbassano il risultato: un bot che chiede un deposito e il collegamento del wallet risulta rosso anche se il resto sembra in ordine.
 - **Soglie**: fino a 30 verde, da 31 a 60 giallo, oltre 60 rosso.
@@ -66,9 +66,9 @@ Ogni esito è accompagnato dalla **certezza della valutazione**, che dice quanto
 
 Non devi fidarti sulla parola: queste prove sono pubbliche e puoi controllarle tu.
 
-- **Test automatici** ([![Test](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml)): 509 test Python e 139 JavaScript girano sui server di GitHub, su Linux e Windows, a ogni modifica del codice.
+- **Test automatici** ([![Test](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/test.yml)): 539 test Python e 173 JavaScript girano sui server di GitHub, su Linux e Windows, a ogni modifica del codice.
 - **Analisi di sicurezza del codice** ([![CodeQL](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml/badge.svg)](https://github.com/frank-85/verifica-bot-telegram/actions/workflows/codeql.yml)): GitHub CodeQL cerca falle note nel JavaScript, nel Python e nei flussi automatici, a ogni modifica e ogni settimana, con le regole di sicurezza estese. Al 18/11/2026: nessuna segnalazione.
-- **Antivirus:** lo zip della Release è analizzato su [VirusTotal](https://www.virustotal.com/gui/file/d1ec1436933c9b7f58b1bfad0474ce8528f5cc6c7ff45b3ab9d8264db3c9b349) da decine di motori antivirus, e lo stesso vale per il [sito dell'app](https://www.virustotal.com/gui/url/f8d103a76bded66c7744f4a3071b9091141a2891def39c6b3e5f201ad397b7cd): all'analisi del 18/11/2026 **nessun motore ha segnalato problemi**, né per lo zip né per il sito. Impronta SHA-256 dello zip: `d1ec1436933c9b7f58b1bfad0474ce8528f5cc6c7ff45b3ab9d8264db3c9b349`. Se l'impronta del file che scarichi è diversa, non è quello pubblicato qui.
+- **Antivirus:** lo zip della Release è analizzato su [VirusTotal](https://www.virustotal.com/gui/file/7f3d9d2e84d5a8e294000a276d2622139b0bf45476caa9b2eaffddf012f78ac8) da decine di motori antivirus, e lo stesso vale per il [sito dell'app](https://www.virustotal.com/gui/url/f8d103a76bded66c7744f4a3071b9091141a2891def39c6b3e5f201ad397b7cd): all'analisi del 26/11/2026 **nessuno dei 64 motori ha segnalato problemi** per lo zip (versione 1.1); il sito era risultato pulito all'analisi del 18/11/2026. Impronta SHA-256 dello zip: `7f3d9d2e84d5a8e294000a276d2622139b0bf45476caa9b2eaffddf012f78ac8`. Se l'impronta del file che scarichi è diversa, non è quello pubblicato qui.
 - **Nessun programma da installare:** l'app è una pagina web. Installarla sul telefono non scarica un file `.apk` e non chiede permessi (contatti, file, posizione, notifiche).
 - **Codice aperto:** tutto ciò che fa l'app è leggibile in questo repository.
 
@@ -105,7 +105,7 @@ Queste verifiche non sono una certificazione e nessuno può garantire l'assenza 
 | `costruisci_icone.py` | Genera le icone da un unico disegno (SVG e PNG coerenti). |
 | `strumenti/vetrina/`, `docs/immagini/` | Lo script che fotografa l'app vera per le immagini di questo README, e le immagini. |
 | `verifica-bot/SKILL.md` | Le istruzioni per usare il motore con un assistente AI (Claude Code): l'assistente raccoglie le prove, il motore calcola l'esito. |
-| `tests/` | 509 test Python e 139 test JavaScript. |
+| `tests/` | 539 test Python e 173 test JavaScript. |
 
 Il motore esiste in due versioni, Python e JavaScript. Una serie di **test di parità** dà gli stessi casi a entrambe e verifica che producano lo stesso risultato: una correzione fatta da una parte sola fa fallire i test.
 
